@@ -1,16 +1,3 @@
-# camvote
+# CamVote
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Secure Digital Electoral System for Cameroon – Flutter, Web, AI..         CamVote is a secure, mobile and web-based voting platform designed to modernize and protect Cameroon’s electoral process. It allows citizens to register using biometrics, vote remotely, and view real-time results — all with full transparency and legal compliance.
