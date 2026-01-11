@@ -30,7 +30,7 @@ dependencies:
 
   # QR Code
   qr_flutter: ^4.1.0
-  qr_code_scanner: ^1.0.1
+
 
   # Image Handling
   image_picker: ^1.0.7
@@ -47,6 +47,7 @@ dependencies:
 
   # UI
   cupertino_icons: ^1.0.8
+  mobile_scanner: ^7.1.4
 
 dev_dependencies:
   flutter_test:
