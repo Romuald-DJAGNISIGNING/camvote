@@ -1,0 +1,1032 @@
+{
+  "@@locale": "en",
+
+  "appName": "CamVote",
+  "slogan": "Your Vote. Your Voice. Your Future.",
+  "cameroonName": "Republic of Cameroon",
+
+  "chooseModeTitle": "Choose how you want to use CamVote",
+  "modePublicTitle": "Public Access",
+  "modePublicSubtitle": "View results, election info, and verify registration without logging in.",
+  "modeVoterTitle": "Voter",
+  "modeVoterSubtitle": "Register, get verified, vote securely, and access your e-Electoral Card.",
+  "modeObserverTitle": "Observer",
+  "modeObserverSubtitle": "Read-only monitoring: audit logs, fraud flags, transparency tools.",
+  "modeAdminTitle": "Admin",
+  "modeAdminSubtitle": "Manage elections, candidates, monitoring, cleaning, bans, and compliance.",
+
+  "settings": "Settings",
+  "about": "About",
+  "aboutSub": "Creator details, Trello progress dashboard, strengths & weaknesses.",
+
+  "publicPortalTitle": "Public Portal",
+  "publicPortalHeadline": "Public information (no login required)",
+
+  "publicResultsTitle": "Results & Statistics",
+  "publicResultsSub": "Live trends, turnout, and final results.",
+
+  "publicElectionsInfoTitle": "Election Types & Guidelines",
+  "publicElectionsInfoSub": "Understand election types and voter guidelines.",
+
+  "verifyRegistrationTitle": "Verify Registration (Privacy-safe)",
+  "verifyRegistrationSub": "Verify status using reg number + DOB. Identity stays masked.",
+
+  "lastUpdated": "Last updated",
+  "turnout": "Turnout",
+  "totalRegistered": "Total registered",
+  "totalVotesCast": "Votes cast",
+  "absentee": "Absentee",
+  "candidateResults": "Candidate results",
+
+  "electionsInfoHeadline": "Election types and guidelines (public)",
+  "guidelinesTitle": "Guidelines",
+  "guidelineAgeRules": "Registration: 18+. Voting: 21+. Eligibility is enforced automatically.",
+  "guidelineOnePersonOneVote": "One person, one vote: duplicate attempts are blocked and audited.",
+  "guidelineSecrecy": "Vote secrecy: receipts never reveal the chosen candidate.",
+  "guidelineFraudReporting": "Fraud reporting: suspicious patterns are flagged for observers and admins.",
+
+  "electionTypePresidential": "Presidential Election",
+  "electionTypePresidentialBody": "Election of the Head of State. Results are monitored live with audit logs and locked after closing.",
+  "electionTypeLegislative": "Legislative Election",
+  "electionTypeLegislativeBody": "Election of members of parliament. Results available by constituency/region in the dashboard.",
+  "electionTypeMunicipal": "Municipal Election",
+  "electionTypeMunicipalBody": "Election of municipal councilors. Results displayed at commune and regional levels.",
+  "electionTypeRegional": "Regional Election",
+  "electionTypeRegionalBody": "Regional council elections. Includes turnout and participation statistics.",
+  "electionTypeSenatorial": "Senatorial Election",
+  "electionTypeSenatorialBody": "Senate elections. Monitoring and audit view available for authorized roles.",
+
+  "verifyPrivacyNote": "Privacy note: public verification shows only masked identity information and status.",
+  "verifyFormRegNumber": "Registration number",
+  "verifyFormDob": "Date of birth",
+  "verifySubmit": "Verify",
+  "requiredField": "This field is required",
+  "invalidRegNumber": "Registration number must be at least 4 characters",
+  "selectDob": "Please select your date of birth",
+  "tapToSelect": "Tap to select",
+
+  "verifyAttemptLimitBody": "Too many verification attempts. Please wait before trying again.",
+  "cooldown": "Cooldown",
+
+  "verifyResultTitle": "Verification result",
+  "maskedName": "Masked name",
+  "maskedRegNumber": "Masked reg number",
+  "status": "Status",
+  "cardExpiry": "Card expiry",
+
+  "verifyStatusNotFound": "Not found",
+  "verifyStatusPending": "Pending verification",
+  "verifyStatusRegisteredPreEligible": "Registered (18–20, not eligible to vote yet)",
+  "verifyStatusEligible": "Eligible to vote",
+  "verifyStatusVoted": "Already voted (current election)",
+  "verifyStatusSuspended": "Suspended / under review",
+  "verifyStatusDeceased": "Removed (deceased)",
+  "verifyStatusArchived": "Archived (retention)",
+  "verifyEligibleToastMessage": "Congratulations! You can now vote in eligible elections. 🎉",
+
+  "voterPortalTitle": "Voter Portal",
+  "voterHome": "Home",
+  "voterElections": "Elections",
+  "voterVote": "Vote",
+  "voterResults": "Results",
+  "voterProfile": "Profile",
+
+  "adminDashboard": "Admin Dashboard",
+  "adminDashboardIntro": "Admin web-first dashboard includes election management, monitoring, cleaning, bans, audit and fraud review.",
+  "observerDashboard": "Observer Dashboard",
+  "observerDashboardIntro": "Observer read-only portal includes transparency monitoring, audit logs, fraud flags and restricted voter directory.",
+
+  "appearance": "Appearance",
+  "language": "Language",
+  "system": "System",
+  "light": "Light",
+  "dark": "Dark",
+
+  "aboutIntro": "This section will present the creator profile, the project vision, and a Trello-powered progress dashboard (publicly viewable).",
+
+  "regionAdamawa": "Adamawa",
+  "regionCentre": "Centre",
+  "regionEast": "East",
+  "regionFarNorth": "Far North",
+  "regionLittoral": "Littoral",
+  "regionNorth": "North",
+  "regionNorthWest": "North-West",
+  "regionWest": "West",
+  "regionSouth": "South",
+  "regionSouthWest": "South-West",
+
+  "notificationsTitle": "Notifications",
+  "markAllRead": "Mark all read",
+  "clearAll": "Clear all",
+  "noNotifications": "No notifications yet.",
+  "audiencePublic": "Public",
+  "audienceVoter": "Voter",
+  "audienceObserver": "Observer",
+  "audienceAdmin": "Admin",
+  "audienceAll": "All",
+  "toastAllRead": "All notifications marked as read.",
+  "notificationElectionSoonTitle": "Election starts soon",
+  "notificationElectionSoonBody": "A scheduled election will open soon. Get ready to vote securely.",
+  "notificationElectionOpenTitle": "Election is now open",
+  "notificationElectionOpenBody": "Voting is now open. Cast your ballot securely.",
+  "notificationElectionClosedTitle": "Election closed",
+  "notificationElectionClosedBody": "Voting has closed. Results will be published shortly.",
+  "notificationSecurityNoticeTitle": "Security notice",
+  "notificationSecurityNoticeBody": "Multiple invalid attempts detected on a device. Monitoring is active.",
+  "notificationStatusUpdateTitle": "Status update",
+  "notificationStatusUpdateBody": "You are registered (18-20). You will automatically become eligible at 21.",
+
+  "summaryTab": "Summary",
+  "chartsTab": "Charts",
+  "mapTab": "Map",
+
+  "chartBarTitle": "Votes by candidate (Bar)",
+  "chartPieTitle": "Vote share (Pie)",
+  "chartLineTitle": "Turnout trend (Line)",
+  "chartLineSubtitle": "Visualization will be API-driven once results are published.",
+  "votesLabel": "Votes",
+
+  "mapTitle": "Cameroon regions (winner map)",
+  "mapTapHint": "Tap a region to see the current leading candidate.",
+  "mapLegendTitle": "Legend",
+
+  "loading": "Loading…",
+  "startupError": "Startup error",
+  "error": "Error",
+  "pleaseWait": "Please wait",
+  "retry": "Retry",
+  "close": "Close",
+  "ok": "OK",
+  "cancel": "Cancel",
+  "refresh": "Refresh",
+  "search": "Search",
+  "noData": "No data available",
+  "winnerLabel": "Winner",
+  "resultsLive": "LIVE Results",
+  "resultsFinal": "FINAL Results",
+  "mapOfWinners": "Map of Regional Winners",
+  "unknown": "Unknown",
+  "cameroon": "Cameroon",
+  "appSlogan": "Trust. Transparency. Truth.",
+
+  "documentOcrTitle": "Document Verification (OCR)",
+  "documentOcrSubtitle": "Upload an official document. We'll OCR it and match your details.",
+  "documentType": "Document type",
+  "documentTypeNationalId": "National ID",
+  "documentTypePassport": "Passport",
+  "documentTypeOther": "Other official document",
+  "fullName": "Full name",
+  "dateOfBirth": "Date of birth",
+  "placeOfBirth": "Place of birth",
+  "nationality": "Nationality",
+  "pickFromGallery": "Gallery",
+  "captureWithCamera": "Camera",
+  "runOcr": "Run OCR & Verify",
+  "ocrProcessing": "Processing…",
+  "ocrExtractedTitle": "Extracted from document",
+  "ocrValidationTitle": "Match result",
+  "ocrVerifiedTitle": "Verified",
+  "ocrRejectedTitle": "Rejected",
+  "ocrVerified": "Document verified ✅",
+  "ocrRejected": "Verification rejected",
+  "ocrFailedTitle": "OCR failed",
+  "rawOcrText": "Raw OCR text",
+  "tryAnotherDoc": "Try another document",
+  "continueNext": "Continue",
+  "ocrNotSupportedTitle": "OCR not available here",
+  "ocrNotSupportedMessage": "Document OCR works on Android/iOS. Use the mobile app for registration.",
+
+  "userLabel": "User",
+
+  "loginTitle": "{role} sign in",
+  "@loginTitle": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "loginHeaderTitle": "Secure access for {role}",
+  "@loginHeaderTitle": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "loginHeaderSubtitle": "Verify identity, continue securely, and protect every action.",
+  "loginIdentifierLabel": "Email or registration ID",
+  "loginPasswordLabel": "Password",
+  "passwordMinLength": "Min {length} characters",
+  "@passwordMinLength": {
+    "placeholders": {
+      "length": {}
+    }
+  },
+  "signIn": "Sign in",
+  "signInSubtitle": "Access voter, observer, or admin portals",
+  "signOut": "Sign out",
+  "deleteAccount": "Delete account",
+  "deleteAccountSubtitle": "Permanent removal with legal retention rules",
+  "signingIn": "Signing in...",
+  "forgotPassword": "Forgot password?",
+  "forgotPasswordTitle": "Reset password",
+  "forgotPasswordSubtitle": "We will send a secure reset link to your account.",
+  "forgotPasswordSend": "Send reset link",
+  "forgotPasswordSending": "Sending...",
+  "forgotPasswordSuccess": "Reset link sent.",
+  "forgotPasswordNeedHelpTitle": "Need help?",
+  "forgotPasswordNeedHelpSubtitle": "Contact support for account recovery.",
+  "forgotPasswordHeroTitle": "Account recovery",
+  "forgotPasswordHeroSubtitle": "Verify your identity and regain secure access.",
+  "biometricLogin": "Use biometrics",
+  "continueAs": "Continue as {name}",
+  "@continueAs": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "biometricWebNotice": "Biometric login is available on Android and iOS.",
+  "biometricNotAvailable": "Biometrics are not available on this device.",
+  "biometricReasonSignIn": "Confirm your identity to sign in.",
+  "biometricReasonEnable": "Enable biometric login for CamVote.",
+  "biometricLoginTitle": "Biometric + liveness login",
+  "biometricLoginSubtitle": "Require device biometrics and liveness for sign in.",
+  "securityChipBiometric": "Biometric gate",
+  "securityChipLiveness": "Liveness checks",
+  "securityChipAuditReady": "Audit ready",
+  "securityChipFraudShield": "Fraud shield",
+  "rolePortalTitle": "{role} portal",
+  "@rolePortalTitle": {
+    "placeholders": {
+      "role": {}
+    }
+  },
+  "rolePortalSubtitle": "Secured with biometrics and live checks.",
+  "newVoterRegistrationTitle": "New voter registration",
+  "newVoterRegistrationSubtitle": "Start your registration and verification flow.",
+
+  "accountSectionTitle": "Account",
+  "securitySectionTitle": "Security",
+  "supportSectionTitle": "Support",
+  "onboardingSectionTitle": "Onboarding",
+  "onboardingReplayTitle": "Revisit onboarding",
+  "onboardingReplaySubtitle": "Replay the CamVote introduction",
+
+  "helpSupportTitle": "Help & Support",
+  "helpSupportSubtitle": "We respond fast to voting, security, and fraud issues.",
+  "helpSupportLoginSubtitle": "Get help with access or security issues",
+  "helpSupportSettingsSubtitle": "Get help with security or voting issues",
+  "helpSupportPublicSubtitle": "Report issues or request assistance",
+  "helpSupportEmergencyTitle": "Emergency contact",
+  "helpSupportEmailLabel": "Email",
+  "helpSupportHotlineLabel": "Hotline",
+  "helpSupportRegistrationIdLabel": "Registration ID (optional)",
+  "helpSupportCategoryLabel": "Category",
+  "helpSupportMessageLabel": "Describe the issue",
+  "helpSupportSubmit": "Submit ticket",
+  "helpSupportSubmitting": "Sending...",
+  "helpSupportSubmissionFailed": "Submission failed.",
+  "helpSupportTicketReceived": "Ticket received. Reference: {ticketId}",
+  "@helpSupportTicketReceived": {
+    "placeholders": {
+      "ticketId": {}
+    }
+  },
+  "helpSupportFaqTitle": "FAQs",
+  "helpSupportFaqRegistration": "How do I register? Complete OCR + biometrics enrollment.",
+  "helpSupportFaqLiveness": "Why liveness checks? To prevent automated or replay fraud.",
+  "helpSupportFaqReceipt": "How do I verify my vote? Use your receipt token.",
+  "supportCategoryRegistration": "Registration",
+  "supportCategoryVoting": "Voting",
+  "supportCategoryBiometrics": "Biometrics",
+  "supportCategoryFraud": "Fraud report",
+  "supportCategoryTechnical": "Technical",
+  "supportCategoryOther": "Other",
+
+  "roleGatewayWebHint": "Web: public, observer, admin",
+  "roleGatewayMobileHint": "Mobile: public and voter",
+  "roleGatewaySubtitle": "Pick the portal that matches your mission today.",
+  "roleGatewayFeatureVerifiedTitle": "Verified identity",
+  "roleGatewayFeatureVerifiedSubtitle": "Biometrics + liveness",
+  "roleGatewayFeatureFraudTitle": "Fraud defenses",
+  "roleGatewayFeatureFraudSubtitle": "Device + AI signals",
+  "roleGatewayFeatureTransparencyTitle": "Transparent results",
+  "roleGatewayFeatureTransparencySubtitle": "Live public dashboards",
+
+  "onboardingSkip": "Skip",
+  "onboardingBack": "Back",
+  "onboardingNext": "Next",
+  "onboardingEnter": "Enter CamVote",
+  "onboardingSlide1Title": "Identity you can trust",
+  "onboardingSlide1Subtitle": "Biometric and liveness checks secure registration, voting, and every sensitive action.",
+  "onboardingSlide1Highlight1": "Liveness verification",
+  "onboardingSlide1Highlight2": "Privacy-safe receipts",
+  "onboardingSlide1Highlight3": "One person, one vote",
+  "onboardingSlide2Title": "Transparent public results",
+  "onboardingSlide2Subtitle": "Live dashboards show turnout, counts, and verified updates for everyone.",
+  "onboardingSlide2Highlight1": "Live results feeds",
+  "onboardingSlide2Highlight2": "Regional drilldowns",
+  "onboardingSlide2Highlight3": "Observer-ready views",
+  "onboardingSlide3Title": "Fraud defense at every step",
+  "onboardingSlide3Subtitle": "AI risk signals, device integrity, and audit logs keep elections safe.",
+  "onboardingSlide3Highlight1": "AI risk signals",
+  "onboardingSlide3Highlight2": "Device integrity checks",
+  "onboardingSlide3Highlight3": "Immutable audit trails",
+
+  "chartBarLabel": "Bar",
+  "chartPieLabel": "Pie",
+  "chartLineLabel": "Line",
+  "winnerVotesLabel": "Winner votes",
+  "totalVotesLabel": "Total votes",
+
+  "aboutBuilderTitle": "About the builder",
+  "aboutBuilderSubtitle": "Meet the vision, mission, and roadmap behind CamVote.",
+  "aboutProfileName": "DJAGNI SIGNING Romuald",
+  "aboutProfileTitle": "Computer Science Engineering Undergraduate • Civic-Tech Builder",
+  "aboutProfileTagline": "Building trustworthy digital elections for Cameroon.",
+  "aboutProfileVision": "A transparent, secure, and inclusive electoral system that restores trust by making every step verifiable, accessible, and audit-ready.",
+  "aboutProfileMission": "Design systems that protect voter identity, prevent fraud, and publish results quickly without compromising integrity.",
+  "aboutProfileEmailLabel": "Email",
+  "aboutProfileEmailValue": "romualdsigningd@gmail.com",
+  "aboutProfileLinkedInLabel": "LinkedIn",
+  "aboutProfileLinkedInValue": "https://www.linkedin.com/in/romuald-djagnisigning",
+  "aboutProfileGitHubLabel": "GitHub",
+  "aboutProfileGitHubValue": "https://www.github.com/Romuald-DJAGNISIGNING",
+  "aboutProfilePortfolioLabel": "Portfolio",
+  "aboutProfilePortfolioValue": "https://romuald-djagnisigning.dev",
+  "aboutTagSecureVoting": "Secure voting",
+  "aboutTagBiometrics": "Biometrics",
+  "aboutTagAuditTrails": "Audit trails",
+  "aboutTagOfflineFirst": "Offline-first UX",
+  "aboutTagAccessibility": "Accessibility",
+  "aboutTagLocalization": "EN/FR localization",
+  "aboutVisionMissionTitle": "Vision & Mission",
+  "aboutVisionTitle": "Vision",
+  "aboutMissionTitle": "Mission",
+  "aboutContactSocialTitle": "Contact & Social",
+  "aboutProductFocusTitle": "Product Focus",
+  "aboutTrelloTitle": "Trello Board Stats",
+  "aboutConnectTrelloTitle": "Connect Trello",
+  "aboutConnectTrelloBody": "Set CAMVOTE_TRELLO_KEY, CAMVOTE_TRELLO_TOKEN, and CAMVOTE_TRELLO_BOARD_ID to show live board stats.",
+  "aboutTrelloLoadingTitle": "Loading Trello data",
+  "aboutTrelloLoadingBody": "Fetching live project stats...",
+  "aboutTrelloUnavailableTitle": "Trello unavailable",
+  "aboutTrelloUnavailableBody": "Unable to fetch board stats: {error}",
+  "@aboutTrelloUnavailableBody": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "aboutTrelloNotConfiguredTitle": "Trello not configured",
+  "aboutTrelloNotConfiguredBody": "Add Trello credentials to enable live stats.",
+  "aboutWhyCamVoteTitle": "Why CamVote",
+  "aboutWhyCamVoteBody": "CamVote demonstrates how civic tech can reduce irregularities, improve transparency, and return credible results quickly.",
+  "aboutCopyEmail": "Copy email",
+  "aboutCopyLinkedIn": "Copy LinkedIn",
+  "aboutCopyGitHub": "Copy GitHub",
+  "aboutCopyBoardUrl": "Copy board URL",
+  "aboutBoardUrlLabel": "Board URL",
+  "aboutLastActivityLabel": "Last activity",
+  "aboutTopListsLabel": "Top lists",
+  "aboutStatTotal": "Total",
+  "aboutStatOpen": "Open",
+  "aboutStatDone": "Done",
+  "aboutFooterBuiltBy": "© {year} CamVote • Built by {name}",
+  "@aboutFooterBuiltBy": {
+    "placeholders": {
+      "name": {},
+      "year": {}
+    }
+  },
+  "copiedMessage": "{label} copied",
+  "@copiedMessage": {
+    "placeholders": {
+      "label": {}
+    }
+  },
+  "registrationHubTitle": "Registration",
+  "registrationHubSubtitle": "Start your secure voter enrollment process.",
+  "deviceAccountPolicyTitle": "Device Account Policy",
+  "deviceAccountPolicyBody": "This device currently has {count}/{max} registered accounts.\nMax {max} accounts per device to reduce fraud.",
+  "@deviceAccountPolicyBody": {
+    "placeholders": {
+      "count": {},
+      "max": {}
+    }
+  },
+  "biometricEnrollmentTitle": "Biometric enrollment",
+  "biometricEnrollmentStatusComplete": "Completed and ready for verification.",
+  "biometricEnrollmentStatusPending": "Pending completion.",
+  "statusComplete": "Complete",
+  "statusPending": "Pending",
+  "statusCompleted": "Completed",
+  "statusRequired": "Required",
+  "statusEnrolled": "Enrolled",
+  "statusVerified": "Verified",
+  "registrationBlockedTitle": "Registration blocked on this device",
+  "registrationBlockedBody": "This device already reached the maximum number of accounts.\nIf this is a mistake, you can request review via support.",
+  "startVoterRegistration": "Start Voter Registration",
+  "backToPublicMode": "Back to Public Mode",
+  "errorWithDetails": "Error: {details}",
+  "@errorWithDetails": {
+    "placeholders": {
+      "details": {}
+    }
+  },
+  "registrationDraftTitle": "Voter Registration (Draft)",
+  "registrationDraftHeaderTitle": "Voter Registration",
+  "registrationDraftHeaderSubtitle": "Complete your personal details to begin verification.",
+  "draftSaved": "Draft saved",
+  "draftNotSaved": "Draft not saved",
+  "draftSavedSubtitle": "You can save and resume anytime. Next step: OCR + Liveness.",
+  "clearDraft": "Clear draft",
+  "regionLabel": "Region",
+  "pickDateOfBirth": "Pick date of birth",
+  "dateOfBirthWithValue": "DOB: {date}",
+  "@dateOfBirthWithValue": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "saveDraft": "Save draft",
+  "registrationReviewTitle": "Review registration",
+  "registrationReviewSubtitle": "Confirm your data before submitting.",
+  "registrationSectionPersonalDetails": "Personal details",
+  "registrationSectionDocumentVerification": "Document verification",
+  "registrationSectionSecurityEnrollment": "Security enrollment",
+  "summaryLabel": "Summary",
+  "nameMatchLabel": "Name match",
+  "dobMatchLabel": "DOB match",
+  "pobMatchLabel": "POB match",
+  "nationalityMatchLabel": "Nationality match",
+  "nameLabel": "Name",
+  "dateOfBirthShort": "DOB",
+  "placeOfBirthShort": "POB",
+  "biometricsLabel": "Biometrics",
+  "livenessLabel": "Liveness",
+  "registrationConsentTitle": "I confirm all information is accurate.",
+  "registrationConsentSubtitle": "I consent to the secure processing of my registration data.",
+  "registrationSubmitting": "Submitting...",
+  "registrationRenewing": "Renewing electoral registration...",
+  "registrationSubmit": "Submit registration",
+  "registrationSubmitBlockedNote": "Complete document verification and enrollment to submit.",
+  "registrationSubmissionFailed": "Submission failed.",
+  "registrationRenewalFailed": "Renewal failed.",
+  "failed": "Failed",
+  "yes": "Yes",
+  "no": "No",
+  "registrationSubmittedTitle": "Registration submitted",
+  "registrationSubmittedSubtitle": "Your application is now in review.",
+  "registrationSubmittedNote": "You will be notified once verification is complete. Keep your tracking ID safe for follow-up.",
+  "trackingIdLabel": "Tracking ID",
+  "messageLabel": "Message",
+  "goToVoterLogin": "Go to voter login",
+  "continueToLogin": "Continue to login",
+  "deletedAccountLoginTitle": "Account already exists",
+  "deletedAccountLoginBody": "This voter record already exists in the registry and cannot be re-registered. Please sign in with biometrics + liveness to continue.",
+  "deletedAccountRenewedTitle": "Record renewed",
+  "deletedAccountRenewedBody": "Your previous record exists, but the e-electoral card had expired. We renewed the record. Please sign in to continue.",
+  "backToPublicPortal": "Back to Public portal",
+  "registrationStatusPending": "Pending",
+  "registrationStatusApproved": "Approved",
+  "registrationStatusRejected": "Rejected",
+  "biometricEnrollmentSubtitle": "Secure your identity with biometrics and liveness.",
+  "biometricEnrollmentSubtitleWithName": "Secure {name} with biometrics and liveness.",
+  "@biometricEnrollmentSubtitleWithName": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "biometricEnrollmentStep1Title": "Step 1: Enroll biometrics",
+  "biometricEnrollmentStep1Subtitle": "We verify your fingerprint or Face ID using your device.",
+  "biometricEnrollmentStep2Title": "Step 2: Liveness check",
+  "biometricEnrollmentStep2Subtitle": "Confirm you are present in front of the camera right now.",
+  "recheck": "Recheck",
+  "enrollNow": "Enroll now",
+  "runLiveness": "Run liveness",
+  "enrollmentCompleteTitle": "Enrollment complete",
+  "enrollmentInProgressTitle": "Enrollment in progress",
+  "enrollmentCompleteBody": "You can now finish registration.",
+  "enrollmentInProgressBody": "Complete both steps to continue.",
+  "finishEnrollment": "Finish enrollment",
+  "biometricPrivacyNote": "Your biometric data is stored securely on your device and is never saved as raw images.",
+  "biometricEnrollReason": "Enroll biometrics for secure voting.",
+  "biometricVerificationFailed": "Biometric verification failed.",
+  "biometricEnrollmentRecorded": "Biometric enrollment recorded.",
+  "livenessCheckFailed": "Liveness check failed.",
+  "livenessVerifiedToast": "Liveness verified.",
+  "livenessCheckTitle": "Liveness Check",
+  "livenessCameraPermissionRequired": "Camera permission is required.",
+  "livenessNoCameraAvailable": "No camera available.",
+  "livenessPreparingCamera": "Preparing camera...",
+  "livenessHoldSteady": "Hold steady for verification.",
+  "livenessStepLabel": "Step {step} of {total}",
+  "@livenessStepLabel": {
+    "placeholders": {
+      "step": {},
+      "total": {}
+    }
+  },
+  "livenessVerifiedMessage": "Liveness verified.",
+  "livenessPromptHoldSteady": "Hold steady. Follow the prompt.",
+  "livenessPromptCenterFace": "Center your face in the frame.",
+  "livenessPromptAlignFace": "Align your face to continue.",
+  "livenessStatusNoFace": "No face detected",
+  "livenessStatusFaceCentered": "Face centered",
+  "livenessStatusAdjustPosition": "Adjust position",
+  "livenessGoodLight": "Good light",
+  "livenessOpenSettings": "Open settings",
+  "livenessTaskBlinkTitle": "Blink your eyes",
+  "livenessTaskBlinkSubtitle": "Close both eyes, then open them.",
+  "livenessTaskTurnLeftTitle": "Turn left",
+  "livenessTaskTurnLeftSubtitle": "Gently turn your head to the left.",
+  "livenessTaskTurnRightTitle": "Turn right",
+  "livenessTaskTurnRightSubtitle": "Gently turn your head to the right.",
+  "livenessTaskSmileTitle": "Give a slight smile",
+  "livenessTaskSmileSubtitle": "Relax your face and smile briefly.",
+  "voteBiometricsSubtitle": "Biometrics + liveness required for every vote.",
+  "noOpenElections": "No election is currently open for voting.",
+  "electionScopeLabel": "Scope: {scope}",
+  "@electionScopeLabel": {
+    "placeholders": {
+      "scope": {}
+    }
+  },
+  "alreadyVotedInElection": "✅ You already voted in this election.",
+  "voteAction": "Vote",
+  "deviceBlockedMessage": "This device is temporarily blocked.",
+  "deviceBlockedUntil": "Until: {until}",
+  "@deviceBlockedUntil": {
+    "placeholders": {
+      "until": {}
+    }
+  },
+  "electionLockedOnDevice": "This election is locked on this device.",
+  "confirmVoteTitle": "Confirm vote",
+  "confirmVoteBody": "You are about to vote.\n\nSelected: {candidate} ({party})\n\nYou will be asked to verify with biometrics + liveness.",
+  "@confirmVoteBody": {
+    "placeholders": {
+      "candidate": {},
+      "party": {}
+    }
+  },
+  "voteBiometricReason": "Confirm your identity to cast this vote.",
+  "voteReceiptTitle": "Vote receipt",
+  "voteReceiptSubtitle": "Private verification receipt for your vote.",
+  "candidateHashLabel": "Candidate hash",
+  "partyHashLabel": "Party hash",
+  "castAtLabel": "Cast at",
+  "auditTokenLabel": "Audit token",
+  "tokenCopied": "Token copied",
+  "copyAction": "Copy",
+  "shareAction": "Share",
+  "printReceiptAction": "Print receipt",
+  "receiptSafetyNote": "Keep this token safe. It lets you verify that your vote was included in the public audit log without revealing your choice.",
+  "receiptShareMessage": "CamVote receipt token: {token}",
+  "@receiptShareMessage": {
+    "placeholders": {
+      "token": {}
+    }
+  },
+  "receiptBiometricReason": "Confirm your identity to access this receipt.",
+  "receiptPdfTitle": "CamVote Receipt",
+  "electionLabel": "Election",
+  "receiptPrivacyNote": "This receipt protects vote privacy by hashing the selection.",
+  "electoralCardTitle": "e-Electoral Card",
+  "electoralCardSubtitle": "Your verified digital voter identity card.",
+  "electoralCardIncompleteNote": "Complete voter registration to generate your e-Electoral card.",
+  "electoralCardLockedTitle": "CamVote e-Electoral Card",
+  "electoralCardLockedSubtitle": "Unlock to view your card details.",
+  "verifyToUnlock": "Verify to unlock",
+  "electoralCardBiometricReason": "Unlock your e-Electoral Card.",
+  "electoralCardQrNote": "This QR token is used to verify registration status without exposing personal details.",
+  "electionsBrowseSubtitle": "Browse scheduled elections and candidates.",
+  "electionStatusUpcoming": "Upcoming",
+  "electionStatusOpen": "Open",
+  "electionStatusClosed": "Closed",
+  "opensLabel": "Opens",
+  "closesLabel": "Closes",
+  "candidatesLabel": "Candidates",
+  "voterHomeSubtitle": "Track your status, protect your vote, and stay informed.",
+  "nextElectionTitle": "Next election",
+  "nextElectionCountdown": "{days} days • {time}",
+  "@nextElectionCountdown": {
+    "placeholders": {
+      "days": {},
+      "time": {}
+    }
+  },
+  "nextElectionCountdownLabelDays": "Days",
+  "nextElectionCountdownLabelHours": "Hours",
+  "nextElectionCountdownLabelMinutes": "Minutes",
+  "nextElectionCountdownLabelSeconds": "Seconds",
+  "candidatesCountLabel": "Candidates: {count}",
+  "@candidatesCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "voterResultsSubtitle": "Track results and verify your vote receipts.",
+  "resultsPublicPortalNote": "Live results are available in the Public portal charts.\nHere, you’ll also get your personal vote verification later.",
+  "pastElectionsTitle": "Past elections",
+  "noClosedElections": "No closed election yet.",
+  "yourReceiptsTitle": "Your receipts",
+  "noReceiptsYet": "No receipts yet.",
+  "auditTokenShortLabel": "Audit token: {token}",
+  "@auditTokenShortLabel": {
+    "placeholders": {
+      "token": {}
+    }
+  },
+  "voterProfileSubtitle": "Manage your identity, security, and preferences.",
+  "signedInVoter": "Signed in voter",
+  "verificationStatusTitle": "Verification status",
+  "verificationStatusVerified": "Verified identity and eligible status.",
+  "verificationStatusPending": "Pending verification. Complete OCR + biometrics.",
+  "electoralCardViewSubtitle": "View your digital voter card",
+  "votingCentersTitle": "Voting centers map",
+  "votingCentersSubtitle": "Find verified voting centers near you and view details.",
+  "votingCentersPublicSubtitle": "Locate nearby voting centers and eligibility desks.",
+  "votingCentersSelectTitle": "Select a voting center",
+  "votingCentersSelectSubtitle": "Choose a center for physical registration or voting.",
+  "votingCenterSelectPrompt": "Select a center to continue",
+  "votingCenterSelectAction": "Use this center",
+  "votingCentersSearchHint": "Search by city, neighborhood, or center name",
+  "useMyLocation": "Use my location",
+  "votingCentersMapTitle": "Cameroon voting centers",
+  "votingCentersMapHint": "Tap a marker to view a center and select it.",
+  "votingCentersLegendTitle": "Map legend",
+  "votingCentersLegendCenter": "Voting center",
+  "votingCentersLegendYou": "You are here",
+  "votingCentersNearbyTitle": "Nearby centers",
+  "votingCentersNearbySubtitle": "Ordered by distance when location is available.",
+  "votingCentersEmpty": "No centers available. Please refresh or try again later.",
+  "distanceKm": "{km} km",
+  "@distanceKm": {
+    "placeholders": {
+      "km": {}
+    }
+  },
+  "votingCenterNotSelectedTitle": "No center selected",
+  "votingCenterNotSelectedSubtitle": "Pick a voting center to complete your registration.",
+  "votingCenterSelectedTitle": "Selected voting center",
+  "votingCenterLabel": "Voting center",
+  "clearSelection": "Clear selection",
+  "biometricsUnavailableTitle": "Device not compatible",
+  "biometricsUnavailableBody": "Biometrics or liveness are unavailable on this device. Use a physical center for registration or voting.",
+  "locationServicesDisabled": "Location services are disabled. Enable them to find nearby centers.",
+  "locationPermissionDenied": "Location permission denied. Allow access to find nearby centers.",
+  "locationPermissionDeniedForever": "Location permission permanently denied. Update permissions in device settings.",
+  "settingsSubtitle": "Personalize your experience and security controls.",
+  "themeStyleTitle": "Theme style",
+  "themeStyleClassic": "Classic",
+  "themeStyleCameroon": "Cameroon",
+  "themeStyleGeek": "Geek",
+  "themeStyleFruity": "Fruity",
+  "themeStylePro": "Pro",
+  "deleteAccountHeaderSubtitle": "This action is permanent and requires verification.",
+  "deleteAccountBody": "This action is permanent. Your access will be removed, while legal retention rules apply to official electoral records.",
+  "deleteAccountConfirmLabel": "Type {keyword} to confirm",
+  "@deleteAccountConfirmLabel": {
+    "placeholders": {
+      "keyword": {}
+    }
+  },
+  "deleteKeyword": "DELETE",
+  "deleteAccountConfirmError": "Confirmation required.",
+  "deleteAccountBiometricReason": "Confirm account deletion.",
+  "deletingAccount": "Deleting...",
+  "missingReceiptData": "Missing receipt data.",
+  "missingRegistrationData": "Missing registration data.",
+  "missingSubmissionDetails": "Missing submission details.",
+  "signedInUser": "Signed in",
+  "adminVoterManagementTitle": "Voter Management",
+  "adminVoterManagementSubtitle": "Monitor registrations, verification, and flags.",
+  "adminRunListCleaningTooltip": "Run electoral list cleaning",
+  "adminListCleaningDone": "Cleaning done. Suspicious voters suspended.",
+  "voterSearchHint": "Search by name or voter ID…",
+  "filterRegion": "Filter region",
+  "filterStatus": "Filter status",
+  "clearFilters": "Clear filters",
+  "regionFilterLabel": "Region: {region}",
+  "@regionFilterLabel": {
+    "placeholders": {
+      "region": {}
+    }
+  },
+  "statusFilterLabel": "Status: {status}",
+  "@statusFilterLabel": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "noVotersMatchFilters": "No voters match your filters.",
+  "deviceFlaggedLabel": "Device flagged",
+  "biometricDuplicateLabel": "Biometric duplicate",
+  "ageLabel": "Age {age}",
+  "@ageLabel": {
+    "placeholders": {
+      "age": {}
+    }
+  },
+  "flagsLabel": "⚠ {signals}",
+  "@flagsLabel": {
+    "placeholders": {
+      "signals": {}
+    }
+  },
+  "voterHasVotedLabel": "Voted",
+  "voterNotVotedLabel": "Not voted",
+  "chooseRegionTitle": "Choose region",
+  "chooseStatusTitle": "Choose status",
+  "riskLow": "Low",
+  "riskMedium": "Medium",
+  "riskHigh": "High",
+  "riskCritical": "Critical",
+  "riskLabel": "AI {risk}",
+  "@riskLabel": {
+    "placeholders": {
+      "risk": {}
+    }
+  },
+  "statusPendingVerification": "Pending verification",
+  "statusRegistered": "Registered",
+  "statusPreEligible": "Pre-eligible (18–20)",
+  "statusEligible": "Eligible (21+)",
+  "statusVoted": "Voted",
+  "statusSuspended": "Suspended",
+  "statusDeceased": "Deceased",
+  "statusArchived": "Archived",
+  "adminDashboardHeaderSubtitle": "Monitor operations, audits, and live election health.",
+  "statRegistered": "Registered",
+  "statVoted": "Voted",
+  "statActiveElections": "Active elections",
+  "statSuspiciousFlags": "Suspicious flags",
+  "adminActionElections": "Elections",
+  "adminActionVoters": "Voters",
+  "adminActionAuditLogs": "Audit Logs",
+  "liveResultsPreview": "Live Results Preview",
+  "adminPreviewLabel": "Admin preview",
+  "observerPreviewLabel": "Observer view",
+  "noElectionDataAvailable": "No election data available.",
+  "fraudIntelligenceTitle": "Fraud intelligence",
+  "fraudAiStatus": "AI ACTIVE",
+  "fraudSignalsFlagged": "Suspicious signals flagged: {count}",
+  "@fraudSignalsFlagged": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fraudAnomalyRate": "Estimated anomaly rate: {rate}%",
+  "@fraudAnomalyRate": {
+    "placeholders": {
+      "rate": {}
+    }
+  },
+  "fraudInsightBody": "Signals combine device anomalies, biometric duplicates, and behavioral mismatches. Review flagged voters in Voters.",
+  "fraudFlagsRateLabel": "Flags: {flags} • Rate: {rate}%",
+  "@fraudFlagsRateLabel": {
+    "placeholders": {
+      "flags": {},
+      "rate": {}
+    }
+  },
+  "observerDashboardHeaderSubtitle": "Read-only oversight with transparent election data.",
+  "observerReadOnlyTitle": "Read-only access",
+  "observerTotalsLabel": "Registered: {registered} • Voted: {voted} • Flags: {flags}",
+  "@observerTotalsLabel": {
+    "placeholders": {
+      "registered": {},
+      "voted": {},
+      "flags": {}
+    }
+  },
+  "observerOpenAuditLogs": "Open Audit Logs",
+  "observerReportIncidentTitle": "Report an incident",
+  "observerReportIncidentSubtitle": "Submit evidence, photos, and a full incident report.",
+  "incidentTitleLabel": "Incident title",
+  "incidentCategoryLabel": "Category",
+  "incidentSeverityLabel": "Severity",
+  "incidentLocationLabel": "Location",
+  "incidentDescriptionLabel": "Description",
+  "incidentElectionIdLabel": "Election ID (optional)",
+  "incidentDateTimeLabel": "Incident date & time",
+  "incidentEvidenceTitle": "Evidence attachments",
+  "incidentAddCamera": "Camera",
+  "incidentAddGallery": "Gallery",
+  "incidentEvidenceEmpty": "No evidence added yet.",
+  "incidentSubmitAction": "Submit incident report",
+  "incidentSubmissionFailed": "Incident submission failed.",
+  "incidentSubmittedBody": "Incident report submitted. Reference: {id}",
+  "@incidentSubmittedBody": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "incidentCategoryFraud": "Fraud",
+  "incidentCategoryIntimidation": "Intimidation",
+  "incidentCategoryViolence": "Violence",
+  "incidentCategoryLogistics": "Logistics",
+  "incidentCategoryTechnical": "Technical",
+  "incidentCategoryAccessibility": "Accessibility",
+  "incidentCategoryOther": "Other",
+  "incidentSeverityLow": "Low",
+  "incidentSeverityMedium": "Medium",
+  "incidentSeverityHigh": "High",
+  "incidentSeverityCritical": "Critical",
+  "changeAction": "Change",
+  "adminElectionManagementTitle": "Election Management",
+  "adminElectionManagementSubtitle": "Create, schedule, and oversee elections.",
+  "adminCreateElection": "Create election",
+  "noElectionsYet": "No elections yet.",
+  "electionStatusLive": "Live",
+  "votesCountLabel": "Votes: {count}",
+  "@votesCountLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "addCandidate": "Add Candidate",
+  "electionTitleLabel": "Election title",
+  "electionTypeLabel": "Election type",
+  "electionStartLabel": "Start: {date}",
+  "@electionStartLabel": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "electionEndLabel": "End: {date}",
+  "@electionEndLabel": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "electionStartTimeLabel": "Start time: {time}",
+  "@electionStartTimeLabel": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "electionEndTimeLabel": "End time: {time}",
+  "@electionEndTimeLabel": {
+    "placeholders": {
+      "time": {}
+    }
+  },
+  "electionDescriptionLabel": "Election description",
+  "electionScopeFieldLabel": "Scope",
+  "electionScopeNational": "National",
+  "electionScopeRegional": "Regional",
+  "electionScopeMunicipal": "Municipal",
+  "electionScopeDiaspora": "Diaspora",
+  "electionScopeLocal": "Local",
+  "electionLocationLabel": "Location / constituency",
+  "registrationDeadlineTitle": "Registration deadline",
+  "registrationDeadlineLabel": "Registration deadline: {date}",
+  "@registrationDeadlineLabel": {
+    "placeholders": {
+      "date": {}
+    }
+  },
+  "addRegistrationDeadline": "Add registration deadline",
+  "clearDeadline": "Clear deadline",
+  "electionBallotTypeLabel": "Ballot type",
+  "electionBallotTypeSingle": "Single choice",
+  "electionBallotTypeRanked": "Ranked choice",
+  "electionBallotTypeApproval": "Approval voting",
+  "electionBallotTypeRunoff": "Runoff",
+  "electionEligibilityLabel": "Eligibility notes",
+  "electionTimezoneLabel": "Timezone",
+  "createAction": "Create",
+  "partyNameLabel": "Party name",
+  "partyAcronymLabel": "Party acronym",
+  "candidateSloganLabel": "Candidate slogan",
+  "candidateBioLabel": "Candidate bio",
+  "candidateWebsiteLabel": "Campaign website",
+  "candidateAvatarUrlLabel": "Avatar photo URL",
+  "candidateRunningMateLabel": "Running mate",
+  "candidateColorLabel": "Party color",
+  "addAction": "Add",
+  "electionTypeParliamentary": "Parliamentary Election",
+  "electionTypeReferendum": "Referendum",
+  "auditLogsTitle": "Audit Logs",
+  "auditLogsSubtitle": "Immutable trails for every action.",
+  "auditFilterAll": "All",
+  "auditShowingAll": "Showing all events",
+  "auditFilterLabel": "Filter: {filter}",
+  "@auditFilterLabel": {
+    "placeholders": {
+      "filter": {}
+    }
+  },
+  "noAuditEvents": "No audit events.",
+  "auditEventElectionCreated": "Election created",
+  "auditEventCandidateAdded": "Candidate added",
+  "auditEventResultsPublished": "Results published",
+  "auditEventListCleaned": "List cleaned",
+  "auditEventRegistrationRejected": "Registration rejected",
+  "auditEventSuspiciousActivity": "Suspicious activity",
+  "auditEventDeviceBanned": "Device banned",
+  "auditEventVoteCast": "Vote cast",
+  "legalHubTitle": "Electoral laws & codes",
+  "legalHubSubtitle": "Official legal texts and civic references.",
+  "legalSourcesTitle": "Official sources",
+  "legalSourcesSubtitle": "Verified sources for Cameroon electoral law.",
+  "legalSourceElecamLabel": "ELECAM portal",
+  "legalSourceAssnatLabel": "National Assembly portal",
+  "legalElectoralCodeTitle": "Electoral Code of Cameroon",
+  "legalDocumentSubtitle": "Official text ({language})",
+  "@legalDocumentSubtitle": {
+    "placeholders": {
+      "language": {}
+    }
+  },
+  "legalSearchHint": "Search within the document",
+  "legalSearchEmpty": "No matches found. Try a different keyword.",
+  "legalSearchResults": "{count} result(s)",
+  "@legalSearchResults": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "openWebsite": "Open",
+  "openLinkFailed": "Unable to open the link.",
+  "languageEnglish": "English",
+  "languageFrench": "French",
+  "missingDocumentData": "Missing legal document data.",
+  "adminToolsTitle": "Admin tools",
+  "adminFraudMonitorTitle": "Fraud monitor",
+  "adminFraudMonitorSubtitle": "AI risk signals, anomaly trends, and device flags.",
+  "fraudSignalsTitle": "Active fraud signals",
+  "fraudSignalCount": "{count} signals",
+  "@fraudSignalCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fraudRiskScoreTitle": "Risk score",
+  "fraudRiskScoreValue": "{score}% risk",
+  "@fraudRiskScoreValue": {
+    "placeholders": {
+      "score": {}
+    }
+  },
+  "fraudSignalTotal": "Signals",
+  "fraudDevicesFlagged": "Devices flagged",
+  "fraudAccountsAtRisk": "Accounts at risk",
+  "adminSecurityTitle": "Device security",
+  "adminSecuritySubtitle": "Device risk status, strikes, and integrity alerts.",
+  "securityStrikesLabel": "{count} strikes",
+  "@securityStrikesLabel": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "adminIncidentsTitle": "Incident oversight",
+  "adminIncidentsSubtitle": "Monitor and resolve field incidents and reports.",
+  "incidentSubtitle": "{severity} • {location}",
+  "@incidentSubtitle": {
+    "placeholders": {
+      "severity": {},
+      "location": {}
+    }
+  },
+  "filterLabel": "Filter",
+  "filterAll": "All",
+  "incidentStatusOpen": "Open",
+  "incidentStatusInvestigating": "Investigating",
+  "incidentStatusResolved": "Resolved",
+  "adminResultsPublishTitle": "Publish results",
+  "adminResultsPublishSubtitle": "Finalize and publish verified results.",
+  "resultsPublishSummary": "{votes} votes • {precincts} precincts reporting",
+  "@resultsPublishSummary": {
+    "placeholders": {
+      "votes": {},
+      "precincts": {}
+    }
+  },
+  "publishResultsAction": "Publish",
+  "resultsPublishNotReady": "Not ready",
+  "resultsPublishedToast": "Results published.",
+  "observerToolsTitle": "Observer tools",
+  "observerResultsToolSubtitle": "Read-only live results and trends.",
+  "observerIncidentTrackerTitle": "Incident tracker",
+  "observerIncidentTrackerSubtitle": "Track your reported incidents in real time.",
+  "observerTransparencyTitle": "Transparency feed",
+  "observerTransparencySubtitle": "Official updates and public accountability notes.",
+  "observerChecklistTitle": "Observation checklist",
+  "observerChecklistSubtitle": "Verify compliance points and log observations.",
+  "publicElectionCalendarTitle": "Election calendar",
+  "publicElectionCalendarSubtitle": "Upcoming election dates and milestones.",
+  "publicCivicEducationTitle": "Civic education",
+  "publicCivicEducationSubtitle": "Learn voting rights, duties, and procedures.",
+  "calendarEntrySubtitle": "{scope} • {location}\n{start} → {end}",
+  "@calendarEntrySubtitle": {
+    "placeholders": {
+      "scope": {},
+      "location": {},
+      "start": {},
+      "end": {}
+    }
+  },
+  "readMoreAction": "Read more"
+}
+
+

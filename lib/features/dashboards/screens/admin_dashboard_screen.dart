@@ -1,0 +1,477 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:camvote/gen/l10n/app_localizations.dart';
+
+import '../../../core/widgets/animations/animated_counter.dart';
+import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../../core/routing/route_paths.dart';
+import '../../../core/layout/responsive.dart';
+import '../../../core/branding/brand_backdrop.dart';
+import '../../../core/branding/brand_header.dart';
+import '../../public_portal/widgets/results_charts.dart';
+import '../../public_portal/widgets/results_region_map_card.dart';
+import '../../public_portal/providers/public_portal_providers.dart';
+import '../../public_portal/utils/candidate_metric.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
+import '../../../core/motion/cam_reveal.dart';
+import '../providers/admin_providers.dart';
+
+class AdminDashboardScreen extends ConsumerWidget {
+  const AdminDashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(adminStatsProvider);
+    final results = ref.watch(publicResultsProvider);
+    final t = AppLocalizations.of(context);
+
+    return Scaffold(
+      appBar: NotificationAppBar(title: Text(t.adminDashboard)),
+      body: stats.when(
+        data: (s) {
+          final data = results.asData?.value;
+          final chartCandidates = data == null
+              ? const <CandidateMetric>[]
+              : data.candidates.map((c) {
+                  return CandidateMetric(
+                    id: c.candidateId,
+                    name: c.candidateName,
+                    votes: c.votes,
+                    color: _colorForCandidate(c.candidateName),
+                  );
+                }).toList();
+
+          final nationalWinnerName = chartCandidates.isEmpty
+              ? null
+              : (chartCandidates.toList()
+                    ..sort((a, b) => b.votes.compareTo(a.votes)))
+                  .first
+                  .name;
+
+          final labelsByCode = {
+            'far_north': t.regionFarNorth,
+            'north': t.regionNorth,
+            'adamawa': t.regionAdamawa,
+            'north_west': t.regionNorthWest,
+            'west': t.regionWest,
+            'centre': t.regionCentre,
+            'littoral': t.regionLittoral,
+            'south_west': t.regionSouthWest,
+            'east': t.regionEast,
+            'south': t.regionSouth,
+          };
+
+          return BrandBackdrop(
+            child: ResponsiveContent(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  CamStagger(
+                    children: [
+                      const SizedBox(height: 6),
+                      BrandHeader(
+                        title: t.adminDashboard,
+                        subtitle: t.adminDashboardHeaderSubtitle,
+                      ),
+                      const SizedBox(height: 16),
+                      _grid(
+                        context,
+                        children: [
+                          _statCard(
+                            context,
+                            label: t.statRegistered,
+                            value: s.totalRegistered,
+                            icon: Icons.how_to_vote_outlined,
+                            accent: const Color(0xFF0A7D2E),
+                          ),
+                          _statCard(
+                            context,
+                            label: t.statVoted,
+                            value: s.totalVoted,
+                            icon: Icons.verified_outlined,
+                            accent: const Color(0xFF1C6DD0),
+                          ),
+                          _statCard(
+                            context,
+                            label: t.statActiveElections,
+                            value: s.activeElections,
+                            icon: Icons.event_available_outlined,
+                            accent: const Color(0xFFF5B700),
+                          ),
+                          _statCard(
+                            context,
+                            label: t.statSuspiciousFlags,
+                            value: s.suspiciousFlags,
+                            icon: Icons.report_gmailerrorred_outlined,
+                            accent: const Color(0xFFB3261E),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        t.adminToolsTitle,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 10),
+                      _toolsGrid(
+                        context,
+                        actions: [
+                          _action(
+                            context,
+                            icon: Icons.how_to_vote,
+                            label: t.adminActionElections,
+                            onTap: () => context.go(RoutePaths.adminElections),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.people_alt,
+                            label: t.adminActionVoters,
+                            onTap: () => context.go(RoutePaths.adminVoters),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.shield,
+                            label: t.adminActionAuditLogs,
+                            onTap: () => context.go(RoutePaths.adminAudit),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.auto_awesome_outlined,
+                            label: t.adminFraudMonitorTitle,
+                            onTap: () => context.go(RoutePaths.adminFraudMonitor),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.security_outlined,
+                            label: t.adminSecurityTitle,
+                            onTap: () => context.go(RoutePaths.adminSecurity),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.report_gmailerrorred_outlined,
+                            label: t.adminIncidentsTitle,
+                            onTap: () => context.go(RoutePaths.adminIncidents),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.rocket_launch_outlined,
+                            label: t.adminResultsPublishTitle,
+                            onTap: () => context.go(RoutePaths.adminResultsPublish),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.menu_book_outlined,
+                            label: t.legalHubTitle,
+                            onTap: () => context.go(RoutePaths.legalLibrary),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      CamReveal(
+                        child: _FraudInsightPanel(
+                          suspiciousFlags: s.suspiciousFlags,
+                          totalRegistered: s.totalRegistered,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        t.liveResultsPreview,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 10),
+                      ResultsCharts(
+                        candidates: chartCandidates,
+                        turnoutTrend: data?.turnoutTrend,
+                        watermarkTitle: t.appName,
+                        watermarkSubtitle: t.adminPreviewLabel,
+                      ),
+                      const SizedBox(height: 12),
+                      ResultsRegionMapCard(
+                        winners: data?.regionalWinners ?? const [],
+                        labelsByRegionCode: labelsByCode,
+                        title: t.mapTitle,
+                        subtitle: data?.electionTitle ?? t.noElectionDataAvailable,
+                        nationalWinnerName: nationalWinnerName,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+      },
+        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        loading: () => const Center(child: CamElectionLoader()),
+      ),
+    );
+  }
+
+  Color _colorForCandidate(String name) {
+    final palette = [
+      const Color(0xFF0A7D2E),
+      const Color(0xFFC62828),
+      const Color(0xFFF9A825),
+      const Color(0xFF1565C0),
+      const Color(0xFF6A1B9A),
+    ];
+    final idx = name.hashCode.abs() % palette.length;
+    return palette[idx].withAlpha(230);
+  }
+
+  Widget _grid(BuildContext context, {required List<Widget> children}) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final width = c.maxWidth;
+        final wide = width >= 900;
+        final crossAxisCount = wide
+            ? 4
+            : width >= 560
+                ? 2
+                : 1;
+        final aspect = wide
+            ? 1.6
+            : crossAxisCount == 2
+                ? 1.4
+                : 3.4;
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: aspect,
+          children: children,
+        );
+      },
+    );
+  }
+
+  Widget _statCard(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required IconData icon,
+    required Color accent,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: accent.withAlpha(70)),
+          gradient: LinearGradient(
+            colors: [
+              accent.withAlpha(30),
+              cs.surface.withAlpha(10),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: accent.withAlpha(30),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: accent),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            AnimatedCounter(value: value),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _toolsGrid(BuildContext context, {required List<Widget> actions}) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final width = c.maxWidth;
+        final wide = width >= 900;
+        final crossAxisCount = wide
+            ? 4
+            : width >= 560
+                ? 2
+                : 1;
+        final aspect = wide
+            ? 1.6
+            : crossAxisCount == 2
+                ? 1.4
+                : 3.2;
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: aspect,
+          children: actions,
+        );
+      },
+    );
+  }
+
+  Widget _action(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withAlpha(18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FraudInsightPanel extends StatelessWidget {
+  final int suspiciousFlags;
+  final int totalRegistered;
+
+  const _FraudInsightPanel({
+    required this.suspiciousFlags,
+    required this.totalRegistered,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final rate = totalRegistered == 0
+        ? 0
+        : (suspiciousFlags / totalRegistered) * 100;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 420;
+                final title = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shield_outlined),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        t.fraudIntelligenceTitle,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ),
+                  ],
+                );
+                final badge = Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    t.fraudAiStatus,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                );
+                if (isNarrow) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      title,
+                      const SizedBox(height: 8),
+                      badge,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: title),
+                    badge,
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            Text(
+              t.fraudSignalsFlagged(suspiciousFlags),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              t.fraudAnomalyRate(rate.toStringAsFixed(2)),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const CamElectionLoader(size: 18, strokeWidth: 2.4),
+                const SizedBox(width: 10),
+                Text(
+                  '${totalRegistered == 0 ? 0 : ((suspiciousFlags / totalRegistered) * 100).toStringAsFixed(1)}%',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              t.fraudInsightBody,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

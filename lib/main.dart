@@ -1,98 +1,84 @@
+// lib/main.dart
+//
+// CamVote bootstrap entrypoint (Android / iOS / Web).
+// - Initializes local storage (Hive)
+// - Prepares timezone data (for local notifications scheduling)
+// - Wraps the app with Riverpod ProviderScope
+// - Sets up guarded error handling (useful for production hardening)
+//
+// Next file we will add: lib/app.dart (MaterialApp.router + theme + l10n + routing)
+
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/theme/cam_theme.dart';
-import 'core/widgets/buttons/cam_button.dart';
-import 'core/widgets/cards/stat_card.dart';
-import 'core/widgets/cards/candidate_card.dart';
-import 'core/widgets/loaders/cam_election_loader.dart';
-import 'core/constants/app_constants.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
-void main() {
-  runApp(const ProviderScope(child: CamVoteApp()));
-}
 
-class CamVoteApp extends StatelessWidget {
-  const CamVoteApp({super.key});
+import 'core/notifications/local_notifications_service.dart';
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CamVote',
-      debugShowCheckedModeBanner: false,
-      theme: CamTheme.lightTheme,
-      home: const TestWidgetsScreen(),
-    );
-  }
-}
+import 'app.dart';
 
-class TestWidgetsScreen extends StatelessWidget {
-  const TestWidgetsScreen({super.key});
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('CamVote - Widget Test'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Display electoral law info
-            Text(
-              'Cameroon Electoral System',
-              style: Theme.of(context).textTheme.displaySmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Registration Age: ${AppConstants.minimumRegistrationAge}+ | '
-              'Voting Age: ${AppConstants.minimumVotingAge}+',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            
-            // Stat Cards
-            const StatCard(
-              title: 'Total Registered Voters',
-              value: '7,234,567',
-              icon: Icons.how_to_vote,
-            ),
-            const SizedBox(height: 16),
-            
-            // Candidate Card
-            CandidateCard(
-              candidateName: 'Paul Biya',
-              party: 'CPDM - Cameroon People\'s Democratic Movement',
-              isSelected: true,
-              onTap: () {},
-            ),
-            const SizedBox(height: 16),
-            
-            // Loader (in a container)
-            const SizedBox(
-              height: 150,
-              child: CamElectionLoader(
-                message: 'Loading election data...',
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Button
-            CamButton(
-              label: 'All Widgets Working!',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✅ Block 1 Part 2 Complete!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+  if (!kIsWeb) {
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
       ),
     );
   }
+
+  await _bootstrap();
+
+  // Forward Flutter framework errors into the zone (and keep them visible in debug).
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    Zone.current.handleUncaughtError(
+      details.exception,
+      details.stack ?? StackTrace.current,
+    );
+  };
+
+  // Catch unhandled async errors (especially important on Web).
+  PlatformDispatcher.instance.onError = (error, stack) {
+    Zone.current.handleUncaughtError(error, stack);
+    return true;
+  };
+
+  await LocalNotificationsService.instance.init();
+
+  // Guard the whole app: in production, this is where we later connect crash reporting.
+  runZonedGuarded(
+    () => runApp(const ProviderScope(child: CamVoteApp())),
+    (error, stack) {
+      if (kDebugMode) {
+        // In debug we print. In production we will forward to crash reporting.
+        // ignore: avoid_print
+        print('Uncaught error: $error');
+        // ignore: avoid_print
+        print(stack);
+      }
+    },
+  );
+}
+
+Future<void> _bootstrap() async {
+  // Local storage (works on mobile + web). We'll use it for:
+  // - cached public results
+  // - device/account policy cache
+  // - draft registration steps
+  // - UI preferences (theme/lang as fallback)
+  await Hive.initFlutter();
+
+  // Timezone DB needed for correct local notification scheduling.
+  // Later we will set the local timezone more precisely when we wire notifications.
+  tz.initializeTimeZones();
 }
