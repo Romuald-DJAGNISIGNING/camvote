@@ -14,6 +14,7 @@ class BrandBackdrop extends StatelessWidget {
     final profile = _BackdropVisualProfile.resolve(media);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+    final surfaceWashAlpha = kIsWeb ? 0 : (isDark ? 70 : 36);
     final gradient = isDark
         ? BrandPalette.darkHeroGradient
         : BrandPalette.heroGradient;
@@ -73,15 +74,16 @@ class BrandBackdrop extends StatelessWidget {
                   color: Colors.black.withAlpha(isDark ? 50 : 20),
                 ),
               ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    // Keep readability without the heavy gray wash that can
-                    // make onboarding and portal screens look "frozen".
-                    color: cs.surface.withAlpha(isDark ? 70 : 36),
+              if (surfaceWashAlpha > 0)
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      // Keep readability on mobile/desktop apps while avoiding
+                      // the web "gray mask" effect.
+                      color: cs.surface.withAlpha(surfaceWashAlpha),
+                    ),
                   ),
                 ),
-              ),
               if (profile.showPatternTexture)
                 Positioned.fill(
                   child: IgnorePointer(
