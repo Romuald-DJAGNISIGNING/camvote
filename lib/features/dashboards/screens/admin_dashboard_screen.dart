@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../../../core/widgets/animations/animated_counter.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
@@ -9,12 +11,15 @@ import '../../../core/routing/route_paths.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
+import '../../../core/theme/role_theme.dart';
 import '../../public_portal/widgets/results_charts.dart';
 import '../../public_portal/widgets/results_region_map_card.dart';
 import '../../public_portal/providers/public_portal_providers.dart';
 import '../../public_portal/utils/candidate_metric.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../providers/admin_providers.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
@@ -24,10 +29,29 @@ class AdminDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(adminStatsProvider);
     final results = ref.watch(publicResultsProvider);
+    final auth = ref.watch(authControllerProvider).asData?.value;
+    final isAdminAuthed =
+        auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
     final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: NotificationAppBar(title: Text(t.adminDashboard)),
+      appBar: NotificationAppBar(
+        title: Text(t.adminDashboard),
+        actions: [
+          if (isAdminAuthed)
+            IconButton(
+              tooltip: t.signOut,
+              onPressed: () async {
+                await ref.read(authControllerProvider.notifier).logout();
+                if (!context.mounted) return;
+                context.go(
+                  kIsWeb ? RoutePaths.adminPortal : RoutePaths.gateway,
+                );
+              },
+              icon: const Icon(Icons.logout),
+            ),
+        ],
+      ),
       body: stats.when(
         data: (s) {
           final data = results.asData?.value;
@@ -45,9 +69,9 @@ class AdminDashboardScreen extends ConsumerWidget {
           final nationalWinnerName = chartCandidates.isEmpty
               ? null
               : (chartCandidates.toList()
-                    ..sort((a, b) => b.votes.compareTo(a.votes)))
-                  .first
-                  .name;
+                      ..sort((a, b) => b.votes.compareTo(a.votes)))
+                    .first
+                    .name;
 
           final labelsByCode = {
             'far_north': t.regionFarNorth,
@@ -109,14 +133,28 @@ class AdminDashboardScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        t.adminToolsTitle,
-                        style: Theme.of(context).textTheme.titleLarge,
+                      CamSectionHeader(
+                        title: t.adminToolsTitle,
+                        icon: Icons.widgets_outlined,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       _toolsGrid(
                         context,
                         actions: [
+                          _action(
+                            context,
+                            icon: Icons.hub_outlined,
+                            label: t.chooseModeTitle,
+                            onTap: () => context.go(RoutePaths.adminPortal),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.public_outlined,
+                            label: t.publicPortalTitle,
+                            onTap: () => context.push(
+                              '${RoutePaths.publicHome}?entry=admin',
+                            ),
+                          ),
                           _action(
                             context,
                             icon: Icons.how_to_vote,
@@ -131,6 +169,12 @@ class AdminDashboardScreen extends ConsumerWidget {
                           ),
                           _action(
                             context,
+                            icon: Icons.visibility_outlined,
+                            label: t.adminObserverAccessTitle,
+                            onTap: () => context.go(RoutePaths.adminObservers),
+                          ),
+                          _action(
+                            context,
                             icon: Icons.shield,
                             label: t.adminActionAuditLogs,
                             onTap: () => context.go(RoutePaths.adminAudit),
@@ -139,7 +183,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                             context,
                             icon: Icons.auto_awesome_outlined,
                             label: t.adminFraudMonitorTitle,
-                            onTap: () => context.go(RoutePaths.adminFraudMonitor),
+                            onTap: () =>
+                                context.go(RoutePaths.adminFraudMonitor),
                           ),
                           _action(
                             context,
@@ -155,9 +200,30 @@ class AdminDashboardScreen extends ConsumerWidget {
                           ),
                           _action(
                             context,
+                            icon: Icons.location_on_outlined,
+                            label: t.adminVotingCentersTitle,
+                            onTap: () =>
+                                context.go(RoutePaths.adminVotingCenters),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.storage_outlined,
+                            label: t.adminContentSeedTitle,
+                            onTap: () =>
+                                context.go(RoutePaths.adminContentSeed),
+                          ),
+                          _action(
+                            context,
                             icon: Icons.rocket_launch_outlined,
                             label: t.adminResultsPublishTitle,
-                            onTap: () => context.go(RoutePaths.adminResultsPublish),
+                            onTap: () =>
+                                context.go(RoutePaths.adminResultsPublish),
+                          ),
+                          _action(
+                            context,
+                            icon: Icons.support_agent_outlined,
+                            label: t.helpSupportTitle,
+                            onTap: () => context.go(RoutePaths.adminSupport),
                           ),
                           _action(
                             context,
@@ -175,11 +241,11 @@ class AdminDashboardScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        t.liveResultsPreview,
-                        style: Theme.of(context).textTheme.titleLarge,
+                      CamSectionHeader(
+                        title: t.liveResultsPreview,
+                        icon: Icons.query_stats_outlined,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       ResultsCharts(
                         candidates: chartCandidates,
                         turnoutTrend: data?.turnoutTrend,
@@ -191,7 +257,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                         winners: data?.regionalWinners ?? const [],
                         labelsByRegionCode: labelsByCode,
                         title: t.mapTitle,
-                        subtitle: data?.electionTitle ?? t.noElectionDataAvailable,
+                        subtitle:
+                            data?.electionTitle ?? t.noElectionDataAvailable,
                         nationalWinnerName: nationalWinnerName,
                       ),
                     ],
@@ -200,8 +267,8 @@ class AdminDashboardScreen extends ConsumerWidget {
               ),
             ),
           );
-      },
-        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        },
+        error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
         loading: () => const Center(child: CamElectionLoader()),
       ),
     );
@@ -227,13 +294,13 @@ class AdminDashboardScreen extends ConsumerWidget {
         final crossAxisCount = wide
             ? 4
             : width >= 560
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         final aspect = wide
             ? 1.6
             : crossAxisCount == 2
-                ? 1.4
-                : 3.4;
+            ? 1.4
+            : 3.4;
         return GridView.count(
           crossAxisCount: crossAxisCount,
           physics: const NeverScrollableScrollPhysics(),
@@ -262,10 +329,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: accent.withAlpha(70)),
           gradient: LinearGradient(
-            colors: [
-              accent.withAlpha(30),
-              cs.surface.withAlpha(10),
-            ],
+            colors: [accent.withAlpha(30), cs.surface.withAlpha(10)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -288,8 +352,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                   child: Text(
                     label,
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -310,13 +374,13 @@ class AdminDashboardScreen extends ConsumerWidget {
         final crossAxisCount = wide
             ? 4
             : width >= 560
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         final aspect = wide
             ? 1.6
             : crossAxisCount == 2
-                ? 1.4
-                : 3.2;
+            ? 1.4
+            : 3.2;
         return GridView.count(
           crossAxisCount: crossAxisCount,
           physics: const NeverScrollableScrollPhysics(),
@@ -357,8 +421,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const Icon(Icons.chevron_right),
@@ -403,15 +467,17 @@ class _FraudInsightPanel extends StatelessWidget {
                     Flexible(
                       child: Text(
                         t.fraudIntelligenceTitle,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
                 );
                 final badge = Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(999),
@@ -419,18 +485,14 @@ class _FraudInsightPanel extends StatelessWidget {
                   child: Text(
                     t.fraudAiStatus,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 );
                 if (isNarrow) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      title,
-                      const SizedBox(height: 8),
-                      badge,
-                    ],
+                    children: [title, const SizedBox(height: 8), badge],
                   );
                 }
                 return Row(
@@ -458,9 +520,9 @@ class _FraudInsightPanel extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   '${totalRegistered == 0 ? 0 : ((suspiciousFlags / totalRegistered) * 100).toStringAsFixed(1)}%',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ],
             ),
