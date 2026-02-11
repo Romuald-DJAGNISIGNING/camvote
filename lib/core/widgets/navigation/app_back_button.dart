@@ -15,15 +15,25 @@ class AppBackButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = GoRouter.of(context);
     final state = GoRouterState.of(context);
-    final canPop = Navigator.of(context).canPop() || router.canPop();
-    if (!canPop && !alwaysVisible) return const SizedBox.shrink();
-
     final auth = ref.watch(authControllerProvider).asData?.value;
     final role = ref.watch(currentRoleProvider);
     final isVoterUnverified =
         auth?.user?.role == AppRole.voter && auth?.user?.verified == false;
     final isAdminAuthed =
         auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
+    final location = state.matchedLocation;
+    final entry = state.uri.queryParameters['entry'];
+    final canPop = Navigator.of(context).canPop() || router.canPop();
+    final hasContextualFallback = _hasContextualFallback(
+      role: role,
+      location: location,
+      entry: entry,
+      isVoterUnverified: isVoterUnverified,
+      isAdminAuthed: isAdminAuthed,
+    );
+    if (!alwaysVisible && !canPop && !hasContextualFallback) {
+      return const SizedBox.shrink();
+    }
 
     return IconButton(
       icon: const Icon(Icons.arrow_back),
@@ -32,11 +42,47 @@ class AppBackButton extends ConsumerWidget {
         role,
         isVoterUnverified,
         isAdminAuthed,
-        state.matchedLocation,
-        state.uri.queryParameters['entry'],
+        location,
+        entry,
       ),
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
     );
+  }
+
+  bool _hasContextualFallback({
+    required AppRole role,
+    required String location,
+    required String? entry,
+    required bool isVoterUnverified,
+    required bool isAdminAuthed,
+  }) {
+    if (location == RoutePaths.adminDashboard) return true;
+    if (location.startsWith(RoutePaths.adminDashboard) &&
+        location != RoutePaths.adminDashboard) {
+      return true;
+    }
+    if (location.startsWith(RoutePaths.observerDashboard) &&
+        location != RoutePaths.observerDashboard) {
+      return true;
+    }
+    if (location.startsWith(RoutePaths.publicHome) &&
+        location != RoutePaths.publicHome) {
+      return true;
+    }
+    if (location == RoutePaths.publicHome &&
+        (entry == 'admin' || isAdminAuthed)) {
+      return true;
+    }
+    if (location == RoutePaths.authLogin && entry == 'admin') return true;
+    if (entry == 'admin') return true;
+    if (isVoterUnverified && location != RoutePaths.voterPending) return true;
+
+    return switch (role) {
+      AppRole.voter => location != RoutePaths.voterShell,
+      AppRole.observer => location != RoutePaths.observerDashboard,
+      AppRole.admin => location != RoutePaths.adminPortal,
+      AppRole.public => false,
+    };
   }
 
   void _handleBack(
@@ -65,6 +111,22 @@ class AppBackButton extends ConsumerWidget {
 
     if (location == RoutePaths.authLogin && entry == 'admin') {
       context.go(RoutePaths.adminPortal);
+      return;
+    }
+
+    if (location.startsWith(RoutePaths.observerDashboard) &&
+        location != RoutePaths.observerDashboard) {
+      context.go(RoutePaths.observerDashboard);
+      return;
+    }
+
+    if (location.startsWith(RoutePaths.publicHome) &&
+        location != RoutePaths.publicHome) {
+      if (entry == 'admin' || isAdminAuthed) {
+        context.go('${RoutePaths.publicHome}?entry=admin');
+      } else {
+        context.go(RoutePaths.publicHome);
+      }
       return;
     }
 

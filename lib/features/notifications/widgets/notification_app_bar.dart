@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_paths.dart';
@@ -42,11 +43,20 @@ class NotificationAppBar extends StatelessWidget
     ];
 
     return AppBar(
-      leading: showBack ? const AppBackButton() : null,
+      automaticallyImplyLeading: false,
+      forceMaterialTransparency: kIsWeb,
+      leading: showBack ? const AppBackButton(alwaysVisible: false) : null,
       title: title,
       centerTitle: centerTitle,
       bottom: bottom,
-      shape: Border(bottom: BorderSide(color: cs.outlineVariant.withAlpha(60))),
+      backgroundColor: kIsWeb ? Colors.transparent : null,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      shape: kIsWeb
+          ? null
+          : Border(bottom: BorderSide(color: cs.outlineVariant.withAlpha(60))),
       actions: actionList.isEmpty ? null : actionList,
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'role_theme.dart';
@@ -31,11 +32,12 @@ class AppTheme {
       textTheme: _textTheme(isDark: isDark),
       appBarTheme: AppBarTheme(
         centerTitle: true,
-        backgroundColor: scheme.surface,
+        backgroundColor: kIsWeb ? Colors.transparent : scheme.surface,
         foregroundColor: scheme.onSurface,
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         titleTextStyle: _textTheme(
           isDark: isDark,
         ).titleLarge?.copyWith(fontWeight: FontWeight.w900),
@@ -136,9 +138,9 @@ class AppTheme {
           color: scheme.inverseSurface.withAlpha(230),
           borderRadius: BorderRadius.circular(10),
         ),
-        textStyle: _textTheme(isDark: isDark)
-            .labelMedium
-            ?.copyWith(color: scheme.onInverseSurface),
+        textStyle: _textTheme(
+          isDark: isDark,
+        ).labelMedium?.copyWith(color: scheme.onInverseSurface),
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: scheme.primary,

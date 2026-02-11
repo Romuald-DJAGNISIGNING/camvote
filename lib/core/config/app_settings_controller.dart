@@ -133,12 +133,20 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
   Future<void> _setString(String key, String value) async {
     final prefs = await _ensurePrefs();
     if (prefs == null) return;
-    await prefs.setString(key, value);
+    try {
+      await prefs.setString(key, value);
+    } catch (_) {
+      // Fail open: the in-memory state is already updated.
+    }
   }
 
   Future<void> _setBool(String key, bool value) async {
     final prefs = await _ensurePrefs();
     if (prefs == null) return;
-    await prefs.setBool(key, value);
+    try {
+      await prefs.setBool(key, value);
+    } catch (_) {
+      // Fail open: the in-memory state is already updated.
+    }
   }
 }

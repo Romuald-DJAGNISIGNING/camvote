@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -188,7 +189,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    await ref.read(appSettingsProvider.notifier).setOnboardingSeen(true);
+    unawaited(
+      ref
+          .read(appSettingsProvider.notifier)
+          .setOnboardingSeen(true)
+          .catchError((_) {}),
+    );
     if (!mounted) return;
     context.go(kIsWeb ? RoutePaths.webPortal : RoutePaths.gateway);
   }
