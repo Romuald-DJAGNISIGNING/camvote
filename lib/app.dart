@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import 'core/l10n/app_locales.dart';
 import 'core/routing/app_router.dart';
+import 'core/routing/route_paths.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_theme_style.dart';
 import 'core/theme/role_theme.dart';
@@ -16,6 +18,7 @@ import 'core/web/tab_close_guard.dart';
 import 'features/auth/providers/auth_providers.dart';
 import 'features/notifications/domain/cam_notification.dart';
 import 'features/notifications/providers/notifications_providers.dart';
+import 'features/notifications/widgets/notification_bell.dart';
 
 const _defaultAppSettings = AppSettingsState(
   themeMode: ThemeMode.system,
@@ -67,14 +70,120 @@ class CamVoteApp extends ConsumerWidget {
           minScaleFactor: 0.9,
           maxScaleFactor: 1.05,
         );
+        final appChild = BackSwipe(
+          child: _NotificationToastListener(child: child),
+        );
         return MediaQuery(
           data: media.copyWith(textScaler: clampedScaler),
-          child: BackSwipe(child: _NotificationToastListener(child: child)),
+          child: kIsWeb ? _WebActionDock(child: appChild) : appChild,
         );
       },
       routerConfig: router,
     );
   }
+}
+
+class _WebActionDock extends ConsumerWidget {
+  const _WebActionDock({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final route = _routeContextOrDefault(context);
+    if (_hideDockOnRoute(route.path)) {
+      return child;
+    }
+
+    final t = AppLocalizations.of(context);
+    final auth = ref.watch(authControllerProvider).asData?.value;
+    final isAdminAuthed =
+        auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
+    final isAdminContext =
+        route.entry == 'admin' ||
+        route.path.startsWith(RoutePaths.adminDashboard) ||
+        route.path == RoutePaths.adminPortal;
+    final showBell = route.path != RoutePaths.notifications;
+
+    return Stack(
+      children: [
+        child,
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface.withAlpha(230),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outlineVariant.withAlpha(90),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showBell)
+                      NotificationBell(
+                        onOpen: () {
+                          context.push(RoutePaths.notifications);
+                        },
+                      ),
+                    IconButton(
+                      tooltip: t.settings,
+                      onPressed: () {
+                        final entry = isAdminContext ? 'admin' : 'general';
+                        context.push('${RoutePaths.settings}?entry=$entry');
+                      },
+                      icon: const Icon(Icons.settings_outlined),
+                    ),
+                    if (isAdminAuthed &&
+                        !route.path.startsWith(RoutePaths.adminDashboard))
+                      IconButton(
+                        tooltip: t.modeAdminTitle,
+                        onPressed: () => context.go(RoutePaths.adminDashboard),
+                        icon: const Icon(Icons.admin_panel_settings_outlined),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool _hideDockOnRoute(String path) {
+    return path == RoutePaths.onboarding ||
+        path.startsWith(RoutePaths.authLogin) ||
+        path.startsWith(RoutePaths.authForgot) ||
+        path.startsWith(RoutePaths.authArchived) ||
+        path.startsWith(RoutePaths.authForcePasswordChange);
+  }
+
+  _RouteContext _routeContextOrDefault(BuildContext context) {
+    try {
+      final state = GoRouterState.of(context);
+      return _RouteContext(
+        path: state.matchedLocation,
+        entry: state.uri.queryParameters['entry'],
+      );
+    } catch (_) {
+      return const _RouteContext(path: RoutePaths.gateway, entry: null);
+    }
+  }
+}
+
+class _RouteContext {
+  const _RouteContext({required this.path, required this.entry});
+
+  final String path;
+  final String? entry;
 }
 
 class _NotificationToastListener extends ConsumerStatefulWidget {

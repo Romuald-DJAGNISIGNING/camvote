@@ -81,7 +81,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final settingsAsync = ref.watch(appSettingsProvider);
   final settings = settingsAsync.asData?.value;
   final isBootstrapping = authAsync.isLoading || settingsAsync.isLoading;
-  final hasSeenOnboarding = settings?.hasSeenOnboarding ?? true;
+  final hasSeenOnboarding = settings?.hasSeenOnboarding ?? false;
 
   Widget portalEntry(Widget child) {
     return isBootstrapping ? const _PortalEntryLoadingScreen() : child;
