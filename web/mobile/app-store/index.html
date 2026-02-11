@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>CamVote iOS - Coming Soon</title>
+  <meta name="description" content="CamVote for iOS is under review. Get notified when the App Store release is live." />
+  <link rel="icon" href="../media/app_icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../media/app_icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background">
+    <img class="pattern" src="../media/cam_pattern.png" alt="" />
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="../media/app_logo.png" alt="CamVote" />
+      <div class="brand-text">
+        <div class="brand-name">CamVote</div>
+        <div class="brand-tag" data-i18n="brandTag">Official civic platform</div>
+      </div>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <div class="pill" data-i18n="pill">App Store</div>
+        <h1 data-i18n="heroTitle">CamVote for iOS is on the way.</h1>
+        <p class="lead" data-i18n="heroSubtitle">
+          The App Store release is under review. We will launch the moment Apple approval is complete.
+        </p>
+        <div class="notify-form">
+          <label class="field-label" for="notifyEmail" data-i18n="emailLabel">Your email</label>
+          <div class="field-row">
+            <input
+              id="notifyEmail"
+              class="field-input"
+              type="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              placeholder="you@email.com"
+              data-i18n-placeholder="emailPlaceholder"
+            />
+          </div>
+          <div class="field-hint" data-i18n="emailHint">We only use it to notify you when the iOS app is live.</div>
+          <div class="field-error" id="notifyError" aria-live="polite" data-i18n="emailError">Please enter a valid email address.</div>
+          <div class="notify-status" id="notifyStatus" aria-live="polite"></div>
+          <div class="notify-burst" id="notifyBurst" aria-hidden="true"></div>
+        </div>
+        <div class="cta-row">
+          <a class="btn primary" id="notifyCta" href="#" data-support="camvoteappassist@gmail.com" data-i18n="ctaNotify">Notify me</a>
+          <a class="btn ghost" id="playCta" href="#" target="_blank" rel="noopener" data-i18n="ctaPlay">Get it on Google Play</a>
+          <a class="btn ghost" id="publicCta" href="#" data-i18n="ctaPublic">Open Public Portal</a>
+        </div>
+        <div class="status-grid">
+          <div class="status-card">
+            <div class="status-dot"></div>
+            <div>
+              <div class="status-title" data-i18n="status1Title">Submitted</div>
+              <div class="status-body" data-i18n="status1Body">App Store review in progress</div>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-dot status-dot-alt"></div>
+            <div>
+              <div class="status-title" data-i18n="status2Title">Final checks</div>
+              <div class="status-body" data-i18n="status2Body">Security & compliance pass</div>
+            </div>
+          </div>
+          <div class="status-card">
+            <div class="status-dot status-dot-ready"></div>
+            <div>
+              <div class="status-title" data-i18n="status3Title">Launch</div>
+              <div class="status-body" data-i18n="status3Body">Live the moment approval lands</div>
+            </div>
+          </div>
+        </div>
+        <div class="launch-clock" id="launchClock">
+          <div class="launch-clock-head">
+            <span data-i18n="countdownTitle">Launch countdown</span>
+            <strong data-i18n="countdownWindow">Target: Q2 2026</strong>
+          </div>
+          <div class="launch-clock-grid">
+            <div><strong id="countDays">--</strong><span data-i18n="countdownDays">Days</span></div>
+            <div><strong id="countHours">--</strong><span data-i18n="countdownHours">Hours</span></div>
+            <div><strong id="countMinutes">--</strong><span data-i18n="countdownMinutes">Minutes</span></div>
+            <div><strong id="countSeconds">--</strong><span data-i18n="countdownSeconds">Seconds</span></div>
+          </div>
+        </div>
+        <div class="note" data-i18n="note">
+          Want updates? We will publish the App Store link here the second it is live.
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="store-card">
+          <div class="store-glow"></div>
+          <div class="store-orbit" aria-hidden="true"></div>
+          <div class="store-header">
+            <img src="../media/app_icon.png" alt="" />
+            <div>
+              <div class="store-name">CamVote</div>
+              <div class="store-sub" data-i18n="storeSub">Official civic mobile app</div>
+            </div>
+          </div>
+          <div class="store-body">
+            <div class="coming-soon" data-i18n="comingSoon">Coming soon on the App Store</div>
+            <div class="progress">
+              <span></span>
+            </div>
+            <div class="launch-eta" id="launchEta" data-i18n="launchEta">We are targeting a release right after review completion.</div>
+            <div class="store-tags">
+              <span data-i18n="tag1">Secure</span>
+              <span data-i18n="tag2">Verified</span>
+              <span data-i18n="tag3">Official</span>
+            </div>
+          </div>
+        </div>
+        <div class="sparkle sparkle-1"></div>
+        <div class="sparkle sparkle-2"></div>
+        <div class="sparkle sparkle-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div data-i18n="footer">Official civic participation platform.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

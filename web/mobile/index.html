@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>CamVote Mobile App</title>
+  <meta name="description" content="Download the CamVote mobile app to register, vote, and receive official election updates." />
+  <link rel="icon" href="media/app_icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="media/app_icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background">
+    <img class="pattern" src="media/cam_pattern.png" alt="" />
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="scan-overlay" id="scanOverlay" aria-live="polite">
+    <div class="scan-card">
+      <div class="scan-glow"></div>
+      <div class="scan-logo scan-logo-android" id="scanLogoAndroid" aria-hidden="true">
+        <span class="android-head"></span>
+        <span class="android-eye left"></span>
+        <span class="android-eye right"></span>
+        <span class="android-antenna left"></span>
+        <span class="android-antenna right"></span>
+      </div>
+      <div class="scan-logo scan-logo-ios" id="scanLogoIos" aria-hidden="true">
+        <span class="apple-logo" aria-hidden="true">
+          <svg viewBox="0 0 384 512" role="img" focusable="false">
+            <path d="M318.7 268.7c-.2-36.7 16.4-64.4 51.2-86.1-19.3-28.2-48.6-43.8-88.1-46.6-37.1-3-77.6 21.7-93.7 21.7-16.4 0-51-21-79.4-20.4-40.8 .6-78.6 23.7-99.6 60.3-42.7 73.8-10.9 182.7 30.6 242.6 20.3 29.2 44.5 62.1 76.3 60.9 30.1-1.2 41.6-19.4 78.1-19.4 36.3 0 46.6 19.4 78.8 18.8 32.9-.6 53.7-29.7 73.7-58.9 23.2-33.9 32.8-66.7 33-68.4-.7-.2-63.2-24.3-63.4-96.5zM262.3 70.2c16.8-20.4 28.1-48.8 25-77.2-24.2 1-53.5 16.1-70.7 36.5-15.6 18-29.2 46.7-25.6 74.3 26.9 2.1 54.5-13.7 71.3-33.6z" />
+          </svg>
+        </span>
+      </div>
+      <div class="scan-title" data-i18n="scanTitle">Opening the right store</div>
+      <div class="scan-sub" data-i18n="scanSubtitle">Just a second - almost there.</div>
+      <div class="scan-progress-track" aria-hidden="true">
+        <div class="scan-progress-fill" id="scanProgressFill"></div>
+      </div>
+      <div class="scan-burst" id="scanBurst" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="media/app_logo.png" alt="CamVote" />
+      <div class="brand-text">
+        <div class="brand-name">CamVote</div>
+        <div class="brand-tag" data-i18n="brandTag">Official civic platform</div>
+      </div>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <div class="pill" data-i18n="pill">Mobile-first access</div>
+        <h1 data-i18n="heroTitle">Your vote, in your pocket.</h1>
+        <p class="lead" data-i18n="heroSubtitle">
+          The CamVote mobile app lets citizens register, verify, vote, and receive official election updates anywhere.
+        </p>
+        <div class="cta-row">
+          <a class="btn primary store-btn" id="playCta" href="#" target="_blank" rel="noopener">
+            <span class="store-mark play-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M3.5 2.8c-.6.4-.9 1.1-.9 1.9v14.6c0 .8.3 1.5.9 1.9l10.7-9.2L3.5 2.8z" fill="#34A853"/>
+                <path d="M14.2 12l3.6-3.1 2.7 1.5c.6.4 1 .9 1 1.6s-.4 1.2-1 1.6l-2.7 1.5-3.6-3.1z" fill="#4285F4"/>
+                <path d="M3.5 2.8l10.7 9.2 3.6-3.1-7.3-4.2c-2.3-1.3-4.4-2.5-7-1.9z" fill="#FBBC05"/>
+                <path d="M3.5 21.2l7-4.1 7.3-4.2-3.6-3.1-10.7 9.2z" fill="#EA4335"/>
+              </svg>
+            </span>
+            <span data-i18n="ctaPlay">Get it on Google Play</span>
+          </a>
+          <a class="btn ghost store-btn" id="appCta" href="#" target="_blank" rel="noopener">
+            <span class="store-mark apple-logo" aria-hidden="true">
+              <svg viewBox="0 0 384 512" role="img" focusable="false">
+                <path d="M318.7 268.7c-.2-36.7 16.4-64.4 51.2-86.1-19.3-28.2-48.6-43.8-88.1-46.6-37.1-3-77.6 21.7-93.7 21.7-16.4 0-51-21-79.4-20.4-40.8 .6-78.6 23.7-99.6 60.3-42.7 73.8-10.9 182.7 30.6 242.6 20.3 29.2 44.5 62.1 76.3 60.9 30.1-1.2 41.6-19.4 78.1-19.4 36.3 0 46.6 19.4 78.8 18.8 32.9-.6 53.7-29.7 73.7-58.9 23.2-33.9 32.8-66.7 33-68.4-.7-.2-63.2-24.3-63.4-96.5zM262.3 70.2c16.8-20.4 28.1-48.8 25-77.2-24.2 1-53.5 16.1-70.7 36.5-15.6 18-29.2 46.7-25.6 74.3 26.9 2.1 54.5-13.7 71.3-33.6z" />
+              </svg>
+            </span>
+            <span data-i18n="ctaApp">Download on the App Store</span>
+          </a>
+        </div>
+        <div class="hero-badges">
+          <span class="badge" data-i18n="badgeSecurity">Biometric security</span>
+          <span class="badge" data-i18n="badgeRealtime">Realtime alerts</span>
+          <span class="badge" data-i18n="badgeLowBandwidth">Low-bandwidth ready</span>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="hero-device">
+          <div class="device-screen">
+            <div class="screen-header">
+              <img src="media/app_icon.png" alt="" />
+              <div>
+                <div class="screen-title" data-i18n="screenTitle">Election Day</div>
+                <div class="screen-sub" data-i18n="screenSub">Countdowns, updates, and your card.</div>
+              </div>
+            </div>
+            <div class="screen-blocks">
+              <div class="screen-block"></div>
+              <div class="screen-block"></div>
+              <div class="screen-block"></div>
+            </div>
+            <div class="screen-metrics">
+              <div class="metric">
+                <div class="metric-label" data-i18n="metric1Label">Next deadline</div>
+                <div class="metric-value" data-i18n="metric1Value">Soon</div>
+              </div>
+              <div class="metric">
+                <div class="metric-label" data-i18n="metric2Label">Coverage</div>
+                <div class="metric-value" data-i18n="metric2Value">Nationwide</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-card floating-card-1">
+          <img src="media/cameroon_coat_of_arms.png" alt="" />
+          <div>
+            <div class="float-title" data-i18n="floatTitle1">Official sources</div>
+            <div class="float-sub" data-i18n="floatBody1">Verified civic information</div>
+          </div>
+        </div>
+        <div class="floating-card floating-card-2">
+          <div class="pulse"></div>
+          <div>
+            <div class="float-title" data-i18n="floatTitle2">Live updates</div>
+            <div class="float-sub" data-i18n="floatBody2">Results & alerts</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="platforms reveal">
+      <div class="platforms-head">
+        <h2 data-i18n="platformsTitle">Built for every device</h2>
+        <p data-i18n="platformsSubtitle">Native Android and iOS experiences designed for secure, low-bandwidth civic access.</p>
+      </div>
+      <div class="platforms-grid">
+        <article class="platform-card">
+          <div class="platform-icon android" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" aria-label="Android">
+              <path d="M7 8.5h10a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7.5a2 2 0 0 1 2-2Z" fill="currentColor"/>
+              <circle cx="9" cy="12" r="1" fill="#fff"/>
+              <circle cx="15" cy="12" r="1" fill="#fff"/>
+              <path d="M9 6 7 4M15 6l2-2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3 data-i18n="platformAndroid">Android optimized</h3>
+            <p data-i18n="platformAndroidDesc">Fast onboarding, low‑bandwidth mode, and device security built-in.</p>
+          </div>
+        </article>
+        <article class="platform-card ios">
+          <div class="platform-icon ios" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img" aria-label="iOS">
+              <path d="M14.8 3.2c.4 1.2-.1 2.5-1 3.3-.9.9-2.2 1.4-3.4 1.3-.3-1.2.2-2.5 1.1-3.3.9-.9 2.3-1.5 3.3-1.3Z" fill="currentColor"/>
+              <path d="M12 8c2.2 0 3.1 1.1 4.4 1.1 1.3 0 2.3-1.1 3.6-1.1.5 1.6-.4 3.5-1.3 4.7-.9 1.2-2 2.6-3.4 2.6-1.4 0-1.8-.9-3.3-.9-1.5 0-2 .9-3.4.9-1.4 0-2.4-1.2-3.3-2.5-1.1-1.6-2-4.4-.8-6.4.8-1.3 2.2-2 3.7-2 1.4 0 2.7 1 3.8 1Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <h3 data-i18n="platformIos">iOS refined</h3>
+            <p data-i18n="platformIosDesc">Smooth verification, secure biometrics, and elegant civic workflows.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="trust-bar reveal">
+      <div class="trust-badge" data-i18n="trustBadge1">Device-bound signatures</div>
+      <div class="trust-badge" data-i18n="trustBadge2">Encrypted receipts</div>
+      <div class="trust-badge" data-i18n="trustBadge3">Biometric verification</div>
+      <div class="trust-badge" data-i18n="trustBadge4">Official civic data</div>
+      <div class="trust-badge" data-i18n="trustBadge5">Fraud monitoring</div>
+    </section>
+
+    <section class="feature-grid reveal">
+      <h2 data-i18n="featuresTitle">Everything you need to participate</h2>
+      <div class="grid" id="featureGrid"></div>
+    </section>
+
+    <section class="icon-grid reveal">
+      <div class="icon-grid-head">
+        <h2 data-i18n="iconGridTitle">Feature highlights</h2>
+        <p data-i18n="iconGridSubtitle">Visual cues for the most important CamVote experiences.</p>
+      </div>
+      <div class="icon-grid-items">
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--secure">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 5 6v6c0 4.2 3.2 7.8 7 9 3.8-1.2 7-4.8 7-9V6l-7-3Z" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem1">Secure identity</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--scan">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 8V5h3M16 5h3v3M19 16v3h-3M8 19H5v-3" />
+              <path d="M7 12h10" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem2">OCR scan</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--time">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8" />
+              <path d="M12 8v5l3 2" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem3">Live countdowns</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--map">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s6-5.2 6-9.5a6 6 0 1 0-12 0C6 15.8 12 21 12 21Z" />
+              <circle cx="12" cy="11" r="2.5" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem4">Global map</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--book">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 5h9a3 3 0 0 1 3 3v11H8a3 3 0 0 0-3 3V5Z" />
+              <path d="M8 5v14" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem5">Civic education</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--alert">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3c3.3 0 6 2.7 6 6v3.5l1.5 2.5H4.5L6 12.5V9c0-3.3 2.7-6 6-6Z" />
+              <path d="M10 19c.3 1.1 1.1 2 2 2s1.7-.9 2-2" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem6">Official alerts</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--badge">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="10" r="4.5" />
+              <path d="M9 14 7 21l5-3 5 3-2-7" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem7">Eligibility tracking</div>
+        </div>
+        <div class="icon-item">
+          <div class="icon-badge icon-badge--receipt">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1-2 1V3Z" />
+              <path d="M9 8h6M9 12h6" />
+            </svg>
+          </div>
+          <div class="icon-label" data-i18n="iconItem8">Secure receipts</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="showcase reveal">
+      <div class="showcase-head">
+        <h2 data-i18n="showcaseTitle">A mobile experience you can feel</h2>
+        <p data-i18n="showcaseSubtitle">Every flow is designed to be calm, guided, and secure.</p>
+      </div>
+      <div class="showcase-grid">
+        <article class="showcase-card">
+          <div class="mini-screen mini-screen--registration">
+            <div class="mini-chip" data-i18n="showcaseCard1Chip">Registration</div>
+            <div class="mini-line"></div>
+            <div class="mini-line"></div>
+            <div class="mini-line short"></div>
+          </div>
+          <h3 data-i18n="showcaseCard1Title">Registration, simplified</h3>
+          <p data-i18n="showcaseCard1Body">Smart forms and OCR guide citizens through every step.</p>
+        </article>
+        <article class="showcase-card">
+          <div class="mini-screen mini-screen--verification">
+            <div class="mini-chip" data-i18n="showcaseCard2Chip">Verification</div>
+            <div class="mini-steps">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          <h3 data-i18n="showcaseCard2Title">Verification you can trust</h3>
+          <p data-i18n="showcaseCard2Body">Biometrics and device keys lock each identity to the device.</p>
+        </article>
+        <article class="showcase-card">
+          <div class="mini-screen mini-screen--results">
+            <div class="mini-chip" data-i18n="showcaseCard3Chip">Results</div>
+            <div class="mini-bars">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          <h3 data-i18n="showcaseCard3Title">Results and transparency</h3>
+          <p data-i18n="showcaseCard3Body">Live updates, regional maps, and official summaries.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="ticker reveal">
+      <div class="ticker-head">
+        <h2 data-i18n="tickerTitle">Live election ticker</h2>
+        <p data-i18n="tickerSubtitle">Updates, alerts, and milestones roll in real time.</p>
+      </div>
+      <div class="ticker-rail" id="tickerRail">
+        <div class="ticker-item" data-i18n="tickerItem1">Registration deadline approaching</div>
+        <div class="ticker-item" data-i18n="tickerItem2">New polling centers added</div>
+        <div class="ticker-item" data-i18n="tickerItem3">Eligibility unlocked for new voters</div>
+        <div class="ticker-item" data-i18n="tickerItem4">Results preview available</div>
+      </div>
+    </section>
+
+    <section class="countdown-strip reveal">
+      <div class="strip-head">
+        <h2 data-i18n="countdownTitle">Countdown intelligence</h2>
+        <p data-i18n="countdownSubtitle">Personalized timers keep every citizen ready.</p>
+      </div>
+      <div class="strip-rail">
+        <article class="strip-card">
+          <div class="strip-dot"></div>
+          <h4 data-i18n="countdownItem1Title">Election opens</h4>
+          <p data-i18n="countdownItem1Body">Live countdown with opening alerts.</p>
+        </article>
+        <article class="strip-card">
+          <div class="strip-dot"></div>
+          <h4 data-i18n="countdownItem2Title">Election closes</h4>
+          <p data-i18n="countdownItem2Body">Closing reminders and confirmation.</p>
+        </article>
+        <article class="strip-card">
+          <div class="strip-dot"></div>
+          <h4 data-i18n="countdownItem3Title">Card renewal</h4>
+          <p data-i18n="countdownItem3Body">e-Card expiry warnings and renewal action.</p>
+        </article>
+        <article class="strip-card">
+          <div class="strip-dot"></div>
+          <h4 data-i18n="countdownItem4Title">Eligibility unlock</h4>
+          <p data-i18n="countdownItem4Body">Celebrate the moment you become eligible.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="story reveal">
+      <div class="story-head">
+        <h2 data-i18n="storyTitle">The full citizen journey</h2>
+        <p data-i18n="storySubtitle">From onboarding to results, everything stays in one calm flow.</p>
+      </div>
+      <div class="story-track">
+        <article class="story-card">
+          <div class="story-screen story-screen--onboarding">
+            <div class="story-chip" data-i18n="story1Chip">Onboarding</div>
+            <div class="story-line"></div>
+            <div class="story-line"></div>
+          </div>
+          <h3 data-i18n="story1Title">Warm onboarding</h3>
+          <p data-i18n="story1Body">Guided steps help every voter feel supported.</p>
+        </article>
+        <article class="story-card">
+          <div class="story-screen story-screen--identity">
+            <div class="story-chip" data-i18n="story2Chip">Identity</div>
+            <div class="story-badges">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+          <h3 data-i18n="story2Title">Identity locked</h3>
+          <p data-i18n="story2Body">Biometrics ensure each voter stays unique.</p>
+        </article>
+        <article class="story-card">
+          <div class="story-screen story-screen--vote">
+            <div class="story-chip" data-i18n="story3Chip">Vote</div>
+            <div class="story-ballot"></div>
+          </div>
+          <h3 data-i18n="story3Title">Ballot confidence</h3>
+          <p data-i18n="story3Body">Clear candidates, secure cast, instant receipt.</p>
+        </article>
+        <article class="story-card">
+          <div class="story-screen story-screen--receipt">
+            <div class="story-chip" data-i18n="story4Chip">Receipt</div>
+            <div class="story-receipt"></div>
+          </div>
+          <h3 data-i18n="story4Title">Private receipt</h3>
+          <p data-i18n="story4Body">Encrypted proofs for your records.</p>
+        </article>
+        <article class="story-card">
+          <div class="story-screen story-screen--results">
+            <div class="story-chip" data-i18n="story5Chip">Results</div>
+            <div class="story-chart"></div>
+          </div>
+          <h3 data-i18n="story5Title">Live results</h3>
+          <p data-i18n="story5Body">Transparent results and regional maps.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="gallery reveal">
+      <div class="gallery-head">
+        <h2 data-i18n="galleryTitle">Screen gallery</h2>
+        <p data-i18n="gallerySubtitle">A quick tour of the core CamVote flows.</p>
+      </div>
+      <div class="gallery-track">
+        <div class="gallery-card">
+          <div class="gallery-screen gallery-screen--home"></div>
+          <div class="gallery-label" data-i18n="galleryLabel1">Home dashboard</div>
+        </div>
+        <div class="gallery-card">
+          <div class="gallery-screen gallery-screen--verify"></div>
+          <div class="gallery-label" data-i18n="galleryLabel2">Verification timeline</div>
+        </div>
+        <div class="gallery-card">
+          <div class="gallery-screen gallery-screen--countdown"></div>
+          <div class="gallery-label" data-i18n="galleryLabel3">Countdowns</div>
+        </div>
+        <div class="gallery-card">
+          <div class="gallery-screen gallery-screen--map"></div>
+          <div class="gallery-label" data-i18n="galleryLabel4">Centers map</div>
+        </div>
+        <div class="gallery-card">
+          <div class="gallery-screen gallery-screen--results"></div>
+          <div class="gallery-label" data-i18n="galleryLabel5">Results</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screenwall reveal">
+      <div class="screenwall-head">
+        <h2 data-i18n="screenwallTitle">Interactive screen previews</h2>
+        <p data-i18n="screenwallSubtitle">Slide through real CamVote flows on Samsung Galaxy S24 Ultra and iPhone 17 Pro.</p>
+      </div>
+      <div class="carousel-shell">
+        <button class="carousel-btn" data-action="prev" aria-label="Previous screen">
+          <span>‹</span>
+        </button>
+        <div class="carousel-phones" id="carouselPhones">
+          <article class="carousel-device android">
+            <div class="frame-shell frame-shell--android">
+              <img class="frame-image" src="media/samsung_galaxy_s24_ultra_portrait.png" alt="Samsung Galaxy S24 Ultra device frame" />
+              <div class="carousel-screen frame-screen">
+                <div class="frame-cutout frame-cutout--android"></div>
+              </div>
+            </div>
+            <div class="carousel-label" data-i18n="deviceLabelAndroid">Samsung Galaxy S24 Ultra</div>
+          </article>
+
+          <article class="carousel-device ios">
+            <div class="frame-shell frame-shell--ios">
+              <img class="frame-image" src="media/iphone_17_pro_vector.svg" alt="Apple iPhone 17 Pro device frame" />
+              <div class="carousel-screen frame-screen">
+                <div class="frame-cutout frame-cutout--ios"></div>
+              </div>
+            </div>
+            <div class="carousel-label" data-i18n="deviceLabelIos">iPhone 17 Pro</div>
+          </article>
+        </div>
+        <button class="carousel-btn" data-action="next" aria-label="Next screen">
+          <span>›</span>
+        </button>
+      </div>
+      <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Screens"></div>
+      <div class="carousel-tags" role="tablist" aria-label="Screen list">
+        <button class="carousel-tag active" data-slide="0" data-i18n="screen1Title">Citizen dashboard</button>
+        <button class="carousel-tag" data-slide="1" data-i18n="screen2Title">Registration hub</button>
+        <button class="carousel-tag" data-slide="2" data-i18n="screen3Title">Document OCR</button>
+        <button class="carousel-tag" data-slide="3" data-i18n="screen4Title">Biometric check</button>
+        <button class="carousel-tag" data-slide="4" data-i18n="screen5Title">Verification status</button>
+        <button class="carousel-tag" data-slide="5" data-i18n="screen6Title">Election calendar</button>
+        <button class="carousel-tag" data-slide="6" data-i18n="screen7Title">Cast your vote</button>
+        <button class="carousel-tag" data-slide="7" data-i18n="screen8Title">Vote receipt</button>
+        <button class="carousel-tag" data-slide="8" data-i18n="screen9Title">Live results</button>
+        <button class="carousel-tag" data-slide="9" data-i18n="screen10Title">Polling centers</button>
+        <button class="carousel-tag" data-slide="10" data-i18n="screen11Title">Notifications</button>
+        <button class="carousel-tag" data-slide="11" data-i18n="screen12Title">Profile & settings</button>
+      </div>
+      <template id="carouselSlides">
+        <div class="carousel-slide active" data-slide="0">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen1Title">Citizen dashboard</div>
+              <div class="ui-sub" data-i18n="screen1Sub">Verified profile</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen1Chip">Verified</span>
+          </div>
+          <div class="ui-card">
+            <div class="ui-card-title" data-i18n="screen1CardTitle">Election countdown</div>
+            <div class="ui-row">
+              <span data-i18n="screen1Open">Opens in</span>
+              <strong>12d 04h</strong>
+            </div>
+            <div class="ui-row">
+              <span data-i18n="screen1Close">Closes in</span>
+              <strong>12d 18h</strong>
+            </div>
+          </div>
+          <div class="ui-actions">
+            <button type="button" class="ui-action" data-i18n="screen1Action1">Register</button>
+            <button type="button" class="ui-action" data-i18n="screen1Action2">Vote</button>
+            <button type="button" class="ui-action" data-i18n="screen1Action3">Map</button>
+            <button type="button" class="ui-action" data-i18n="screen1Action4">Results</button>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="1">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen2Title">Registration hub</div>
+              <div class="ui-sub" data-i18n="screen2Sub">Step-by-step guidance</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen2Chip">Onboarding</span>
+          </div>
+          <div class="ui-progress"><span></span></div>
+          <div class="ui-steps">
+            <div class="ui-step done"><span>1</span><div data-i18n="screen2Step1">Document scan</div></div>
+            <div class="ui-step active"><span>2</span><div data-i18n="screen2Step2">Biometrics</div></div>
+            <div class="ui-step"><span>3</span><div data-i18n="screen2Step3">Review & submit</div></div>
+          </div>
+          <div class="ui-status" data-i18n="screen2Status">In progress</div>
+        </div>
+        <div class="carousel-slide" data-slide="2">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen3Title">Document OCR</div>
+              <div class="ui-sub" data-i18n="screen3Sub">Auto capture and extraction</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen3Chip">OCR</span>
+          </div>
+          <div class="ui-scan">
+            <div class="ui-scan-frame">
+              <div class="ui-scan-line"></div>
+              <div class="ui-scan-tag" data-i18n="screen3ScanTitle">ID Scan</div>
+            </div>
+            <div class="ui-scan-hint" data-i18n="screen3ScanHint">Hold steady for auto-capture</div>
+          </div>
+          <div class="ui-form">
+            <div class="ui-input"><span data-i18n="screen3Field1">Full name</span><strong>•••••</strong></div>
+            <div class="ui-input"><span data-i18n="screen3Field2">Document ID</span><strong>•••••</strong></div>
+            <div class="ui-input"><span data-i18n="screen3Field3">Date of birth</span><strong>•••••</strong></div>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="3">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen4Title">Biometric check</div>
+              <div class="ui-sub" data-i18n="screen4Sub">Face + liveness verification</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen4Chip">Secure</span>
+          </div>
+          <div class="ui-biometrics">
+            <div class="ui-avatar"></div>
+            <div class="ui-bio-ring"></div>
+            <div class="ui-bio-label" data-i18n="screen4FaceTitle">Align your face</div>
+            <div class="ui-bio-sub" data-i18n="screen4FaceHint">Follow the on-screen guide</div>
+          </div>
+          <div class="ui-steps">
+            <div class="ui-step done"><span>1</span><div data-i18n="screen4Step1">Device bound keys</div></div>
+            <div class="ui-step active"><span>2</span><div data-i18n="screen4Step2">Liveness scan</div></div>
+            <div class="ui-step"><span>3</span><div data-i18n="screen4Step3">Identity locked</div></div>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="4">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen5Title">Verification status</div>
+              <div class="ui-sub" data-i18n="screen5Sub">We are reviewing your profile</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen5Chip">Review</span>
+          </div>
+          <div class="ui-timeline">
+            <div class="ui-timeline-item done"><span></span><div data-i18n="screen5Stage1">Submitted</div></div>
+            <div class="ui-timeline-item active"><span></span><div data-i18n="screen5Stage2">Verification</div></div>
+            <div class="ui-timeline-item"><span></span><div data-i18n="screen5Stage3">Approved</div></div>
+          </div>
+          <div class="ui-status" data-i18n="screen5Status">Next update in 24h</div>
+        </div>
+        <div class="carousel-slide" data-slide="5">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen6Title">Election calendar</div>
+              <div class="ui-sub" data-i18n="screen6Sub">Upcoming civic events</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen6Chip">Upcoming</span>
+          </div>
+          <div class="ui-events">
+            <div class="ui-event"><span data-i18n="screen6Event1">Municipal elections</span><strong>14d</strong></div>
+            <div class="ui-event"><span data-i18n="screen6Event2">Registration closes</span><strong>06d</strong></div>
+            <div class="ui-event"><span data-i18n="screen6Event3">Card renewal</span><strong>21d</strong></div>
+          </div>
+          <div class="ui-pill" data-i18n="screen6CountdownLabel">Personal countdowns active</div>
+        </div>
+        <div class="carousel-slide" data-slide="6">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen7Title">Cast your vote</div>
+              <div class="ui-sub" data-i18n="screen7Sub">Secure ballot selection</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen7Chip">Secure</span>
+          </div>
+          <div class="ui-candidates">
+            <div class="ui-option active"><span data-i18n="screen7Candidate1">Candidate A</span><span>✓</span></div>
+            <div class="ui-option"><span data-i18n="screen7Candidate2">Candidate B</span><span></span></div>
+            <div class="ui-option"><span data-i18n="screen7Candidate3">Candidate C</span><span></span></div>
+          </div>
+          <button class="ui-primary" type="button" data-i18n="screen7Action">Cast vote</button>
+        </div>
+        <div class="carousel-slide" data-slide="7">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen8Title">Vote receipt</div>
+              <div class="ui-sub" data-i18n="screen8Sub">Encrypted proof stored locally</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen8Chip">Receipt</span>
+          </div>
+          <div class="ui-receipt">
+            <div class="ui-receipt-line"><span data-i18n="screen8Line1">Receipt ID</span><strong>CV-2026-0041</strong></div>
+            <div class="ui-receipt-line"><span data-i18n="screen8Line2">Status</span><strong>Verified</strong></div>
+            <div class="ui-receipt-line"><span data-i18n="screen8Line3">Hash</span><strong>••••••</strong></div>
+          </div>
+          <div class="ui-status success" data-i18n="screen8Status">Saved to device</div>
+        </div>
+        <div class="carousel-slide" data-slide="8">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen9Title">Live results</div>
+              <div class="ui-sub" data-i18n="screen9Sub">Transparent regional updates</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen9Chip">Live</span>
+          </div>
+          <div class="ui-card">
+            <div class="ui-card-title" data-i18n="screen9CardTitle">Regional results</div>
+            <div class="ui-chart">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+          <div class="ui-stats">
+            <div class="ui-stat"><span data-i18n="screen9Stat1">Turnout</span><strong>72%</strong></div>
+            <div class="ui-stat"><span data-i18n="screen9Stat2">Incidents</span><strong>3</strong></div>
+            <div class="ui-stat"><span data-i18n="screen9Stat3">Map view</span><strong>On</strong></div>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="9">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen10Title">Polling centers</div>
+              <div class="ui-sub" data-i18n="screen10Sub">Cameroon + diaspora map</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen10Chip">Map</span>
+          </div>
+          <div class="ui-map">
+            <div class="ui-map-grid"></div>
+            <div class="ui-map-pin pin-1"></div>
+            <div class="ui-map-pin pin-2"></div>
+            <div class="ui-map-pin pin-3"></div>
+          </div>
+          <div class="ui-list">
+            <div class="ui-list-item"><span data-i18n="screen10Point1">Yaoundé center</span><strong>1.2 km</strong></div>
+            <div class="ui-list-item"><span data-i18n="screen10Point2">Embassy access</span><strong>Online</strong></div>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="10">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen11Title">Notifications</div>
+              <div class="ui-sub" data-i18n="screen11Sub">Official alerts and updates</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen11Chip">Live</span>
+          </div>
+          <div class="ui-notif-list">
+            <div class="ui-notif"><span data-i18n="screen11Notif1">Polling center updated</span><strong>2m</strong></div>
+            <div class="ui-notif"><span data-i18n="screen11Notif2">Eligibility unlocked</span><strong>1h</strong></div>
+            <div class="ui-notif"><span data-i18n="screen11Notif3">Results published</span><strong>Now</strong></div>
+          </div>
+        </div>
+        <div class="carousel-slide" data-slide="11">
+          <div class="ui-header">
+            <div>
+              <div class="ui-title" data-i18n="screen12Title">Profile & settings</div>
+              <div class="ui-sub" data-i18n="screen12Sub">Manage your account</div>
+            </div>
+            <span class="ui-chip" data-i18n="screen12Chip">Settings</span>
+          </div>
+          <div class="ui-settings">
+            <div class="ui-toggle"><span data-i18n="screen12Setting1">Biometric lock</span><span class="toggle on"></span></div>
+            <div class="ui-toggle"><span data-i18n="screen12Setting2">Notifications</span><span class="toggle"></span></div>
+            <div class="ui-toggle"><span data-i18n="screen12Setting3">Language</span><span class="toggle on"></span></div>
+          </div>
+          <button class="ui-secondary" type="button" data-i18n="screen12Action">Get support</button>
+        </div>
+      </template>
+    </section>
+
+
+    <section class="pillars">
+      <div class="pillar reveal">
+        <h3 data-i18n="pillar1Title">Smart registration</h3>
+        <p data-i18n="pillar1Body">Guided steps with OCR and verification to avoid errors.</p>
+      </div>
+      <div class="pillar reveal">
+        <h3 data-i18n="pillar2Title">Trusted voting</h3>
+        <p data-i18n="pillar2Body">Device-bound signatures, biometrics, and audit trails.</p>
+      </div>
+      <div class="pillar reveal">
+        <h3 data-i18n="pillar3Title">Civic clarity</h3>
+        <p data-i18n="pillar3Body">Legal texts, civic education, and transparency tools.</p>
+      </div>
+    </section>
+
+    <section class="metrics reveal">
+      <div class="metrics-card">
+        <div>
+          <h2 data-i18n="metricsTitle">Built for scale</h2>
+          <p data-i18n="metricsSubtitle">Designed to support nationwide participation and diaspora voters.</p>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-value" data-count="10">0</div>
+            <div class="metric-label" data-i18n="metricCard1">Regions covered</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" data-count="100">0</div>
+            <div class="metric-label" data-i18n="metricCard2">Countries reachable</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" data-count="24">0</div>
+            <div class="metric-label" data-i18n="metricCard3">/7 official updates</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-value" data-count="100">0</div>
+            <div class="metric-label" data-i18n="metricCard4">% audit visibility</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="integrity reveal">
+      <div class="integrity-copy">
+        <h2 data-i18n="integrityTitle">Security you can see</h2>
+        <p data-i18n="integrityBody">Every action is signed, verified, and audited with device-bound security.</p>
+        <div class="integrity-grid">
+          <div class="integrity-item" data-i18n="integrityItem1">Device-bound cryptography</div>
+          <div class="integrity-item" data-i18n="integrityItem2">Biometric check-in</div>
+          <div class="integrity-item" data-i18n="integrityItem3">Fraud monitoring</div>
+          <div class="integrity-item" data-i18n="integrityItem4">Audit-ready history</div>
+        </div>
+      </div>
+      <div class="integrity-visual">
+        <div class="security-ring">
+          <div class="ring-core">
+            <img src="media/app_icon.png" alt="" />
+            <span data-i18n="integrityBadge">Protected</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="journey reveal">
+      <div class="journey-left">
+        <h2 data-i18n="journeyTitle">A guided journey</h2>
+        <p data-i18n="journeyBody">From onboarding to voting day, the app keeps citizens aligned and confident.</p>
+        <ul class="journey-list">
+          <li data-i18n="journey1">Scan documents, verify identity, and secure your device.</li>
+          <li data-i18n="journey2">Find polling centers in Cameroon or abroad.</li>
+          <li data-i18n="journey3">Track eligibility, card renewal, and election countdowns.</li>
+        </ul>
+      </div>
+      <div class="journey-right">
+        <div class="timeline">
+          <div class="timeline-item">
+            <span>01</span>
+            <div>
+              <div class="timeline-title" data-i18n="step1Title">Download</div>
+              <div class="timeline-body" data-i18n="step1Body">Install the official CamVote app from the store.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span>02</span>
+            <div>
+              <div class="timeline-title" data-i18n="step2Title">Verify</div>
+              <div class="timeline-body" data-i18n="step2Body">Create your secure device profile with biometrics.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <span>03</span>
+            <div>
+              <div class="timeline-title" data-i18n="step3Title">Participate</div>
+              <div class="timeline-body" data-i18n="step3Body">Register, vote, and track results on the go.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="coverage reveal">
+      <div class="coverage-card">
+        <div class="coverage-map">
+          <div class="map-grid"></div>
+          <div class="map-pin pin-1"></div>
+          <div class="map-pin pin-2"></div>
+          <div class="map-pin pin-3"></div>
+          <img class="map-watermark" src="media/cameroon_coat_of_arms.png" alt="" />
+        </div>
+        <div class="coverage-copy">
+          <h2 data-i18n="coverageTitle">Nationwide + diaspora coverage</h2>
+          <p data-i18n="coverageBody">Polling centers, embassies, and diaspora hubs stay visible for every citizen.</p>
+          <ul class="coverage-list">
+            <li data-i18n="coveragePoint1">Add or update polling centers fast.</li>
+            <li data-i18n="coveragePoint2">Support for voters abroad.</li>
+            <li data-i18n="coveragePoint3">Map-first discovery and guidance.</li>
+          </ul>
+          <div class="coverage-tags">
+            <span data-i18n="coverageTag1">Admin-managed</span>
+            <span data-i18n="coverageTag2">Always current</span>
+            <span data-i18n="coverageTag3">Global access</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="receipt reveal">
+      <div class="receipt-card">
+        <div class="receipt-copy">
+          <h2 data-i18n="receiptTitle">Your secure receipt</h2>
+          <p data-i18n="receiptBody">Every vote generates a private, verifiable receipt stored securely on your device.</p>
+          <div class="receipt-tags">
+            <span data-i18n="receiptTag1">Encrypted</span>
+            <span data-i18n="receiptTag2">Private</span>
+            <span data-i18n="receiptTag3">Verifiable</span>
+          </div>
+        </div>
+        <div class="receipt-paper">
+          <div class="receipt-watermark">
+            <img src="media/cameroon_coat_of_arms.png" alt="" />
+          </div>
+          <div class="receipt-header" data-i18n="receiptHeader">CamVote Receipt</div>
+          <div class="receipt-row"><span data-i18n="receiptLine1">Election</span><strong data-i18n="receiptLine1Value">General</strong></div>
+          <div class="receipt-row"><span data-i18n="receiptLine2">Status</span><strong data-i18n="receiptLine2Value">Verified</strong></div>
+          <div class="receipt-row"><span data-i18n="receiptLine3">Timestamp</span><strong data-i18n="receiptLine3Value">Secure</strong></div>
+          <div class="receipt-code">CamVote-SECURE-XXXX</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="support reveal">
+      <div class="support-card">
+        <div>
+          <h2 data-i18n="supportTitle">Always supported</h2>
+          <p data-i18n="supportBody">Help and guidance are built into the app for every voter.</p>
+        </div>
+        <div class="support-grid">
+          <div class="support-item" data-i18n="supportItem1">Help center & FAQs</div>
+          <div class="support-item" data-i18n="supportItem2">Report incidents fast</div>
+          <div class="support-item" data-i18n="supportItem3">Accessibility-first flows</div>
+          <div class="support-item" data-i18n="supportItem4">Localized guidance</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust reveal">
+      <div class="trust-card">
+        <div>
+          <h2 data-i18n="trustTitle">Built for trust</h2>
+          <p data-i18n="trustBody">CamVote uses device-bound security, transparent results, and official civic sources so citizens can act with confidence.</p>
+        </div>
+        <img src="media/cameroon_coat_of_arms.png" alt="" />
+      </div>
+    </section>
+
+    <section class="faq reveal">
+      <div class="faq-head">
+        <h2 data-i18n="faqTitle">Frequently asked</h2>
+        <p data-i18n="faqSubtitle">Quick answers for citizens and first-time voters.</p>
+      </div>
+      <div class="faq-grid">
+        <details open>
+          <summary data-i18n="faqQ1">Is the app official?</summary>
+          <p data-i18n="faqA1">Yes. CamVote consolidates official civic sources and verified election updates.</p>
+        </details>
+        <details>
+          <summary data-i18n="faqQ2">Is my vote private?</summary>
+          <p data-i18n="faqA2">Your vote is protected with device-bound cryptography and never shared publicly.</p>
+        </details>
+        <details>
+          <summary data-i18n="faqQ3">Can I vote from abroad?</summary>
+          <p data-i18n="faqA3">Yes. The app includes diaspora polling centers and embassy locations.</p>
+        </details>
+        <details>
+          <summary data-i18n="faqQ4">What if my card expires?</summary>
+          <p data-i18n="faqA4">You will receive renewal warnings and guided steps to update your card.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="download reveal">
+      <div>
+        <h2 data-i18n="ctaTitle">Ready to install?</h2>
+        <p data-i18n="ctaBody">Choose your store and get started in minutes.</p>
+      </div>
+        <div class="qr-wrap" id="qrWrap">
+          <div class="qr-title" data-i18n="qrTitle">Scan to install</div>
+          <div class="qr-row">
+            <div class="qr-card qr-card--smart" id="qrSmartCard">
+              <div class="qr-aura" aria-hidden="true"></div>
+              <div class="qr-scanline" aria-hidden="true"></div>
+              <img id="smartQr" alt="CamVote download QR" />
+              <div class="qr-burst" id="qrBurst" aria-hidden="true"></div>
+              <span data-i18n="qrHint">Opens the right store for your device</span>
+            </div>
+          </div>
+        </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>&copy; CamVote</span>
+    <span data-i18n="footer">Official civic participation platform.</span>
+    <a class="footer-link" href="ATTRIBUTIONS.md" target="_blank" rel="noopener" data-i18n="footerAttributions">Attributions</a>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
