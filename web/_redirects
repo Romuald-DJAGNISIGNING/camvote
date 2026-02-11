@@ -1,0 +1,7 @@
+/mobile/app-store/ /mobile/app-store/index.html 200
+/mobile/ /mobile/index.html 200
+/general /portal 302
+/general/ /portal 302
+/admin-home /backoffice 302
+/admin-home/ /backoffice 302
+/* /index.html 200

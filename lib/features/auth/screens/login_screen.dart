@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,9 +14,13 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../shared/biometrics/biometric_gate.dart';
 import '../../../shared/liveness/liveness_challenge_screen.dart';
+import '../models/auth_error_codes.dart';
 import '../providers/auth_providers.dart';
+import '../utils/auth_error_utils.dart';
+import '../../onboarding/screens/role_gateway_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key, required this.role});
@@ -40,12 +46,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    if (kIsWeb && widget.role == AppRole.voter) {
+      return const RoleGatewayScreen(isGeneralWebPortal: true);
+    }
     final authAsync = ref.watch(authControllerProvider);
     final isLoading = authAsync.isLoading;
-    final error =
-        authAsync.asData?.value.errorMessage ?? authAsync.error?.toString();
+    final authState = authAsync.asData?.value;
+    final error = _resolveError(
+      t,
+      authState?.errorCode,
+      authState?.errorMessage ?? authAsync.error?.toString(),
+    );
     final biometricEnabled = ref.watch(biometricLoginEnabledProvider);
-    final biometricProfile = ref.watch(biometricLoginProfileProvider);
+    final showPortalSignInAnimation =
+        isLoading &&
+        (widget.role == AppRole.admin || widget.role == AppRole.observer);
 
     final roleLabel = switch (widget.role) {
       AppRole.voter => t.modeVoterTitle,
@@ -55,164 +70,214 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.loginTitle(roleLabel))),
-      body: BrandBackdrop(
-        child: ResponsiveContent(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              CamStagger(
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.loginTitle(roleLabel)),
+      ),
+      body: Stack(
+        children: [
+          BrandBackdrop(
+            child: ResponsiveContent(
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
-                  const SizedBox(height: 8),
-                  _RoleHero(roleLabel: roleLabel, role: widget.role),
-                  const SizedBox(height: 12),
-                  BrandHeader(
-                    title: t.loginHeaderTitle(roleLabel),
-                    subtitle: t.loginHeaderSubtitle,
-                  ),
-                  const SizedBox(height: 16),
-                  _SecurityStrip(role: widget.role),
-                  const SizedBox(height: 18),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: AutofillGroup(
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              TextFormField(
-                                controller: _idCtrl,
-                                textInputAction: TextInputAction.next,
-                                autofillHints: const [
-                                  AutofillHints.username,
-                                  AutofillHints.email,
-                                ],
-                                decoration: InputDecoration(
-                                  labelText: t.loginIdentifierLabel,
-                                  border: const OutlineInputBorder(),
-                                ),
-                                validator: (v) =>
-                                    (v == null || v.trim().isEmpty)
+                  CamStagger(
+                    children: [
+                      const SizedBox(height: 8),
+                      _RoleHero(roleLabel: roleLabel, role: widget.role),
+                      const SizedBox(height: 12),
+                      BrandHeader(
+                        title: t.loginHeaderTitle(roleLabel),
+                        subtitle: t.loginHeaderSubtitle,
+                      ),
+                      const SizedBox(height: 16),
+                      _SecurityStrip(role: widget.role),
+                      const SizedBox(height: 18),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: AutofillGroup(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _idCtrl,
+                                    textInputAction: TextInputAction.next,
+                                    autofillHints: const [
+                                      AutofillHints.username,
+                                      AutofillHints.email,
+                                    ],
+                                    decoration: InputDecoration(
+                                      labelText: t.loginIdentifierLabel,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
                                         ? t.requiredField
                                         : null,
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _pwCtrl,
-                                textInputAction: TextInputAction.done,
-                                autofillHints: const [AutofillHints.password],
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: t.loginPasswordLabel,
-                                  border: const OutlineInputBorder(),
-                                ),
-                                validator: (v) =>
-                                    (v == null || v.trim().length < 6)
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _pwCtrl,
+                                    textInputAction: TextInputAction.done,
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    obscureText: true,
+                                    decoration: InputDecoration(
+                                      labelText: t.loginPasswordLabel,
+                                      border: const OutlineInputBorder(),
+                                    ),
+                                    validator: (v) =>
+                                        (v == null || v.trim().length < 6)
                                         ? t.passwordMinLength(6)
                                         : null,
-                              ),
-                              const SizedBox(height: 16),
-                              FilledButton(
-                                onPressed: isLoading
-                                    ? null
-                                    : () async {
-                                        if (!_formKey.currentState!.validate()) return;
-                                        await ref
-                                            .read(authControllerProvider.notifier)
-                                            .login(
-                                              identifier: _idCtrl.text,
-                                              password: _pwCtrl.text,
-                                              role: widget.role,
-                                            );
+                                  ),
+                                  const SizedBox(height: 16),
+                                  FilledButton(
+                                    onPressed: isLoading
+                                        ? null
+                                        : () async {
+                                            if (!_formKey.currentState!
+                                                .validate()) {
+                                              return;
+                                            }
+                                            await ref
+                                                .read(
+                                                  authControllerProvider
+                                                      .notifier,
+                                                )
+                                                .login(
+                                                  identifier: _idCtrl.text,
+                                                  password: _pwCtrl.text,
+                                                  role: widget.role,
+                                                );
 
-                                        final s = ref
-                                            .read(authControllerProvider)
-                                            .asData
-                                            ?.value;
-                                        if (s == null || !s.isAuthenticated) return;
-                                        if (!context.mounted) return;
-                                        context.go(_destinationForRole(s.user!.role));
-                                      },
-                                child: Text(isLoading ? t.signingIn : t.signIn),
+                                            final s = ref
+                                                .read(authControllerProvider)
+                                                .asData
+                                                ?.value;
+                                            if (s == null) return;
+                                            if (s.errorCode ==
+                                                AuthErrorCodes
+                                                    .accountArchived) {
+                                              if (!context.mounted) return;
+                                              context.go(
+                                                RoutePaths.authArchived,
+                                              );
+                                              return;
+                                            }
+                                            if (!s.isAuthenticated) return;
+                                            if (!context.mounted) return;
+                                            context.go(
+                                              _destinationForRole(s.user!.role),
+                                            );
+                                          },
+                                    child: Text(
+                                      isLoading ? t.signingIn : t.signIn,
+                                    ),
+                                  ),
+                                  if (error != null && error.isNotEmpty) ...[
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      error,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.error,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  TextButton(
+                                    onPressed: () => context.push(
+                                      '${RoutePaths.authForgot}?role=${widget.role.apiValue}',
+                                    ),
+                                    child: Text(t.forgotPassword),
+                                  ),
+                                  const Divider(height: 24),
+                                  biometricEnabled.when(
+                                    data: (enabled) {
+                                      if (!enabled) {
+                                        return const SizedBox.shrink();
+                                      }
+                                      return FutureBuilder<bool>(
+                                        future: BiometricGate()
+                                            .hasEnrolledBiometrics(),
+                                        builder: (context, snapshot) {
+                                          final hasEnrolled =
+                                              snapshot.data ?? false;
+                                          final buttonLabel = hasEnrolled
+                                              ? t.reverifyBiometrics
+                                              : t.enrollNow;
+                                          return FilledButton.tonalIcon(
+                                            onPressed: isLoading
+                                                ? null
+                                                : _handleBiometricLogin,
+                                            icon: const Icon(Icons.fingerprint),
+                                            label: Text(buttonLabel),
+                                          );
+                                        },
+                                      );
+                                    },
+                                    loading: () => const SizedBox.shrink(),
+                                    error: (error, stackTrace) =>
+                                        const SizedBox.shrink(),
+                                  ),
+                                ],
                               ),
-                              if (error != null && error.isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  error,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color:
-                                            Theme.of(context).colorScheme.error,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                ),
-                              ],
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () => context.push(RoutePaths.authForgot),
-                                child: Text(t.forgotPassword),
-                              ),
-                              const Divider(height: 24),
-                              biometricEnabled.when(
-                                data: (enabled) {
-                                  if (!enabled) return const SizedBox.shrink();
-                                  final label = biometricProfile.maybeWhen(
-                                    data: (p) =>
-                                        p == null || p.displayName.isEmpty
-                                            ? t.biometricLogin
-                                            : t.continueAs(p.displayName),
-                                    orElse: () => t.biometricLogin,
-                                  );
-                                  return FilledButton.tonalIcon(
-                                    onPressed:
-                                        isLoading ? null : _handleBiometricLogin,
-                                    icon: const Icon(Icons.fingerprint),
-                                    label: Text(label),
-                                  );
-                                },
-                                loading: () => const SizedBox.shrink(),
-                                error: (error, stackTrace) =>
-                                    const SizedBox.shrink(),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (widget.role == AppRole.voter)
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.app_registration_outlined),
-                        title: Text(t.newVoterRegistrationTitle),
-                        subtitle: Text(t.newVoterRegistrationSubtitle),
-                        onTap: () => context.push(RoutePaths.register),
+                      const SizedBox(height: 16),
+                      if (widget.role == AppRole.voter)
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.app_registration_outlined,
+                            ),
+                            title: Text(t.newVoterRegistrationTitle),
+                            subtitle: Text(t.newVoterRegistrationSubtitle),
+                            onTap: () => context.push(RoutePaths.register),
+                          ),
+                        ),
+                      Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.support_agent_outlined),
+                          title: Text(t.helpSupportTitle),
+                          subtitle: Text(t.helpSupportLoginSubtitle),
+                          onTap: () => context.push(RoutePaths.helpSupport),
+                        ),
                       ),
-                    ),
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.support_agent_outlined),
-                      title: Text(t.helpSupportTitle),
-                      subtitle: Text(t.helpSupportLoginSubtitle),
-                      onTap: () => context.push(RoutePaths.helpSupport),
-                    ),
+                    ],
                   ),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          if (showPortalSignInAnimation)
+            Positioned.fill(
+              child: _RoleSignInLoadingOverlay(
+                title: t.signingIn,
+                subtitle: widget.role == AppRole.admin
+                    ? t.adminDashboard
+                    : t.observerDashboard,
+              ),
+            ),
+        ],
       ),
     );
   }
 
   String _destinationForRole(AppRole role) {
     return switch (role) {
-      AppRole.voter => RoutePaths.voterShell,
+      AppRole.voter => kIsWeb ? RoutePaths.webPortal : RoutePaths.voterShell,
       AppRole.observer => RoutePaths.observerDashboard,
       AppRole.admin => RoutePaths.adminDashboard,
       _ => RoutePaths.publicHome,
@@ -227,15 +292,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     final gate = BiometricGate();
+    final enrolled = await gate.hasEnrolledBiometrics();
     final supported = await gate.isSupported();
     if (!supported) {
-      _toast(t.biometricNotAvailable);
+      _toast(enrolled ? t.biometricNotAvailable : t.biometricEnrollRequired);
       return;
     }
 
-    final ok = await gate.requireBiometric(
-      reason: t.biometricReasonSignIn,
-    );
+    final ok = await gate.requireBiometric(reason: t.biometricReasonSignIn);
     if (!ok) return;
 
     if (!mounted) return;
@@ -251,9 +315,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String? _resolveError(
+    AppLocalizations t,
+    String? code,
+    String? fallbackError,
+  ) {
+    final normalized = (code ?? fallbackError ?? '').trim();
+    if (normalized.isEmpty) return null;
+
+    final authCode = code ?? authErrorCodeFromException(fallbackError ?? '');
+    if (authCode == AuthErrorCodes.unknown && fallbackError != null) {
+      return t.genericErrorLabel;
+    }
+    return authErrorMessageFromCode(t, authCode);
   }
 }
 
@@ -335,7 +414,9 @@ class _SecurityStrip extends StatelessWidget {
     final chips = <String>[
       t.securityChipBiometric,
       t.securityChipLiveness,
-      role == AppRole.admin ? t.securityChipAuditReady : t.securityChipFraudShield,
+      role == AppRole.admin
+          ? t.securityChipAuditReady
+          : t.securityChipFraudShield,
     ];
 
     return Wrap(
@@ -347,6 +428,130 @@ class _SecurityStrip extends StatelessWidget {
           backgroundColor: cs.surfaceContainerHighest.withAlpha(180),
         );
       }).toList(),
+    );
+  }
+}
+
+class _RoleSignInLoadingOverlay extends StatefulWidget {
+  const _RoleSignInLoadingOverlay({
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String title;
+  final String subtitle;
+
+  @override
+  State<_RoleSignInLoadingOverlay> createState() =>
+      _RoleSignInLoadingOverlayState();
+}
+
+class _RoleSignInLoadingOverlayState extends State<_RoleSignInLoadingOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2200),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return AbsorbPointer(
+      child: Container(
+        color: Colors.black.withAlpha(150),
+        alignment: Alignment.center,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            final angle = _controller.value * 2 * math.pi;
+            final pulse = 1 + (math.sin(angle) * 0.045);
+            return Transform.scale(
+              scale: pulse,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 184,
+                    height: 184,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Transform.rotate(
+                          angle: angle,
+                          child: Container(
+                            width: 184,
+                            height: 184,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withAlpha(170),
+                                width: 2.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Transform.rotate(
+                          angle: -angle * 1.6,
+                          child: Container(
+                            width: 146,
+                            height: 146,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withAlpha(115),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 102,
+                          height: 102,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withAlpha(255),
+                                Colors.white.withAlpha(210),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: const CamVoteLogo(size: 52),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    widget.title,
+                    style: textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.subtitle,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withAlpha(220),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

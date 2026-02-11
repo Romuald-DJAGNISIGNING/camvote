@@ -11,9 +11,14 @@ import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../../core/theme/role_theme.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
+import '../utils/auth_error_utils.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  const ForgotPasswordScreen({super.key, this.role});
+
+  final AppRole? role;
 
   @override
   ConsumerState<ForgotPasswordScreen> createState() =>
@@ -37,7 +42,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final isLoading = authAsync.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.forgotPasswordTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.forgotPasswordTitle),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: ListView(
@@ -61,8 +69,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         labelText: t.loginIdentifierLabel,
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? t.requiredField : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? t.requiredField
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -71,16 +80,31 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         ? null
                         : () async {
                             if (!_formKey.currentState!.validate()) return;
-                            await ref
-                                .read(authControllerProvider.notifier)
-                                .requestPasswordReset(_ctrl.text);
+                            try {
+                              await ref
+                                  .read(authControllerProvider.notifier)
+                                  .requestPasswordReset(
+                                    _ctrl.text,
+                                    role: widget.role,
+                                  );
+                            } catch (error) {
+                              if (!context.mounted) return;
+                              final code = authErrorCodeFromException(error);
+                              final message = authErrorMessageFromCode(t, code);
+                              ScaffoldMessenger.of(
+                                context,
+                              ).showSnackBar(SnackBar(content: Text(message)));
+                              return;
+                            }
                             if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text(t.forgotPasswordSuccess)),
                             );
                           },
                     child: Text(
-                      isLoading ? t.forgotPasswordSending : t.forgotPasswordSend,
+                      isLoading
+                          ? t.forgotPasswordSending
+                          : t.forgotPasswordSend,
                     ),
                   ),
                   const SizedBox(height: 12),
