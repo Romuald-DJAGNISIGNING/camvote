@@ -19,6 +19,18 @@ class CamRouteTransitions {
     CamRouteTransition transition = CamRouteTransition.fadeThrough,
     Duration? duration,
   }) {
+    if (kIsWeb) {
+      return CustomTransitionPage<T>(
+        key: state.pageKey,
+        child: child,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return child;
+        },
+      );
+    }
+
     if (defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
       return CupertinoPage<T>(key: state.pageKey, child: child);

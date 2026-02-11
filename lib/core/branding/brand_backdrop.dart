@@ -76,7 +76,9 @@ class BrandBackdrop extends StatelessWidget {
               Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: cs.surface.withAlpha(isDark ? 206 : 236),
+                    // Keep readability without the heavy gray wash that can
+                    // make onboarding and portal screens look "frozen".
+                    color: cs.surface.withAlpha(isDark ? 70 : 36),
                   ),
                 ),
               ),
@@ -145,7 +147,8 @@ class _BackdropVisualProfile {
     final compact = shortest < 460 || area < 260000;
 
     return _BackdropVisualProfile(
-      showPatternTexture: !ultraCompact,
+      // On web this subtle texture can read as a gray filter on some GPUs.
+      showPatternTexture: !kIsWeb && !ultraCompact,
       showSecondaryGlow: !compact,
       showPulseRim: !compact && !reduceMotion,
       textureOpacity: ultraCompact ? 0.08 : (compact ? 0.12 : 0.18),

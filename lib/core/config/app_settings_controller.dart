@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 import '../theme/app_theme_style.dart';
 
@@ -49,6 +50,15 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     locale: Locale('en'),
     hasSeenOnboarding: false,
   );
+  static const Set<String> _allowedThemeStyleIds = {
+    'classic',
+    'cameroon',
+    'geek',
+    'fruity',
+    'pro',
+    'magic',
+    'fun',
+  };
 
   SharedPreferences? _prefs;
 
@@ -59,10 +69,20 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
       return _fallback;
     }
 
-    final themeRaw = prefs.getString(_kTheme) ?? 'system';
-    final themeStyleRaw = prefs.getString(_kThemeStyle) ?? 'classic';
+    var themeRaw = prefs.getString(_kTheme) ?? 'system';
+    var themeStyleRaw = prefs.getString(_kThemeStyle) ?? 'classic';
     final localeRaw = prefs.getString(_kLocale) ?? 'en';
     final hasSeenOnboarding = prefs.getBool(_kOnboarding) ?? false;
+
+    var needsWriteBack = false;
+    if (themeRaw != 'light' && themeRaw != 'dark' && themeRaw != 'system') {
+      themeRaw = 'system';
+      needsWriteBack = true;
+    }
+    if (!_allowedThemeStyleIds.contains(themeStyleRaw)) {
+      themeStyleRaw = 'classic';
+      needsWriteBack = true;
+    }
 
     final themeMode = switch (themeRaw) {
       'light' => ThemeMode.light,
@@ -73,12 +93,20 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     final locale = Locale(localeRaw);
     final themeStyle = AppThemeStyleX.fromId(themeStyleRaw);
 
-    return AppSettingsState(
+    final resolved = AppSettingsState(
       themeMode: themeMode,
       themeStyle: themeStyle,
       locale: locale,
       hasSeenOnboarding: hasSeenOnboarding,
     );
+
+    if (needsWriteBack) {
+      // Normalize corrupted/legacy values so future startups stay stable.
+      unawaited(_setString(_kTheme, themeRaw));
+      unawaited(_setString(_kThemeStyle, themeStyleRaw));
+    }
+
+    return resolved;
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

@@ -259,6 +259,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
           route: '${RoutePaths.helpSupport}?ticketId=${result.ticketId}',
           alsoPush: true,
         );
+    if (!mounted) return;
 
     FocusScope.of(context).unfocus();
     setState(() => _category = SupportCategory.registration);

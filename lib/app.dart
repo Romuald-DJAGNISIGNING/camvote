@@ -90,72 +90,83 @@ class _WebActionDock extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final route = _routeContextOrDefault(context);
-    if (_hideDockOnRoute(route.path)) {
-      return child;
-    }
+    try {
+      final route = _routeContextOrDefault(context);
+      if (_hideDockOnRoute(route.path)) {
+        return child;
+      }
 
-    final t = AppLocalizations.of(context);
-    final auth = ref.watch(authControllerProvider).asData?.value;
-    final isAdminAuthed =
-        auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
-    final isAdminContext =
-        route.entry == 'admin' ||
-        route.path.startsWith(RoutePaths.adminDashboard) ||
-        route.path == RoutePaths.adminPortal;
-    final showBell = route.path != RoutePaths.notifications;
+      final t = Localizations.of<AppLocalizations>(context, AppLocalizations);
+      if (t == null) return child;
 
-    return Stack(
-      children: [
-        child,
-        Positioned(
-          top: 8,
-          right: 8,
-          child: SafeArea(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface.withAlpha(230),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outlineVariant.withAlpha(90),
+      final auth = ref.watch(authControllerProvider).asData?.value;
+      final isAdminAuthed =
+          auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
+      final isAdminContext =
+          route.entry == 'admin' ||
+          route.path.startsWith(RoutePaths.adminDashboard) ||
+          route.path == RoutePaths.adminPortal;
+      final showBell = route.path != RoutePaths.notifications;
+
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          child,
+          Positioned(
+            top: 8,
+            right: 8,
+            child: SafeArea(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface.withAlpha(230),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withAlpha(90),
+                  ),
                 ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (showBell)
-                      NotificationBell(
-                        onOpen: () {
-                          context.push(RoutePaths.notifications);
-                        },
-                      ),
-                    IconButton(
-                      tooltip: t.settings,
-                      onPressed: () {
-                        final entry = isAdminContext ? 'admin' : 'general';
-                        context.push('${RoutePaths.settings}?entry=$entry');
-                      },
-                      icon: const Icon(Icons.settings_outlined),
-                    ),
-                    if (isAdminAuthed &&
-                        !route.path.startsWith(RoutePaths.adminDashboard))
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (showBell)
+                        NotificationBell(
+                          onOpen: () {
+                            context.push(RoutePaths.notifications);
+                          },
+                        ),
                       IconButton(
-                        tooltip: t.modeAdminTitle,
-                        onPressed: () => context.go(RoutePaths.adminDashboard),
-                        icon: const Icon(Icons.admin_panel_settings_outlined),
+                        tooltip: t.settings,
+                        onPressed: () {
+                          final entry = isAdminContext ? 'admin' : 'general';
+                          context.push('${RoutePaths.settings}?entry=$entry');
+                        },
+                        icon: const Icon(Icons.settings_outlined),
                       ),
-                  ],
+                      if (isAdminAuthed &&
+                          !route.path.startsWith(RoutePaths.adminDashboard))
+                        IconButton(
+                          tooltip: t.modeAdminTitle,
+                          onPressed: () =>
+                              context.go(RoutePaths.adminDashboard),
+                          icon: const Icon(Icons.admin_panel_settings_outlined),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    } catch (_) {
+      return child;
+    }
   }
 
   bool _hideDockOnRoute(String path) {

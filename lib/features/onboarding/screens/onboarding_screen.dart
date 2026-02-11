@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -7,12 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
-import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/config/app_settings_controller.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -38,109 +37,86 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final isLastSlide = _index == slides.length - 1;
 
     return Scaffold(
-      body: BrandBackdrop(
-        child: SafeArea(
-          child: ResponsiveContent(
-            padding: EdgeInsets.zero,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isCompact = constraints.maxHeight < 640;
-                final isTight = constraints.maxHeight < 600;
-                final horizontalPad = constraints.maxWidth < 360 ? 12.0 : 16.0;
-                final verticalPad = isTight ? 6.0 : (isCompact ? 10.0 : 16.0);
+      appBar: NotificationAppBar(
+        showBack: false,
+        showBell: false,
+        title: CamVoteLogo(showText: true, size: 30),
+      ),
+      body: SafeArea(
+        child: ResponsiveContent(
+          padding: EdgeInsets.zero,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxHeight < 640;
+              final isTight = constraints.maxHeight < 600;
+              final horizontalPad = constraints.maxWidth < 360 ? 12.0 : 16.0;
+              final verticalPad = isTight ? 6.0 : (isCompact ? 10.0 : 16.0);
 
-                return Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPad,
-                    verticalPad,
-                    horizontalPad,
-                    isCompact ? 16 : 20,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          CamVoteLogo(showText: true, size: isTight ? 34 : 40),
-                          TextButton(
-                            onPressed: _finish,
-                            child: Text(t.onboardingSkip),
-                          ),
-                        ],
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPad,
+                  verticalPad,
+                  horizontalPad,
+                  isCompact ? 16 : 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _finish,
+                        child: Text(t.onboardingSkip),
                       ),
-                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
-                      Text(
-                        t.slogan,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            (isCompact
-                                    ? Theme.of(context).textTheme.titleSmall
-                                    : Theme.of(context).textTheme.titleMedium)
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: isTight ? 2 : (isCompact ? 4 : 8)),
+                    Text(
+                      t.slogan,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          (isCompact
+                                  ? Theme.of(context).textTheme.titleSmall
+                                  : Theme.of(context).textTheme.titleMedium)
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
+                    Expanded(
+                      child: PageView.builder(
+                        controller: _controller,
+                        allowImplicitScrolling: true,
+                        physics: kIsWeb
+                            ? const ClampingScrollPhysics()
+                            : const PageScrollPhysics(),
+                        itemCount: slides.length,
+                        onPageChanged: (i) {
+                          if (i == _index) return;
+                          setState(() => _index = i);
+                        },
+                        itemBuilder: (context, i) {
+                          return _SlideCard(
+                            slide: slides[i],
+                            isActive: i == _index,
+                          );
+                        },
                       ),
-                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
-                      Expanded(
-                        child: PageView.builder(
-                          controller: _controller,
-                          allowImplicitScrolling: true,
-                          physics: kIsWeb
-                              ? const ClampingScrollPhysics()
-                              : const PageScrollPhysics(),
-                          itemCount: slides.length,
-                          onPageChanged: (i) {
-                            if (i == _index) return;
-                            setState(() => _index = i);
-                          },
-                          itemBuilder: (context, i) {
-                            return _SlideCard(
-                              slide: slides[i],
-                              isActive: i == _index,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 10)),
-                      _PageIndicator(count: slides.length, index: _index),
-                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
-                      LayoutBuilder(
-                        builder: (context, btnConstraints) {
-                          final stack = btnConstraints.maxWidth < 360;
-                          if (stack) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (_index > 0)
-                                  OutlinedButton(
-                                    onPressed: _back,
-                                    child: Text(t.onboardingBack),
-                                  ),
-                                if (_index > 0) const SizedBox(height: 10),
-                                FilledButton.icon(
-                                  onPressed: () => _next(slides.length),
-                                  icon: Icon(
-                                    isLastSlide
-                                        ? Icons.rocket_launch
-                                        : Icons.arrow_forward,
-                                  ),
-                                  label: Text(
-                                    isLastSlide
-                                        ? t.onboardingEnter
-                                        : t.onboardingNext,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                          return Row(
+                    ),
+                    SizedBox(height: isTight ? 4 : (isCompact ? 6 : 10)),
+                    _PageIndicator(count: slides.length, index: _index),
+                    SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
+                    LayoutBuilder(
+                      builder: (context, btnConstraints) {
+                        final stack = btnConstraints.maxWidth < 360;
+                        if (stack) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               if (_index > 0)
                                 OutlinedButton(
                                   onPressed: _back,
                                   child: Text(t.onboardingBack),
                                 ),
-                              const Spacer(),
+                              if (_index > 0) const SizedBox(height: 10),
                               FilledButton.icon(
                                 onPressed: () => _next(slides.length),
                                 icon: Icon(
@@ -156,13 +132,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                               ),
                             ],
                           );
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
+                        }
+                        return Row(
+                          children: [
+                            if (_index > 0)
+                              OutlinedButton(
+                                onPressed: _back,
+                                child: Text(t.onboardingBack),
+                              ),
+                            const Spacer(),
+                            FilledButton.icon(
+                              onPressed: () => _next(slides.length),
+                              icon: Icon(
+                                isLastSlide
+                                    ? Icons.rocket_launch
+                                    : Icons.arrow_forward,
+                              ),
+                              label: Text(
+                                isLastSlide
+                                    ? t.onboardingEnter
+                                    : t.onboardingNext,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -189,12 +188,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    unawaited(
-      ref
-          .read(appSettingsProvider.notifier)
-          .setOnboardingSeen(true)
-          .catchError((_) {}),
-    );
+    try {
+      await ref.read(appSettingsProvider.notifier).setOnboardingSeen(true);
+    } catch (_) {
+      // Fail open: still continue to the target route.
+    }
     if (!mounted) return;
     context.go(kIsWeb ? RoutePaths.webPortal : RoutePaths.gateway);
   }

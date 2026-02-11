@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 class RouteTransitions {
@@ -6,6 +7,18 @@ class RouteTransitions {
     required GoRouterState state,
     required Widget child,
   }) {
+    if (kIsWeb) {
+      return CustomTransitionPage<T>(
+        key: state.pageKey,
+        child: child,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return child;
+        },
+      );
+    }
+
     return CustomTransitionPage<T>(
       key: state.pageKey,
       child: child,
