@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
@@ -6,16 +7,22 @@ import 'package:camvote/gen/l10n/app_localizations.dart';
 import 'core/l10n/app_locales.dart';
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme_style.dart';
 import 'core/theme/role_theme.dart';
 import 'core/config/app_settings_controller.dart';
 import 'core/widgets/feedback/cam_toast.dart';
-
-import 'core/widgets/loaders/cameroon_election_loader.dart';
-import 'core/branding/brand_backdrop.dart';
-import 'core/branding/brand_logo.dart';
+import 'core/widgets/navigation/back_swipe.dart';
+import 'core/web/tab_close_guard.dart';
+import 'features/auth/providers/auth_providers.dart';
 import 'features/notifications/domain/cam_notification.dart';
 import 'features/notifications/providers/notifications_providers.dart';
 
+const _defaultAppSettings = AppSettingsState(
+  themeMode: ThemeMode.system,
+  themeStyle: AppThemeStyle.classic,
+  locale: Locale('en'),
+  hasSeenOnboarding: false,
+);
 
 class CamVoteApp extends ConsumerWidget {
   const CamVoteApp({super.key});
@@ -23,123 +30,49 @@ class CamVoteApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(appSettingsProvider);
+    final settings = settingsAsync.asData?.value ?? _defaultAppSettings;
+    final auth = ref.watch(authControllerProvider).asData?.value;
     final router = ref.watch(appRouterProvider);
     final role = ref.watch(currentRoleProvider);
-
-    return settingsAsync.when(
-      loading: () => const _BootstrapSplash(),
-      error: (e, _) => MaterialApp(
-        localizationsDelegates: [
-          AppLocalizations.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: AppLocales.supported,
-        home: Builder(
-          builder: (context) {
-            final t = AppLocalizations.of(context);
-            return Scaffold(
-              body: Center(child: Text('${t.startupError}: $e')),
-            );
-          },
-        ),
-      ),
-      data: (settings) {
-        final theme = AppTheme.build(
-          role: role,
-          mode: settings.themeMode,
-          style: settings.themeStyle,
-        );
-
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          title: 'CamVote',
-          theme: theme.light,
-          darkTheme: theme.dark,
-          themeMode: settings.themeMode,
-          locale: settings.locale,
-          supportedLocales: AppLocales.supported,
-          localizationsDelegates: [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          builder: (context, child) {
-            final media = MediaQuery.of(context);
-            final clampedScaler = media.textScaler.clamp(
-              minScaleFactor: 0.9,
-              maxScaleFactor: 1.15,
-            );
-            return MediaQuery(
-              data: media.copyWith(textScaler: clampedScaler),
-              child: _NotificationToastListener(child: child),
-            );
-          },
-          routerConfig: router,
-        );
-      },
+    if (kIsWeb) {
+      final shouldWarnOnClose =
+          auth?.isAuthenticated == true &&
+          (auth?.user?.role == AppRole.admin ||
+              auth?.user?.role == AppRole.observer);
+      setTabCloseWarningEnabled(shouldWarnOnClose);
+    }
+    final theme = AppTheme.build(
+      role: role,
+      mode: settings.themeMode,
+      style: settings.themeStyle,
     );
-  }
-}
 
-class _BootstrapSplash extends StatelessWidget {
-  const _BootstrapSplash();
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      onGenerateTitle: (context) => AppLocalizations.of(context).appName,
+      theme: theme.light,
+      darkTheme: theme.dark,
+      themeMode: settings.themeMode,
+      locale: settings.locale,
+      supportedLocales: AppLocales.supported,
       localizationsDelegates: [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: AppLocales.supported,
-      home: Builder(
-        builder: (context) {
-          final t = AppLocalizations.of(context);
-          return Scaffold(
-            body: BrandBackdrop(
-              child: Center(
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.92, end: 1),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, tValue, child) {
-                    return Transform.scale(
-                      scale: tValue,
-                      child: Opacity(
-                        opacity: tValue,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const CamVoteLogo(showText: true, size: 72),
-                      const SizedBox(height: 16),
-                      Text(
-                        t.slogan,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 16),
-                      const CamElectionLoader(size: 60),
-                      const SizedBox(height: 10),
-                      Text(t.loading),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        final clampedScaler = media.textScaler.clamp(
+          minScaleFactor: 0.9,
+          maxScaleFactor: 1.05,
+        );
+        return MediaQuery(
+          data: media.copyWith(textScaler: clampedScaler),
+          child: BackSwipe(child: _NotificationToastListener(child: child)),
+        );
+      },
+      routerConfig: router,
     );
   }
 }
@@ -150,16 +83,21 @@ class _NotificationToastListener extends ConsumerStatefulWidget {
   const _NotificationToastListener({required this.child});
 
   @override
-  ConsumerState<_NotificationToastListener> createState() => _NotificationToastListenerState();
+  ConsumerState<_NotificationToastListener> createState() =>
+      _NotificationToastListenerState();
 }
 
-class _NotificationToastListenerState extends ConsumerState<_NotificationToastListener> {
+class _NotificationToastListenerState
+    extends ConsumerState<_NotificationToastListener> {
   final Set<String> _seenIds = {};
   bool _ready = false;
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<List<CamNotification>>(filteredNotificationsProvider, (prev, next) {
+    ref.listen<List<CamNotification>>(filteredNotificationsProvider, (
+      prev,
+      next,
+    ) {
       if (!mounted) return;
 
       if (!_ready) {

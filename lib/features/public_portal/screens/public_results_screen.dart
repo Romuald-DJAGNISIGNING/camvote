@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../providers/public_portal_providers.dart';
 import '../models/public_models.dart';
@@ -15,6 +16,7 @@ import '../widgets/results_region_map_card.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
 
 class PublicResultsScreen extends ConsumerWidget {
   const PublicResultsScreen({super.key});
@@ -29,7 +31,8 @@ class PublicResultsScreen extends ConsumerWidget {
       body: BrandBackdrop(
         child: state.when(
           loading: () => const Center(child: CamElectionLoader()),
-          error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+          error: (e, _) =>
+              Center(child: Text(safeErrorMessage(context, e))),
           data: (data) {
             final cs = Theme.of(context).colorScheme;
 
@@ -61,19 +64,35 @@ class PublicResultsScreen extends ConsumerWidget {
                   padding: EdgeInsets.zero,
                   children: [
                     BrandHeader(
-                      title:
-                          data.electionTitle.isEmpty ? t.publicResultsTitle : data.electionTitle,
+                      title: data.electionTitle.isEmpty
+                          ? t.publicResultsTitle
+                          : data.electionTitle,
                       subtitle: data.electionClosed
                           ? t.resultsFinal
                           : t.resultsLive,
                     ),
                     const SizedBox(height: 14),
+                    if (data.totalRegistered == 0 && data.candidates.isEmpty)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(t.publicResultsAwaitingData),
+                        ),
+                      ),
+                    if (data.totalRegistered == 0 && data.candidates.isEmpty)
+                      const SizedBox(height: 14),
                     _KpiRow(
                       turnout: data.turnoutRate,
                       registered: data.totalRegistered,
                       votes: data.totalVotesCast,
                     ),
                     const SizedBox(height: 14),
+                    CamSectionHeader(
+                      title: t.mapTitle,
+                      subtitle: t.mapTapHint,
+                      icon: Icons.map_outlined,
+                    ),
+                    const SizedBox(height: 6),
                     ResultsRegionMapCard(
                       winners: data.regionalWinners,
                       labelsByRegionCode: labelsByCode,
@@ -82,6 +101,11 @@ class PublicResultsScreen extends ConsumerWidget {
                       nationalWinnerName: _nationalWinnerName(chartCandidates),
                     ),
                     const SizedBox(height: 14),
+                    CamSectionHeader(
+                      title: t.candidateResults,
+                      icon: Icons.bar_chart_outlined,
+                    ),
+                    const SizedBox(height: 6),
                     ResultsCharts(
                       candidates: chartCandidates,
                       turnoutTrend: data.turnoutTrend,
@@ -89,6 +113,11 @@ class PublicResultsScreen extends ConsumerWidget {
                       watermarkSubtitle: t.slogan,
                     ),
                     const SizedBox(height: 14),
+                    CamSectionHeader(
+                      title: t.candidatesLabel,
+                      icon: Icons.people_outline,
+                    ),
+                    const SizedBox(height: 6),
                     _CandidatesList(results: data.candidates),
                   ],
                 ),
@@ -117,7 +146,6 @@ class PublicResultsScreen extends ConsumerWidget {
     final sorted = [...candidates]..sort((a, b) => b.votes.compareTo(a.votes));
     return sorted.first.name;
   }
-
 }
 
 class _KpiRow extends StatelessWidget {
@@ -213,9 +241,9 @@ class _KpiCard extends StatelessWidget {
             DefaultTextStyle(
               style:
                   Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w900,
-                      ) ??
-                      const TextStyle(),
+                    fontWeight: FontWeight.w900,
+                  ) ??
+                  const TextStyle(),
               child: CamCountUp(
                 value: scaledValue,
                 format: (v) {
@@ -256,9 +284,9 @@ class _CandidatesList extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Text(
             t.noData,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       );
@@ -290,3 +318,5 @@ class _CandidatesList extends StatelessWidget {
     );
   }
 }
+
+

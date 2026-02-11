@@ -53,15 +53,15 @@ class CamNotification {
   }
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'type': type.name,
-        'audience': audience.name,
-        'title': title,
-        'body': body,
-        'createdAt': createdAt.toIso8601String(),
-        'read': read,
-        'route': route,
-      };
+    'id': id,
+    'type': type.name,
+    'audience': audience.name,
+    'title': title,
+    'body': body,
+    'createdAt': createdAt.toIso8601String(),
+    'read': read,
+    'route': route,
+  };
 
   static CamNotification fromMap(Map<String, dynamic> m) {
     return CamNotification(
@@ -76,12 +76,14 @@ class CamNotification {
       ),
       title: (m['title'] ?? '') as String,
       body: (m['body'] ?? '') as String,
-      createdAt: DateTime.tryParse((m['createdAt'] ?? '') as String) ?? DateTime.now(),
+      createdAt:
+          DateTime.tryParse((m['createdAt'] ?? '') as String) ?? DateTime.now(),
       read: (m['read'] ?? false) as bool,
       route: m['route'] as String?,
     );
   }
 
   String toJson() => jsonEncode(toMap());
-  static CamNotification fromJson(String s) => fromMap(jsonDecode(s) as Map<String, dynamic>);
+  static CamNotification fromJson(String s) =>
+      fromMap(jsonDecode(s) as Map<String, dynamic>);
 }

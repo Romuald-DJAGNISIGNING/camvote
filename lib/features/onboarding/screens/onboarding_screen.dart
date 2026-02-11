@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +11,6 @@ import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/config/app_settings_controller.dart';
 import '../../../core/layout/responsive.dart';
-import '../../../core/motion/cam_reveal.dart';
 import '../../../core/routing/route_paths.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -40,78 +40,124 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: BrandBackdrop(
         child: SafeArea(
           child: ResponsiveContent(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+            padding: EdgeInsets.zero,
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isCompact = constraints.maxHeight < 640;
-                final heroHeight = isCompact ? 200.0 : 240.0;
-                final pageHeight =
-                    math.max(280.0, constraints.maxHeight * (isCompact ? 0.48 : 0.55));
+                final isTight = constraints.maxHeight < 600;
+                final horizontalPad = constraints.maxWidth < 360 ? 12.0 : 16.0;
+                final verticalPad = isTight ? 6.0 : (isCompact ? 10.0 : 16.0);
 
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const CamVoteLogo(showText: true, size: 40),
-                            TextButton(
-                              onPressed: _finish,
-                              child: Text(t.onboardingSkip),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: isCompact ? 10 : 16),
-                        Text(
-                          t.slogan,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        SizedBox(height: isCompact ? 10 : 16),
-                        SizedBox(
-                          height: pageHeight,
-                          child: PageView.builder(
-                            controller: _controller,
-                            itemCount: slides.length,
-                            onPageChanged: (i) => setState(() => _index = i),
-                            itemBuilder: (context, i) {
-                              return _SlideCard(
-                                slide: slides[i],
-                                heroHeight: heroHeight,
-                              );
-                            },
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPad,
+                    verticalPad,
+                    horizontalPad,
+                    isCompact ? 16 : 20,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CamVoteLogo(showText: true, size: isTight ? 34 : 40),
+                          TextButton(
+                            onPressed: _finish,
+                            child: Text(t.onboardingSkip),
                           ),
+                        ],
+                      ),
+                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
+                      Text(
+                        t.slogan,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            (isCompact
+                                    ? Theme.of(context).textTheme.titleSmall
+                                    : Theme.of(context).textTheme.titleMedium)
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _controller,
+                          allowImplicitScrolling: true,
+                          physics: kIsWeb
+                              ? const ClampingScrollPhysics()
+                              : const PageScrollPhysics(),
+                          itemCount: slides.length,
+                          onPageChanged: (i) {
+                            if (i == _index) return;
+                            setState(() => _index = i);
+                          },
+                          itemBuilder: (context, i) {
+                            return _SlideCard(
+                              slide: slides[i],
+                              isActive: i == _index,
+                            );
+                          },
                         ),
-                        SizedBox(height: isCompact ? 10 : 16),
-                        _PageIndicator(count: slides.length, index: _index),
-                        SizedBox(height: isCompact ? 10 : 16),
-                        Row(
-                          children: [
-                            if (_index > 0)
-                              OutlinedButton(
-                                onPressed: _back,
-                                child: Text(t.onboardingBack),
+                      ),
+                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 10)),
+                      _PageIndicator(count: slides.length, index: _index),
+                      SizedBox(height: isTight ? 4 : (isCompact ? 6 : 12)),
+                      LayoutBuilder(
+                        builder: (context, btnConstraints) {
+                          final stack = btnConstraints.maxWidth < 360;
+                          if (stack) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                if (_index > 0)
+                                  OutlinedButton(
+                                    onPressed: _back,
+                                    child: Text(t.onboardingBack),
+                                  ),
+                                if (_index > 0) const SizedBox(height: 10),
+                                FilledButton.icon(
+                                  onPressed: () => _next(slides.length),
+                                  icon: Icon(
+                                    isLastSlide
+                                        ? Icons.rocket_launch
+                                        : Icons.arrow_forward,
+                                  ),
+                                  label: Text(
+                                    isLastSlide
+                                        ? t.onboardingEnter
+                                        : t.onboardingNext,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              if (_index > 0)
+                                OutlinedButton(
+                                  onPressed: _back,
+                                  child: Text(t.onboardingBack),
+                                ),
+                              const Spacer(),
+                              FilledButton.icon(
+                                onPressed: () => _next(slides.length),
+                                icon: Icon(
+                                  isLastSlide
+                                      ? Icons.rocket_launch
+                                      : Icons.arrow_forward,
+                                ),
+                                label: Text(
+                                  isLastSlide
+                                      ? t.onboardingEnter
+                                      : t.onboardingNext,
+                                ),
                               ),
-                            const Spacer(),
-                            FilledButton.icon(
-                              onPressed: _next,
-                              icon: Icon(
-                                isLastSlide
-                                    ? Icons.rocket_launch
-                                    : Icons.arrow_forward,
-                              ),
-                              label: Text(
-                                isLastSlide ? t.onboardingEnter : t.onboardingNext,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 );
               },
@@ -125,18 +171,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _back() {
     if (_index == 0) return;
     _controller.previousPage(
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
     );
   }
 
-  void _next() {
-    if (_index >= _buildSlides(AppLocalizations.of(context)).length - 1) {
+  void _next(int slideCount) {
+    if (_index >= slideCount - 1) {
       _finish();
       return;
     }
     _controller.nextPage(
-      duration: const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
     );
   }
@@ -144,7 +190,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _finish() async {
     await ref.read(appSettingsProvider.notifier).setOnboardingSeen(true);
     if (!mounted) return;
-    context.go(RoutePaths.gateway);
+    context.go(kIsWeb ? RoutePaths.webPortal : RoutePaths.gateway);
   }
 
   List<_OnboardingSlide> _buildSlides(AppLocalizations t) {
@@ -200,51 +246,123 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
 class _SlideCard extends StatelessWidget {
   final _OnboardingSlide slide;
-  final double heroHeight;
+  final bool isActive;
 
-  const _SlideCard({
-    required this.slide,
-    required this.heroHeight,
-  });
+  const _SlideCard({required this.slide, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    final cs = theme.colorScheme;
 
-    return CamReveal(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _HeroPanel(slide: slide, height: heroHeight),
-          const SizedBox(height: 18),
-          Text(
-            slide.title,
-            style: textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w900,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxHeight = constraints.maxHeight;
+        final isCompact = maxHeight < 520;
+        final heroHeight = math.max(
+          120.0,
+          math.min(
+            isCompact ? 170.0 : 230.0,
+            maxHeight * (isCompact ? 0.38 : 0.48),
+          ),
+        );
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _HeroPanel(slide: slide, height: heroHeight, isActive: isActive),
+            SizedBox(height: isCompact ? 12 : 18),
+            Text(
+              slide.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: isCompact ? 6 : 8),
+            Text(
+              slide.subtitle,
+              maxLines: isCompact ? 3 : 4,
+              overflow: TextOverflow.ellipsis,
+              style: textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withAlpha(180),
+              ),
+            ),
+            SizedBox(height: isCompact ? 12 : 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: slide.highlights.map((text) {
+                return Chip(
+                  label: Text(text),
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest
+                      .withAlpha(190),
+                );
+              }).toList(),
+            ),
+          ],
+        );
+
+        final framedContent = AnimatedScale(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          scale: isActive ? 1 : 0.984,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            opacity: isActive ? 1 : 0.92,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.all(isCompact ? 12 : 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    cs.surface.withAlpha(236),
+                    cs.surfaceContainerHighest.withAlpha(isActive ? 165 : 126),
+                  ],
+                ),
+                border: Border.all(
+                  color: isActive
+                      ? cs.primary.withAlpha(94)
+                      : cs.outlineVariant.withAlpha(120),
+                ),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: cs.primary.withAlpha(36),
+                          blurRadius: 20,
+                          offset: const Offset(0, 12),
+                        ),
+                      ]
+                    : BrandPalette.softShadow,
+              ),
+              child: content,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            slide.subtitle,
-            style: textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withAlpha(180),
+        );
+
+        if (!isCompact) {
+          return RepaintBoundary(child: framedContent);
+        }
+
+        return RepaintBoundary(
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: framedContent,
             ),
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: slide.highlights.map((text) {
-              return Chip(
-                label: Text(text),
-                backgroundColor:
-                    theme.colorScheme.surfaceContainerHighest.withAlpha(190),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -252,10 +370,12 @@ class _SlideCard extends StatelessWidget {
 class _HeroPanel extends StatelessWidget {
   final _OnboardingSlide slide;
   final double height;
+  final bool isActive;
 
   const _HeroPanel({
     required this.slide,
     required this.height,
+    required this.isActive,
   });
 
   @override
@@ -271,30 +391,47 @@ class _HeroPanel extends StatelessWidget {
         ),
         boxShadow: BrandPalette.softShadow,
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -40,
-            top: -20,
-            child: _GlowOrb(color: Colors.white.withAlpha(50), size: 140),
-          ),
-          Positioned(
-            left: -30,
-            bottom: -40,
-            child: _GlowOrb(color: Colors.black.withAlpha(40), size: 160),
-          ),
-          Center(
-            child: Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(235),
-              ),
-              child: Icon(slide.icon, size: 62, color: BrandPalette.ink),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: Stack(
+          children: [
+            Positioned(
+              right: -40,
+              top: -20,
+              child: _GlowOrb(color: Colors.white.withAlpha(50), size: 140),
             ),
-          ),
-        ],
+            Positioned(
+              left: -30,
+              bottom: -40,
+              child: _GlowOrb(color: Colors.black.withAlpha(40), size: 160),
+            ),
+            Center(
+              child: AnimatedScale(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutCubic,
+                scale: isActive ? 1 : 0.92,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withAlpha(isActive ? 238 : 220),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(isActive ? 28 : 12),
+                        blurRadius: isActive ? 22 : 10,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Icon(slide.icon, size: 62, color: BrandPalette.ink),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -311,10 +448,7 @@ class _GlowOrb extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
     );
   }
 }

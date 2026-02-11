@@ -3,12 +3,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// OS-level local notifications (Android/iOS).
 /// - On Web: safely no-op.
-/// - We will later add scheduling for election timers.
+/// - Scheduling can be layered on top of this service for election timers.
 class LocalNotificationsService {
   LocalNotificationsService._();
-  static final LocalNotificationsService instance = LocalNotificationsService._();
+  static final LocalNotificationsService instance =
+      LocalNotificationsService._();
 
-  final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
   Future<void> init() async {
@@ -43,7 +45,10 @@ class LocalNotificationsService {
 
     const iosDetails = DarwinNotificationDetails();
 
-    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
 
     await _plugin.show(id, title, body, details);
   }

@@ -2,11 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/config/app_settings_controller.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../../core/theme/role_theme.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
@@ -17,11 +19,19 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/motion/cam_reveal.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _biometricBusy = false;
+  bool? _biometricOverride;
+
+  @override
+  Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final settingsAsync = ref.watch(appSettingsProvider);
 
@@ -29,17 +39,21 @@ class SettingsScreen extends ConsumerWidget {
       appBar: NotificationAppBar(title: Text(t.settings)),
       body: settingsAsync.when(
         loading: () => const Center(child: CamElectionLoader()),
-        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
         data: (settings) {
           final authAsync = ref.watch(authControllerProvider);
           final auth = authAsync.asData?.value;
           final biometricEnabled = ref.watch(biometricLoginEnabledProvider);
-
-          void toast(String message) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(message)),
-            );
-          }
+          final settingsEntry = GoRouterState.of(
+            context,
+          ).uri.queryParameters['entry'];
+          final fromAdminPortal = settingsEntry == 'admin';
+          final webSignInRole = fromAdminPortal ? 'admin' : 'observer';
+          final webSignInTarget =
+              '${RoutePaths.authLogin}?role=$webSignInRole&entry=${fromAdminPortal ? 'admin' : 'general'}';
+          final webSignInSubtitle = fromAdminPortal
+              ? t.modeAdminSubtitle
+              : t.modeObserverSubtitle;
 
           return BrandBackdrop(
             child: ResponsiveContent(
@@ -122,20 +136,32 @@ class SettingsScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             if (auth == null || !auth.isAuthenticated)
-                              Card(
-                                child: ListTile(
-                                  leading: const Icon(Icons.login),
-                                  title: Text(t.signIn),
-                                  subtitle: Text(t.signInSubtitle),
-                                  onTap: () => context
-                                      .push('${RoutePaths.authLogin}?role=voter'),
+                              if (kIsWeb) ...[
+                                Card(
+                                  child: ListTile(
+                                    leading: const Icon(Icons.login),
+                                    title: Text(t.signIn),
+                                    subtitle: Text(webSignInSubtitle),
+                                    onTap: () => context.push(webSignInTarget),
+                                  ),
                                 ),
-                              )
+                              ] else
+                                Card(
+                                  child: ListTile(
+                                    leading: const Icon(Icons.login),
+                                    title: Text(t.signIn),
+                                    subtitle: Text(t.signInSubtitle),
+                                    onTap: () => context.push(
+                                      '${RoutePaths.authLogin}?role=voter',
+                                    ),
+                                  ),
+                                )
                             else ...[
                               Card(
                                 child: ListTile(
-                                  leading:
-                                      const Icon(Icons.verified_user_outlined),
+                                  leading: const Icon(
+                                    Icons.verified_user_outlined,
+                                  ),
                                   title: Text(
                                     auth.user?.fullName ?? t.signedInUser,
                                   ),
@@ -146,9 +172,21 @@ class SettingsScreen extends ConsumerWidget {
                                 child: ListTile(
                                   leading: const Icon(Icons.logout),
                                   title: Text(t.signOut),
-                                  onTap: () => ref
-                                      .read(authControllerProvider.notifier)
-                                      .logout(),
+                                  onTap: () async {
+                                    final wasAdmin =
+                                        auth.user?.role == AppRole.admin;
+                                    await ref
+                                        .read(authControllerProvider.notifier)
+                                        .logout();
+                                    if (!context.mounted) return;
+                                    if (kIsWeb) {
+                                      context.go(
+                                        (fromAdminPortal || wasAdmin)
+                                            ? RoutePaths.adminPortal
+                                            : RoutePaths.webPortal,
+                                      );
+                                    }
+                                  },
                                 ),
                               ),
                               Card(
@@ -169,53 +207,71 @@ class SettingsScreen extends ConsumerWidget {
                           title: t.securitySectionTitle,
                           child: biometricEnabled.when(
                             data: (enabled) {
-                              return Card(
-                                child: SwitchListTile(
-                                  title: Text(t.biometricLoginTitle),
-                                  subtitle: Text(t.biometricLoginSubtitle),
-                                  value: enabled,
-                                  onChanged: (v) async {
-                                    if (v) {
-                                      final gate = BiometricGate();
-                                      final supported = await gate.isSupported();
-                                      if (!context.mounted) return;
-                                      if (!supported) {
-                                        toast(
-                                          t.biometricNotAvailable,
-                                        );
-                                        return;
-                                      }
-                                      final ok = await gate.requireBiometric(
-                                        reason: t.biometricReasonEnable,
-                                      );
-                                      if (!context.mounted) return;
-                                      if (!ok) return;
-                                      if (!context.mounted) return;
-                                      final live =
-                                          await LivenessChallengeScreen.run(
-                                        context,
-                                      );
-                                      if (!context.mounted) return;
-                                      if (!live) return;
-                                      await ref
-                                          .read(authControllerProvider.notifier)
-                                          .enableBiometricLogin();
-                                    } else {
-                                      await ref
-                                          .read(authControllerProvider.notifier)
-                                          .disableBiometricLogin();
-                                    }
-                                    ref.invalidate(
-                                      biometricLoginEnabledProvider,
-                                    );
-                                    ref.invalidate(
-                                      biometricLoginProfileProvider,
-                                    );
-                                  },
-                                ),
+                              if (auth == null || !auth.isAuthenticated) {
+                                return Card(
+                                  child: ListTile(
+                                    leading: const Icon(Icons.lock_outline),
+                                    title: Text(t.biometricLoginTitle),
+                                    subtitle: Text(
+                                      t.biometricEnableRequiresLogin,
+                                    ),
+                                    trailing: const Icon(Icons.login),
+                                    onTap: () => context.push(
+                                      '${RoutePaths.authLogin}?role=voter',
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final currentValue =
+                                  _biometricOverride ?? enabled;
+                              return FutureBuilder<bool>(
+                                future: BiometricGate().hasEnrolledBiometrics(),
+                                builder: (context, snapshot) {
+                                  final hasEnrolled = snapshot.data ?? false;
+                                  final actionLabel = hasEnrolled
+                                      ? t.reverifyBiometrics
+                                      : t.enrollNow;
+                                  return Card(
+                                    child: SwitchListTile(
+                                      title: Text(t.biometricLoginTitle),
+                                      subtitle: Text(
+                                        _biometricBusy
+                                            ? t.loading
+                                            : t.biometricLoginSubtitle,
+                                      ),
+                                      value: currentValue,
+                                      onChanged: _biometricBusy
+                                          ? null
+                                          : (v) => _toggleBiometric(
+                                              context,
+                                              t,
+                                              enabled: v,
+                                            ),
+                                      secondary: TextButton(
+                                        onPressed: _biometricBusy
+                                            ? null
+                                            : () => _toggleBiometric(
+                                                context,
+                                                t,
+                                                enabled: true,
+                                              ),
+                                        child: Text(actionLabel),
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
                             },
-                            loading: () => const SizedBox.shrink(),
+                            loading: () => const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(12),
+                                child: CamElectionLoader(
+                                  size: 28,
+                                  strokeWidth: 3,
+                                ),
+                              ),
+                            ),
                             error: (error, stackTrace) =>
                                 const SizedBox.shrink(),
                           ),
@@ -260,8 +316,76 @@ class SettingsScreen extends ConsumerWidget {
       AppThemeStyle.geek => t.themeStyleGeek,
       AppThemeStyle.fruity => t.themeStyleFruity,
       AppThemeStyle.pro => t.themeStylePro,
+      AppThemeStyle.magic => t.themeStyleMagic,
+      AppThemeStyle.fun => t.themeStyleFun,
     };
   }
+
+  Future<void> _toggleBiometric(
+    BuildContext context,
+    AppLocalizations t, {
+    required bool enabled,
+  }) async {
+    bool? resolvedValue;
+    final previousValue =
+        _biometricOverride ??
+        ref.read(biometricLoginEnabledProvider).asData?.value ??
+        false;
+    setState(() {
+      _biometricBusy = true;
+      _biometricOverride = enabled;
+    });
+
+    try {
+      if (enabled) {
+        final gate = BiometricGate();
+        final enrolled = await gate.hasEnrolledBiometrics();
+        final supported = await gate.isSupported();
+        if (!context.mounted) return;
+        if (!supported) {
+          _toast(
+            context,
+            enrolled ? t.biometricNotAvailable : t.biometricEnrollRequired,
+          );
+          resolvedValue = previousValue;
+          return;
+        }
+        final ok = await gate.requireBiometric(reason: t.biometricReasonEnable);
+        if (!context.mounted) return;
+        if (!ok) {
+          _toast(context, t.biometricVerificationFailed);
+          resolvedValue = previousValue;
+          return;
+        }
+        final live = await LivenessChallengeScreen.run(context);
+        if (!context.mounted) return;
+        if (!live) {
+          _toast(context, t.livenessCheckFailed);
+          resolvedValue = previousValue;
+          return;
+        }
+        await ref.read(authControllerProvider.notifier).enableBiometricLogin();
+      } else {
+        await ref.read(authControllerProvider.notifier).disableBiometricLogin();
+      }
+      ref.invalidate(biometricLoginEnabledProvider);
+      resolvedValue = await ref
+          .read(biometricLoginEnabledProvider.future)
+          .then((value) => value, onError: (_) => enabled);
+      ref.invalidate(biometricLoginProfileProvider);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _biometricBusy = false;
+          _biometricOverride = resolvedValue ?? previousValue;
+        });
+      }
+    }
+  }
+}
+
+void _toast(BuildContext context, String message) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }
 
 class _SectionCard extends StatelessWidget {
@@ -280,9 +404,9 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 10),
             child,

@@ -51,10 +51,7 @@ class VoteAttemptPolicy {
     );
   }
 
-  Future<void> _flagElection(
-    SharedPreferences prefs,
-    String electionId,
-  ) async {
+  Future<void> _flagElection(SharedPreferences prefs, String electionId) async {
     final flagged = prefs.getStringList(_kFlaggedByElection) ?? <String>[];
     if (flagged.contains(electionId)) return;
     await prefs.setStringList(_kFlaggedByElection, [...flagged, electionId]);

@@ -8,7 +8,7 @@ import 'package:local_auth/local_auth.dart';
 /// - This is the *gate* used before sensitive actions (vote confirm, identity actions).
 class BiometricGate {
   BiometricGate({LocalAuthentication? localAuth})
-      : _localAuth = localAuth ?? LocalAuthentication();
+    : _localAuth = localAuth ?? LocalAuthentication();
 
   final LocalAuthentication _localAuth;
 
@@ -16,15 +16,23 @@ class BiometricGate {
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
-      return canCheck && isDeviceSupported;
+      final enrolled = await hasEnrolledBiometrics();
+      return canCheck && isDeviceSupported && enrolled;
     } catch (_) {
       return false;
     }
   }
 
-  Future<bool> requireBiometric({
-    required String reason,
-  }) async {
+  Future<bool> hasEnrolledBiometrics() async {
+    try {
+      final available = await _localAuth.getAvailableBiometrics();
+      return available.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> requireBiometric({required String reason}) async {
     try {
       final supported = await isSupported();
       if (!supported) return false;

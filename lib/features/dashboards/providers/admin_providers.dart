@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/network/api_client.dart';
 import '../data/admin_repository.dart';
+import '../data/admin_content_seed_service.dart';
 import '../models/admin_models.dart';
+import '../../../core/network/worker_client.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return ApiAdminRepository(dio);
+  return ApiAdminRepository(workerClient: ref.read(workerClientProvider));
+});
+
+final adminContentSeedServiceProvider = Provider<AdminContentSeedService>((
+  ref,
+) {
+  return AdminContentSeedService();
 });
 
 final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
@@ -26,6 +32,11 @@ class ElectionsController extends AsyncNotifier<List<Election>> {
     required DateTime startAt,
     required DateTime endAt,
     DateTime? registrationDeadline,
+    DateTime? campaignStartsAt,
+    DateTime? campaignEndsAt,
+    DateTime? resultsPublishAt,
+    DateTime? runoffOpensAt,
+    DateTime? runoffClosesAt,
     String description = '',
     String scope = '',
     String location = '',
@@ -41,6 +52,11 @@ class ElectionsController extends AsyncNotifier<List<Election>> {
       startAt: startAt,
       endAt: endAt,
       registrationDeadline: registrationDeadline,
+      campaignStartsAt: campaignStartsAt,
+      campaignEndsAt: campaignEndsAt,
+      resultsPublishAt: resultsPublishAt,
+      runoffOpensAt: runoffOpensAt,
+      runoffClosesAt: runoffClosesAt,
       description: description,
       scope: scope,
       location: location,
@@ -66,7 +82,9 @@ class ElectionsController extends AsyncNotifier<List<Election>> {
 }
 
 final electionsProvider =
-    AsyncNotifierProvider<ElectionsController, List<Election>>(ElectionsController.new);
+    AsyncNotifierProvider<ElectionsController, List<Election>>(
+      ElectionsController.new,
+    );
 
 class VotersQuery {
   final String query;
@@ -92,8 +110,8 @@ class VotersQuery {
 
 final votersQueryProvider =
     NotifierProvider<VotersQueryController, VotersQuery>(
-  VotersQueryController.new,
-);
+      VotersQueryController.new,
+    );
 
 class VotersQueryController extends Notifier<VotersQuery> {
   @override
@@ -108,10 +126,91 @@ final votersProvider = FutureProvider<List<VoterAdminRecord>>((ref) async {
   return repo.fetchVoters(query: q.query, region: q.region, status: q.status);
 });
 
+class ObserversQuery {
+  final String query;
+
+  const ObserversQuery({this.query = ''});
+
+  ObserversQuery copyWith({String? query}) {
+    return ObserversQuery(query: query ?? this.query);
+  }
+}
+
+final observersQueryProvider =
+    NotifierProvider<ObserversQueryController, ObserversQuery>(
+      ObserversQueryController.new,
+    );
+
+class ObserversQueryController extends Notifier<ObserversQuery> {
+  @override
+  ObserversQuery build() => const ObserversQuery();
+
+  void update(ObserversQuery query) => state = query;
+}
+
+final observersProvider = FutureProvider<List<ObserverAdminRecord>>((
+  ref,
+) async {
+  final repo = ref.read(adminRepositoryProvider);
+  final q = ref.watch(observersQueryProvider);
+  return repo.fetchObservers(query: q.query);
+});
+
+final observerRoleControllerProvider = Provider<ObserverRoleController>((ref) {
+  return ObserverRoleController(ref);
+});
+
+class ObserverRoleController {
+  final Ref _ref;
+  ObserverRoleController(this._ref);
+
+  Future<ObserverAdminRecord> setRole({
+    required String identifier,
+    required bool grant,
+  }) async {
+    final repo = _ref.read(adminRepositoryProvider);
+    final record = await repo.setObserverRole(
+      identifier: identifier,
+      grant: grant,
+    );
+    _ref.invalidate(observersProvider);
+    _ref.invalidate(adminStatsProvider);
+    _ref.invalidate(auditEventsProvider);
+    return record;
+  }
+
+  Future<ObserverAdminRecord> createObserver({
+    required String fullName,
+    required String email,
+    required String temporaryPassword,
+    String username = '',
+  }) async {
+    final repo = _ref.read(adminRepositoryProvider);
+    final record = await repo.createObserver(
+      fullName: fullName,
+      email: email,
+      temporaryPassword: temporaryPassword,
+      username: username,
+    );
+    _ref.invalidate(observersProvider);
+    _ref.invalidate(adminStatsProvider);
+    _ref.invalidate(auditEventsProvider);
+    return record;
+  }
+
+  Future<void> deleteObserver({required String identifier}) async {
+    final repo = _ref.read(adminRepositoryProvider);
+    await repo.deleteObserver(identifier: identifier);
+    _ref.invalidate(observersProvider);
+    _ref.invalidate(adminStatsProvider);
+    _ref.invalidate(auditEventsProvider);
+  }
+}
+
 final auditFilterProvider =
     NotifierProvider<AuditFilterController, AuditEventType?>(
-  AuditFilterController.new,
-);
+      AuditFilterController.new,
+    );
 
 class AuditFilterController extends Notifier<AuditEventType?> {
   @override

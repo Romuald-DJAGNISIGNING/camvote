@@ -8,7 +8,7 @@ import '../models/registration_enrollment.dart';
 import '../../centers/models/voting_center.dart';
 
 /// Device policy: max 2 different accounts per device (local enforcement now).
-/// Server will enforce again later.
+/// Server enforcement is also applied.
 const _kDeviceAccountIdsKey = 'device_account_ids';
 const _kRegistrationDraftKey = 'registration_draft_voter';
 const _kRegistrationEnrollmentKey = 'registration_enrollment_voter';
@@ -41,7 +41,7 @@ class DeviceAccountPolicy {
     return ids.length;
   }
 
-  /// Call this after a successful registration submission later (7E).
+  /// Call this after a successful registration submission.
   Future<void> addAccountId(String accountId) async {
     final prefs = await _ref.read(sharedPrefsProvider.future);
     final existing = prefs.getStringList(_kDeviceAccountIdsKey) ?? <String>[];
@@ -56,8 +56,8 @@ class DeviceAccountPolicy {
 /// Registration draft persistence
 final voterRegistrationDraftProvider =
     NotifierProvider<VoterRegistrationDraftController, RegistrationDraft>(
-  VoterRegistrationDraftController.new,
-);
+      VoterRegistrationDraftController.new,
+    );
 
 class VoterRegistrationDraftController extends Notifier<RegistrationDraft> {
   @override
@@ -93,6 +93,10 @@ class VoterRegistrationDraftController extends Notifier<RegistrationDraft> {
     state = state.copyWith(nationality: value, saved: false);
   }
 
+  void updateEmail(String value) {
+    state = state.copyWith(email: value, saved: false);
+  }
+
   void updatePreferredCenter(VotingCenter? center) {
     state = state.copyWith(preferredCenter: center, saved: false);
   }
@@ -103,6 +107,10 @@ class VoterRegistrationDraftController extends Notifier<RegistrationDraft> {
 
   void updateDob(DateTime dob) {
     state = state.copyWith(dateOfBirth: dob, saved: false);
+  }
+
+  void clearDob() {
+    state = state.copyWith(clearDob: true, saved: false);
   }
 
   Future<void> saveDraft() async {
@@ -122,8 +130,8 @@ class VoterRegistrationDraftController extends Notifier<RegistrationDraft> {
 /// Biometric + liveness enrollment status
 final registrationEnrollmentProvider =
     NotifierProvider<RegistrationEnrollmentController, RegistrationEnrollment>(
-  RegistrationEnrollmentController.new,
-);
+      RegistrationEnrollmentController.new,
+    );
 
 class RegistrationEnrollmentController
     extends Notifier<RegistrationEnrollment> {
@@ -161,9 +169,11 @@ class RegistrationEnrollmentController
 
   Future<void> _persist(RegistrationEnrollment next) async {
     final completed =
-        next.biometricEnrolled && next.livenessVerified && next.completedAt == null
-            ? next.copyWith(completedAt: DateTime.now())
-            : next;
+        next.biometricEnrolled &&
+            next.livenessVerified &&
+            next.completedAt == null
+        ? next.copyWith(completedAt: DateTime.now())
+        : next;
 
     final prefs = await ref.read(sharedPrefsProvider.future);
     await prefs.setString(

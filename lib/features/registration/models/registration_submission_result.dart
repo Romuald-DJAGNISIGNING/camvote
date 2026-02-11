@@ -19,13 +19,18 @@ class RegistrationSubmissionResult {
 
   factory RegistrationSubmissionResult.fromJson(Map<String, dynamic> json) {
     return RegistrationSubmissionResult(
-      registrationId: (json['registration_id'] as String?) ?? '',
+      registrationId:
+          (json['registration_id'] as String?) ??
+          (json['registrationId'] as String?) ??
+          '',
       status: (json['status'] as String?) ?? 'pending',
       message: (json['message'] as String?) ?? '',
       nextAction: (json['next_action'] as String?) ?? '',
       cardExpired: json['card_expired'] as bool?,
       existingRegistrationId:
-          (json['existing_registration_id'] as String?) ?? '',
+          (json['existing_registration_id'] as String?) ??
+          (json['existingRegistrationId'] as String?) ??
+          '',
       renewalToken: (json['renewal_token'] as String?) ?? '',
     );
   }

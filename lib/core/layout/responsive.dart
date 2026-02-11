@@ -16,39 +16,45 @@ class ResponsiveContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final resolvedPadding = _adaptivePadding(padding, width);
+        final resolvedPadding = _adaptivePadding(padding, width, height);
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Padding(
-              padding: resolvedPadding,
-              child: child,
-            ),
+            child: Padding(padding: resolvedPadding, child: child),
           ),
         );
       },
     );
   }
 
-  EdgeInsets _adaptivePadding(EdgeInsets base, double width) {
+  EdgeInsets _adaptivePadding(EdgeInsets base, double width, double height) {
     if (width <= 340) {
       return EdgeInsets.fromLTRB(
         math.min(base.left, 10),
-        base.top,
+        height < 640 ? math.min(base.top, 10) : base.top,
         math.min(base.right, 10),
-        base.bottom,
+        height < 640 ? math.min(base.bottom, 10) : base.bottom,
       );
     }
     if (width <= 380) {
       return EdgeInsets.fromLTRB(
         math.min(base.left, 12),
-        base.top,
+        height < 640 ? math.min(base.top, 12) : base.top,
         math.min(base.right, 12),
-        base.bottom,
+        height < 640 ? math.min(base.bottom, 12) : base.bottom,
+      );
+    }
+    if (height < 640) {
+      return EdgeInsets.fromLTRB(
+        base.left,
+        math.min(base.top, 12),
+        base.right,
+        math.min(base.bottom, 12),
       );
     }
     return base;

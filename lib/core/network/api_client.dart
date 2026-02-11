@@ -4,13 +4,24 @@ import '../config/app_config.dart';
 import '../../features/auth/data/token_store.dart';
 import '../../features/auth/models/auth_tokens.dart';
 
-final authTokenStoreProvider =
-    Provider<AuthTokenStore>((ref) => AuthTokenStore());
+final authTokenStoreProvider = Provider<AuthTokenStore>(
+  (ref) => AuthTokenStore(),
+);
+
+String _defaultBaseUrl() {
+  if (AppConfig.hasApiBaseUrl) return AppConfig.apiBaseUrl;
+  // Fallback to deployed Worker if not provided.
+  return 'https://camvote.romuald-djagnisigning.workers.dev';
+}
+
+String resolvedApiBaseUrl() => _defaultBaseUrl();
+
+bool hasResolvedApiBaseUrl() => resolvedApiBaseUrl().trim().isNotEmpty;
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: AppConfig.hasApiBaseUrl ? AppConfig.apiBaseUrl : '',
+      baseUrl: _defaultBaseUrl(),
       connectTimeout: const Duration(seconds: 20),
       receiveTimeout: const Duration(seconds: 25),
       sendTimeout: const Duration(seconds: 20),
@@ -54,7 +65,7 @@ final dioProvider = Provider<Dio>((ref) {
 });
 
 Future<AuthTokens> _refreshTokens(String refreshToken) async {
-  final dio = Dio(BaseOptions(baseUrl: AppConfig.apiBaseUrl));
+  final dio = Dio(BaseOptions(baseUrl: _defaultBaseUrl()));
   final res = await dio.post(
     '/auth/refresh',
     data: {'refresh_token': refreshToken},

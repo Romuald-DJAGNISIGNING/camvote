@@ -40,11 +40,11 @@ class OcrValidationResult {
   });
 
   static OcrValidationResult failed(String summary) => OcrValidationResult(
-        ok: false,
-        summary: summary,
-        nameOk: false,
-        dobOk: false,
-        pobOk: false,
-        nationalityOk: false,
-      );
+    ok: false,
+    summary: summary,
+    nameOk: false,
+    dobOk: false,
+    pobOk: false,
+    nationalityOk: false,
+  );
 }

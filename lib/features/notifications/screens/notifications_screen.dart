@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../../../core/motion/cam_reveal.dart';
-import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
@@ -45,19 +46,33 @@ class NotificationsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: t.markAllRead,
-            onPressed: items.isEmpty ? null : () => ref.read(notificationsControllerProvider.notifier).markAllRead(),
+            onPressed: items.isEmpty
+                ? null
+                : () => ref
+                      .read(notificationsControllerProvider.notifier)
+                      .markAllRead(),
             icon: const Icon(Icons.done_all_rounded),
           ),
           IconButton(
             tooltip: t.clearAll,
-            onPressed: items.isEmpty ? null : () => ref.read(notificationsControllerProvider.notifier).clearAll(),
+            onPressed: items.isEmpty
+                ? null
+                : () => ref
+                      .read(notificationsControllerProvider.notifier)
+                      .clearAll(),
             icon: const Icon(Icons.delete_sweep_rounded),
           ),
         ],
       ),
       body: BrandBackdrop(
         child: state.loading
-            ? const Center(child: CamElectionLoader())
+            ? Center(
+                child: CamVotePulseLoading(
+                  title: t.loading,
+                  subtitle: t.notificationsSubtitle,
+                  compact: true,
+                ),
+              )
             : LayoutBuilder(
                 builder: (context, constraints) {
                   return ResponsiveContent(
@@ -65,70 +80,91 @@ class NotificationsScreen extends ConsumerWidget {
                       height: constraints.maxHeight,
                       child: Column(
                         children: [
-                          const SizedBox(height: 6),
-                          BrandHeader(
-                            title: t.notificationsTitle,
-                            subtitle: 'Security, elections, and system updates.',
-                          ),
-                          const SizedBox(height: 12),
-                          // Role filter chips (public/voter/observer/admin)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: CamAudience.values.map((a) {
-                                  final selected = a == audience;
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: ChoiceChip(
-                                      selected: selected,
-                                      onSelected: (_) => ref
-                                          .read(activeAudienceProvider.notifier)
-                                          .setAudience(a),
-                                      label: Text(_audienceLabel(a, t)),
-                                    ),
-                                  );
-                                }).toList(),
+                          CamStagger(
+                            children: [
+                              const SizedBox(height: 6),
+                              BrandHeader(
+                                title: t.notificationsTitle,
+                                subtitle: t.notificationsSubtitle,
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              // Role filter chips (public/voter/observer/admin)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: CamAudience.values.map((a) {
+                                      final selected = a == audience;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 8,
+                                        ),
+                                        child: ChoiceChip(
+                                          selected: selected,
+                                          onSelected: (_) => ref
+                                              .read(
+                                                activeAudienceProvider.notifier,
+                                              )
+                                              .setAudience(a),
+                                          label: Text(_audienceLabel(a, t)),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                           ),
-                          const SizedBox(height: 8),
                           Expanded(
                             child: items.isEmpty
-                                ? Center(child: Text(t.noNotifications))
+                                ? Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Text(t.noNotifications),
+                                    ),
+                                  )
                                 : ListView.builder(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 8, 0, 20),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      0,
+                                      8,
+                                      0,
+                                      20,
+                                    ),
                                     itemCount: items.length,
                                     itemBuilder: (context, index) {
                                       final n = items[index];
 
                                       return CamReveal(
-                                        delay: Duration(milliseconds: 40 * index),
+                                        delay: Duration(
+                                          milliseconds: 40 * index,
+                                        ),
                                         child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 10),
+                                          padding: const EdgeInsets.only(
+                                            bottom: 10,
+                                          ),
                                           child: Dismissible(
                                             key: ValueKey(n.id),
                                             direction:
                                                 DismissDirection.endToStart,
                                             background: Container(
                                               alignment: Alignment.centerRight,
-                                              padding:
-                                                  const EdgeInsets.only(right: 16),
+                                              padding: const EdgeInsets.only(
+                                                right: 16,
+                                              ),
                                               decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .errorContainer,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.errorContainer,
                                                 borderRadius:
                                                     BorderRadius.circular(16),
                                               ),
                                               child: Icon(
                                                 Icons.delete_rounded,
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onErrorContainer,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.onErrorContainer,
                                               ),
                                             ),
                                             onDismissed: (_) => ref
@@ -154,7 +190,10 @@ class NotificationsScreen extends ConsumerWidget {
                                                 // Optional deep link route:
                                                 if (n.route != null &&
                                                     context.mounted) {
-                                                  Navigator.of(context).pop();
+                                                  final route = n.route!.trim();
+                                                  if (route.isNotEmpty) {
+                                                    context.push(route);
+                                                  }
                                                 }
                                               },
                                             ),
@@ -207,7 +246,9 @@ class _NotificationTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Material(
-      color: unread ? cs.primaryContainer.withAlpha(20) : cs.surfaceContainerHighest.withAlpha(60),
+      color: unread
+          ? cs.primaryContainer.withAlpha(20)
+          : cs.surfaceContainerHighest.withAlpha(60),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -236,12 +277,18 @@ class _NotificationTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             title,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: unread ? FontWeight.w700 : FontWeight.w600,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: unread
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
                                 ),
                           ),
                         ),
-                        Text(time, style: Theme.of(context).textTheme.labelSmall),
+                        Text(
+                          time,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),

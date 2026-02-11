@@ -10,11 +10,14 @@ environment:
 
 dependencies:
 
-
+  # Add flutter_dotenv to use environment variables
+  flutter_dotenv: ^5.1.0
+  
   riverpod: ^3.1.0
 
   flutter:
     sdk: flutter
+  cupertino_icons: ^1.0.8
 
   # ---------------------------
   # Localization (EN/FR) + Intl
@@ -91,6 +94,14 @@ dependencies:
   timezone: ^0.10.1
 
   # ---------------------------
+  # Firebase (Auth + Firestore + Storage + Functions)
+  # ---------------------------
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.0
+  cloud_firestore: ^6.0.0
+  firebase_storage: ^13.0.0
+
+  # ---------------------------
   # Motion / Animations (stunning UX)
   # ---------------------------
   flutter_animate: ^4.5.0
@@ -109,6 +120,7 @@ dependencies:
   camera: ^0.11.3
   google_mlkit_text_recognition: 0.13.0
   google_mlkit_face_detection: ^0.11.0
+  cryptography: ^2.9.0
 
 dev_dependencies:
   flutter_test:
@@ -149,6 +161,7 @@ flutter:
     - assets/videos/
     - assets/laws/electoral_code_en.txt
     - assets/laws/electoral_code_fr.txt
+    - .env.public
 
     # Localization ARB files (EN/FR)
     - assets/translations/

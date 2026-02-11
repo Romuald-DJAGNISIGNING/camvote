@@ -13,28 +13,16 @@ class BrandPalette {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFF7C84A),
-      Color(0xFFF06D3B),
-      Color(0xFF0E8A54),
-    ],
+    colors: [Color(0xFFF7C84A), Color(0xFFF06D3B), Color(0xFF0E8A54)],
   );
 
   static const LinearGradient darkHeroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF1B1F26),
-      Color(0xFF2B1F1B),
-      Color(0xFF103A2A),
-    ],
+    colors: [Color(0xFF1B1F26), Color(0xFF2B1F1B), Color(0xFF103A2A)],
   );
 
   static const List<BoxShadow> softShadow = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 22,
-      offset: Offset(0, 12),
-    ),
+    BoxShadow(color: Color(0x14000000), blurRadius: 22, offset: Offset(0, 12)),
   ];
 }

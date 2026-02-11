@@ -14,42 +14,42 @@ enum IncidentCategory {
 
 extension IncidentCategoryX on IncidentCategory {
   String label(AppLocalizations t) => switch (this) {
-        IncidentCategory.fraud => t.incidentCategoryFraud,
-        IncidentCategory.intimidation => t.incidentCategoryIntimidation,
-        IncidentCategory.violence => t.incidentCategoryViolence,
-        IncidentCategory.logistics => t.incidentCategoryLogistics,
-        IncidentCategory.technical => t.incidentCategoryTechnical,
-        IncidentCategory.accessibility => t.incidentCategoryAccessibility,
-        IncidentCategory.other => t.incidentCategoryOther,
-      };
+    IncidentCategory.fraud => t.incidentCategoryFraud,
+    IncidentCategory.intimidation => t.incidentCategoryIntimidation,
+    IncidentCategory.violence => t.incidentCategoryViolence,
+    IncidentCategory.logistics => t.incidentCategoryLogistics,
+    IncidentCategory.technical => t.incidentCategoryTechnical,
+    IncidentCategory.accessibility => t.incidentCategoryAccessibility,
+    IncidentCategory.other => t.incidentCategoryOther,
+  };
 
   String get apiValue => switch (this) {
-        IncidentCategory.fraud => 'fraud',
-        IncidentCategory.intimidation => 'intimidation',
-        IncidentCategory.violence => 'violence',
-        IncidentCategory.logistics => 'logistics',
-        IncidentCategory.technical => 'technical',
-        IncidentCategory.accessibility => 'accessibility',
-        IncidentCategory.other => 'other',
-      };
+    IncidentCategory.fraud => 'fraud',
+    IncidentCategory.intimidation => 'intimidation',
+    IncidentCategory.violence => 'violence',
+    IncidentCategory.logistics => 'logistics',
+    IncidentCategory.technical => 'technical',
+    IncidentCategory.accessibility => 'accessibility',
+    IncidentCategory.other => 'other',
+  };
 }
 
 enum IncidentSeverity { low, medium, high, critical }
 
 extension IncidentSeverityX on IncidentSeverity {
   String label(AppLocalizations t) => switch (this) {
-        IncidentSeverity.low => t.incidentSeverityLow,
-        IncidentSeverity.medium => t.incidentSeverityMedium,
-        IncidentSeverity.high => t.incidentSeverityHigh,
-        IncidentSeverity.critical => t.incidentSeverityCritical,
-      };
+    IncidentSeverity.low => t.incidentSeverityLow,
+    IncidentSeverity.medium => t.incidentSeverityMedium,
+    IncidentSeverity.high => t.incidentSeverityHigh,
+    IncidentSeverity.critical => t.incidentSeverityCritical,
+  };
 
   String get apiValue => switch (this) {
-        IncidentSeverity.low => 'low',
-        IncidentSeverity.medium => 'medium',
-        IncidentSeverity.high => 'high',
-        IncidentSeverity.critical => 'critical',
-      };
+    IncidentSeverity.low => 'low',
+    IncidentSeverity.medium => 'medium',
+    IncidentSeverity.high => 'high',
+    IncidentSeverity.critical => 'critical',
+  };
 }
 
 @immutable

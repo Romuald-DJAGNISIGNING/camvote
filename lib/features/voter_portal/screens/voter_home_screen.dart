@@ -1,7 +1,9 @@
+import 'package:camvote/core/errors/error_message.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/layout/responsive.dart';
@@ -9,7 +11,9 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
-import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
+import '../../../core/routing/route_paths.dart';
 import '../domain/election.dart';
 import '../providers/voter_portal_providers.dart';
 
@@ -23,13 +27,23 @@ class VoterHomeScreen extends ConsumerWidget {
     final electionsAsync = ref.watch(voterElectionsProvider);
 
     return electionsAsync.when(
-      loading: () => const Center(child: CamElectionLoader()),
-      error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+      loading: () => BrandBackdrop(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: CamVotePulseLoading(
+              title: t.loading,
+              subtitle: t.voterHomeSubtitle,
+              compact: true,
+            ),
+          ),
+        ),
+      ),
+      error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
       data: (elections) {
-        final upcoming = elections
-            .where((e) => e.status == ElectionStatus.upcoming)
-            .toList()
-          ..sort((a, b) => a.opensAt.compareTo(b.opensAt));
+        final upcoming =
+            elections.where((e) => e.status == ElectionStatus.upcoming).toList()
+              ..sort((a, b) => a.opensAt.compareTo(b.opensAt));
 
         final next = upcoming.isEmpty ? null : upcoming.first;
 
@@ -55,15 +69,16 @@ class VoterHomeScreen extends ConsumerWidget {
                           ref.read(voterTabIndexProvider.notifier).setIndex(2),
                       onGoResults: () =>
                           ref.read(voterTabIndexProvider.notifier).setIndex(3),
+                      onGoCountdowns: () =>
+                          context.push(RoutePaths.voterCountdowns),
                     ),
                     const SizedBox(height: 24),
-                    Text(
-                      t.publicElectionsInfoTitle,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                          ),
+                    CamSectionHeader(
+                      title: t.publicElectionsInfoTitle,
+                      subtitle: t.publicElectionsInfoSub,
+                      icon: Icons.info_outline,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     ...elections.map((e) => _ElectionTile(election: e)),
                   ],
                 ),
@@ -145,15 +160,15 @@ class _NextElectionCardState extends State<_NextElectionCard> {
                   Text(
                     t.nextElectionTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     widget.election.title,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -192,11 +207,13 @@ class _QuickActions extends StatelessWidget {
   final VoidCallback onGoElections;
   final VoidCallback onGoVote;
   final VoidCallback onGoResults;
+  final VoidCallback onGoCountdowns;
 
   const _QuickActions({
     required this.onGoElections,
     required this.onGoVote,
     required this.onGoResults,
+    required this.onGoCountdowns,
   });
 
   @override
@@ -206,32 +223,42 @@ class _QuickActions extends StatelessWidget {
       builder: (context, c) {
         final wide = c.maxWidth >= 720;
         final spacing = wide ? 12.0 : 8.0;
+        final count = 4;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: [
-            _QuickActionTile(
-              title: t.voterElections,
-              icon: Icons.ballot_outlined,
-              onTap: onGoElections,
-            ),
-            _QuickActionTile(
-              title: t.voterVote,
-              icon: Icons.verified_user_outlined,
-              onTap: onGoVote,
-              accent: Theme.of(context).colorScheme.primary,
-            ),
-            _QuickActionTile(
-              title: t.voterResults,
-              icon: Icons.query_stats_outlined,
-              onTap: onGoResults,
-            ),
-          ].map((tile) {
-            return SizedBox(
-              width: wide ? (c.maxWidth - spacing * 2) / 3 : c.maxWidth,
-              child: tile,
-            );
-          }).toList(),
+          children:
+              [
+                _QuickActionTile(
+                  title: t.voterElections,
+                  icon: Icons.ballot_outlined,
+                  onTap: onGoElections,
+                ),
+                _QuickActionTile(
+                  title: t.voterVote,
+                  icon: Icons.verified_user_outlined,
+                  onTap: onGoVote,
+                  accent: Theme.of(context).colorScheme.primary,
+                ),
+                _QuickActionTile(
+                  title: t.voterResults,
+                  icon: Icons.query_stats_outlined,
+                  onTap: onGoResults,
+                ),
+                _QuickActionTile(
+                  title: t.voterCountdowns,
+                  icon: Icons.timer_outlined,
+                  onTap: onGoCountdowns,
+                  accent: Theme.of(context).colorScheme.tertiary,
+                ),
+              ].map((tile) {
+                return SizedBox(
+                  width: wide
+                      ? (c.maxWidth - spacing * (count - 1)) / count
+                      : c.maxWidth,
+                  child: tile,
+                );
+              }).toList(),
         );
       },
     );
@@ -275,8 +302,8 @@ class _ElectionTile extends StatelessWidget {
                   Text(
                     election.title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(t.electionScopeLabel(election.scopeLabel)),
@@ -340,8 +367,8 @@ class _QuickActionTile extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               Icon(Icons.chevron_right, color: color),
@@ -374,15 +401,15 @@ class _CountdownPill extends StatelessWidget {
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),

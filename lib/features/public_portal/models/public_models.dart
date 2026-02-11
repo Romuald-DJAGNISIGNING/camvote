@@ -58,8 +58,7 @@ class PublicResultsState {
   double get turnoutRate =>
       totalRegistered == 0 ? 0 : (totalVotesCast / totalRegistered) * 100;
 
-  int get totalCandidateVotes =>
-      candidates.fold(0, (sum, c) => sum + c.votes);
+  int get totalCandidateVotes => candidates.fold(0, (sum, c) => sum + c.votes);
 }
 
 enum PublicVoterLookupStatus {
@@ -84,5 +83,49 @@ class PublicVoterLookupResult {
     required this.maskedName,
     required this.maskedRegNumber,
     required this.cardExpiry,
+  });
+}
+
+class PublicElectionsInfoSection {
+  final String id;
+  final String title;
+  final String body;
+  final String sourceUrl;
+  final String sourceLabel;
+
+  const PublicElectionsInfoSection({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.sourceUrl,
+    required this.sourceLabel,
+  });
+}
+
+class PublicElectionsInfoGuideline {
+  final String text;
+  final String sourceUrl;
+  final String sourceLabel;
+
+  const PublicElectionsInfoGuideline({
+    required this.text,
+    required this.sourceUrl,
+    required this.sourceLabel,
+  });
+}
+
+class PublicElectionsInfoState {
+  final String title;
+  final String subtitle;
+  final List<PublicElectionsInfoSection> sections;
+  final List<PublicElectionsInfoGuideline> guidelines;
+  final DateTime? lastUpdated;
+
+  const PublicElectionsInfoState({
+    required this.title,
+    required this.subtitle,
+    required this.sections,
+    required this.guidelines,
+    required this.lastUpdated,
   });
 }

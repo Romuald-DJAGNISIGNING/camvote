@@ -1,16 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 
 import 'cam_motion.dart';
 
 /// Supported page transition styles.
 /// We avoid deprecated APIs and keep transitions consistent cross-platform.
-enum CamRouteTransition {
-  fadeThrough,
-  fadeSlide,
-  scaleFade,
-  none,
-}
+enum CamRouteTransition { fadeThrough, fadeSlide, scaleFade, none }
 
 class CamRouteTransitions {
   const CamRouteTransitions._();
@@ -23,13 +19,22 @@ class CamRouteTransitions {
     CamRouteTransition transition = CamRouteTransition.fadeThrough,
     Duration? duration,
   }) {
+    if (defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      return CupertinoPage<T>(key: state.pageKey, child: child);
+    }
+
     final d = duration ?? CamMotion.medium;
 
     return CustomTransitionPage<T>(
       key: state.pageKey,
       child: child,
-      transitionDuration: transition == CamRouteTransition.none ? Duration.zero : d,
-      reverseTransitionDuration: transition == CamRouteTransition.none ? Duration.zero : d,
+      transitionDuration: transition == CamRouteTransition.none
+          ? Duration.zero
+          : d,
+      reverseTransitionDuration: transition == CamRouteTransition.none
+          ? Duration.zero
+          : d,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         switch (transition) {
           case CamRouteTransition.none:
@@ -49,7 +54,10 @@ class CamRouteTransitions {
   }
 
   static Widget _fadeSlide(Animation<double> animation, Widget child) {
-    final curved = CurvedAnimation(parent: animation, curve: CamMotion.emphasized);
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: CamMotion.emphasized,
+    );
     final offsetTween = Tween<Offset>(
       begin: const Offset(0, CamMotion.slideDistance),
       end: Offset.zero,
@@ -64,14 +72,14 @@ class CamRouteTransitions {
   }
 
   static Widget _scaleFade(Animation<double> animation, Widget child) {
-    final curved = CurvedAnimation(parent: animation, curve: CamMotion.emphasized);
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: CamMotion.emphasized,
+    );
     final scaleTween = Tween<double>(begin: 0.985, end: 1.0);
     return FadeTransition(
       opacity: curved,
-      child: ScaleTransition(
-        scale: scaleTween.animate(curved),
-        child: child,
-      ),
+      child: ScaleTransition(scale: scaleTween.animate(curved), child: child),
     );
   }
 
@@ -83,7 +91,10 @@ class CamRouteTransitions {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final incoming = CurvedAnimation(parent: animation, curve: CamMotion.emphasized);
+    final incoming = CurvedAnimation(
+      parent: animation,
+      curve: CamMotion.emphasized,
+    );
 
     // Incoming: fade + slight scale up
     final scaleTween = Tween<double>(begin: 0.98, end: 1.0);
@@ -97,10 +108,7 @@ class CamRouteTransitions {
       opacity: incoming,
       child: ScaleTransition(
         scale: scaleTween.animate(incoming),
-        child: FadeTransition(
-          opacity: outgoingFade,
-          child: child,
-        ),
+        child: FadeTransition(opacity: outgoingFade, child: child),
       ),
     );
   }

@@ -71,7 +71,9 @@ class CamToast {
             Expanded(
               child: Text(
                 message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: fg),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: fg),
               ),
             ),
           ],
@@ -138,9 +140,7 @@ class _CamCelebrationDialogState extends State<_CamCelebrationDialog> {
         child: Stack(
           children: [
             const Positioned.fill(
-              child: IgnorePointer(
-                child: _CamConfettiBurst(particleCount: 24),
-              ),
+              child: IgnorePointer(child: _CamConfettiBurst(particleCount: 24)),
             ),
             Padding(
               padding: const EdgeInsets.all(18),
@@ -171,7 +171,10 @@ class _CamCelebrationDialogState extends State<_CamCelebrationDialog> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    widget.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     widget.message,
@@ -226,7 +229,9 @@ class _CamConfettiBurstState extends State<_CamConfettiBurst>
       final fall = 0.65 + _rng.nextDouble() * 0.55;
       final size = 4.0 + _rng.nextDouble() * 6.0;
       final spin = (_rng.nextDouble() - 0.5) * 1.6;
-      final shape = _rng.nextBool() ? _ConfettiShape.circle : _ConfettiShape.rect;
+      final shape = _rng.nextBool()
+          ? _ConfettiShape.circle
+          : _ConfettiShape.rect;
       return _ConfettiParticle(
         start: Offset(startX, startY),
         driftX: driftX,
@@ -307,12 +312,17 @@ class _ConfettiPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final particle in particles) {
-      final x = particle.start.dx * size.width + (particle.driftX * progress * size.width);
-      final y = particle.start.dy * size.height + (particle.fall * progress * size.height);
+      final x =
+          particle.start.dx * size.width +
+          (particle.driftX * progress * size.width);
+      final y =
+          particle.start.dy * size.height +
+          (particle.fall * progress * size.height);
       final alpha = (1.0 - progress).clamp(0.0, 1.0);
       final paint = Paint()
-        ..color =
-            colors[particle.colorIndex % colors.length].withValues(alpha: alpha);
+        ..color = colors[particle.colorIndex % colors.length].withValues(
+          alpha: alpha,
+        );
       final center = Offset(x, y);
       final half = particle.size / 2;
 
@@ -323,7 +333,11 @@ class _ConfettiPainter extends CustomPainter {
         canvas.drawCircle(Offset.zero, half, paint);
       } else {
         canvas.drawRect(
-          Rect.fromCenter(center: Offset.zero, width: particle.size, height: particle.size * 0.65),
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: particle.size,
+            height: particle.size * 0.65,
+          ),
           paint,
         );
       }

@@ -13,9 +13,9 @@ class RegistrationEnrollment {
   });
 
   const RegistrationEnrollment.empty()
-      : biometricEnrolled = false,
-        livenessVerified = false,
-        completedAt = null;
+    : biometricEnrolled = false,
+      livenessVerified = false,
+      completedAt = null;
 
   bool get isComplete => biometricEnrolled && livenessVerified;
 
@@ -33,10 +33,10 @@ class RegistrationEnrollment {
   }
 
   Map<String, dynamic> toJson() => {
-        'biometricEnrolled': biometricEnrolled,
-        'livenessVerified': livenessVerified,
-        'completedAt': completedAt?.toIso8601String(),
-      };
+    'biometricEnrolled': biometricEnrolled,
+    'livenessVerified': livenessVerified,
+    'completedAt': completedAt?.toIso8601String(),
+  };
 
   static RegistrationEnrollment fromJson(Map<String, dynamic> json) {
     final raw = json['completedAt'];

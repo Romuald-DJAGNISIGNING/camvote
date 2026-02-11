@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
@@ -6,19 +7,24 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
+import '../../../core/theme/role_theme.dart';
 import '../models/registration_submission_result.dart';
 
-class VoterRegistrationSubmittedScreen extends StatelessWidget {
+class VoterRegistrationSubmittedScreen extends ConsumerWidget {
   final RegistrationSubmissionResult result;
 
   const VoterRegistrationSubmittedScreen({super.key, required this.result});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final statusLabel = _statusLabel(t, result.status);
     return Scaffold(
-      appBar: AppBar(title: Text(t.registrationSubmittedTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.registrationSubmittedTitle),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: ListView(
@@ -37,7 +43,10 @@ class VoterRegistrationSubmittedScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _Row(label: t.status, value: statusLabel),
-                      _Row(label: t.trackingIdLabel, value: result.registrationId),
+                      _Row(
+                        label: t.trackingIdLabel,
+                        value: result.registrationId,
+                      ),
                       if (result.message.isNotEmpty)
                         _Row(label: t.messageLabel, value: result.message),
                     ],
@@ -55,7 +64,12 @@ class VoterRegistrationSubmittedScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => context.go(RoutePaths.publicHome),
+                onPressed: () {
+                  ref
+                      .read(currentRoleProvider.notifier)
+                      .setRole(AppRole.public);
+                  context.go(RoutePaths.publicHome);
+                },
                 icon: const Icon(Icons.public),
                 label: Text(t.backToPublicPortal),
               ),
@@ -86,20 +100,48 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final displayValue = value.isEmpty ? t.unknown : value;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 360;
+          if (isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
-            ),
-          ),
-          Text(value.isEmpty ? t.unknown : value),
-        ],
+                ),
+                const SizedBox(height: 2),
+                Text(displayValue, softWrap: true),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  displayValue,
+                  textAlign: TextAlign.end,
+                  softWrap: true,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../../../core/routing/route_paths.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
+import '../../../core/widgets/marketing/app_download_card.dart';
+import '../../../core/theme/role_theme.dart';
 import '../../public_portal/widgets/results_charts.dart';
 import '../../public_portal/widgets/results_region_map_card.dart';
 import '../../public_portal/providers/public_portal_providers.dart';
@@ -14,6 +18,7 @@ import '../../public_portal/utils/candidate_metric.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../providers/admin_providers.dart';
 
 class ObserverDashboardScreen extends ConsumerWidget {
@@ -23,10 +28,27 @@ class ObserverDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(adminStatsProvider);
     final results = ref.watch(publicResultsProvider);
+    final auth = ref.watch(authControllerProvider).asData?.value;
+    final isObserverAuthed =
+        auth?.isAuthenticated == true && auth?.user?.role == AppRole.observer;
     final t = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: NotificationAppBar(title: Text(t.observerDashboard)),
+      appBar: NotificationAppBar(
+        title: Text(t.observerDashboard),
+        actions: [
+          if (isObserverAuthed)
+            IconButton(
+              tooltip: t.signOut,
+              onPressed: () async {
+                await ref.read(authControllerProvider.notifier).logout();
+                if (!context.mounted) return;
+                context.go(RoutePaths.webPortal);
+              },
+              icon: const Icon(Icons.logout),
+            ),
+        ],
+      ),
       body: stats.when(
         data: (s) {
           final data = results.asData?.value;
@@ -65,6 +87,8 @@ class ObserverDashboardScreen extends ConsumerWidget {
                         title: t.observerDashboard,
                         subtitle: t.observerDashboardHeaderSubtitle,
                       ),
+                      const SizedBox(height: 12),
+                      const AppDownloadCard(),
                       const SizedBox(height: 16),
                       Card(
                         child: ListTile(
@@ -80,11 +104,11 @@ class ObserverDashboardScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        t.observerToolsTitle,
-                        style: Theme.of(context).textTheme.titleLarge,
+                      CamSectionHeader(
+                        title: t.observerToolsTitle,
+                        icon: Icons.widgets_outlined,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       _ToolCard(
                         icon: Icons.query_stats_outlined,
                         title: t.publicResultsTitle,
@@ -101,19 +125,22 @@ class ObserverDashboardScreen extends ConsumerWidget {
                         icon: Icons.report_gmailerrorred_outlined,
                         title: t.observerReportIncidentTitle,
                         subtitle: t.observerReportIncidentSubtitle,
-                        onTap: () => context.go(RoutePaths.observerIncidentReport),
+                        onTap: () =>
+                            context.go(RoutePaths.observerIncidentReport),
                       ),
                       _ToolCard(
                         icon: Icons.manage_search_outlined,
                         title: t.observerIncidentTrackerTitle,
                         subtitle: t.observerIncidentTrackerSubtitle,
-                        onTap: () => context.go(RoutePaths.observerIncidentTracker),
+                        onTap: () =>
+                            context.go(RoutePaths.observerIncidentTracker),
                       ),
                       _ToolCard(
                         icon: Icons.public_outlined,
                         title: t.observerTransparencyTitle,
                         subtitle: t.observerTransparencySubtitle,
-                        onTap: () => context.go(RoutePaths.observerTransparency),
+                        onTap: () =>
+                            context.go(RoutePaths.observerTransparency),
                       ),
                       _ToolCard(
                         icon: Icons.checklist_outlined,
@@ -141,11 +168,11 @@ class ObserverDashboardScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        t.liveResultsPreview,
-                        style: Theme.of(context).textTheme.titleLarge,
+                      CamSectionHeader(
+                        title: t.liveResultsPreview,
+                        icon: Icons.query_stats_outlined,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       ResultsCharts(
                         candidates: chartCandidates,
                         turnoutTrend: data?.turnoutTrend,
@@ -157,13 +184,15 @@ class ObserverDashboardScreen extends ConsumerWidget {
                         winners: data?.regionalWinners ?? const [],
                         labelsByRegionCode: labelsByCode,
                         title: t.mapTitle,
-                        subtitle: data?.electionTitle ?? t.noElectionDataAvailable,
+                        subtitle:
+                            data?.electionTitle ?? t.noElectionDataAvailable,
                         nationalWinnerName: chartCandidates.isEmpty
                             ? null
-                            : (chartCandidates
-                                  ..sort((a, b) => b.votes.compareTo(a.votes)))
-                                .first
-                                .name,
+                            : (chartCandidates..sort(
+                                    (a, b) => b.votes.compareTo(a.votes),
+                                  ))
+                                  .first
+                                  .name,
                       ),
                     ],
                   ),
@@ -172,7 +201,7 @@ class ObserverDashboardScreen extends ConsumerWidget {
             ),
           );
         },
-        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
         loading: () => const Center(child: CamElectionLoader()),
       ),
     );
@@ -211,10 +240,7 @@ class _FraudSnapshot extends StatelessWidget {
         leading: const Icon(Icons.shield_outlined),
         title: Text(t.fraudIntelligenceTitle),
         subtitle: Text(
-          t.fraudFlagsRateLabel(
-            suspiciousFlags,
-            rate.toStringAsFixed(2),
-          ),
+          t.fraudFlagsRateLabel(suspiciousFlags, rate.toStringAsFixed(2)),
         ),
         trailing: const Icon(Icons.auto_awesome),
       ),
@@ -261,8 +287,8 @@ class _ToolCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(

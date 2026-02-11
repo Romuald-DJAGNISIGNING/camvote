@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:camvote/gen/l10n/app_localizations.dart';
 
 /// Cameroon’s 10 regions (for map + stats)
 enum CameroonRegion {
@@ -16,30 +17,30 @@ enum CameroonRegion {
 
 extension CameroonRegionX on CameroonRegion {
   String get code => switch (this) {
-        CameroonRegion.adamawa => 'AD',
-        CameroonRegion.centre => 'CE',
-        CameroonRegion.east => 'ES',
-        CameroonRegion.farNorth => 'EN',
-        CameroonRegion.littoral => 'LT',
-        CameroonRegion.north => 'NO',
-        CameroonRegion.northWest => 'NW',
-        CameroonRegion.south => 'SU',
-        CameroonRegion.southWest => 'SW',
-        CameroonRegion.west => 'OU',
-      };
+    CameroonRegion.adamawa => 'AD',
+    CameroonRegion.centre => 'CE',
+    CameroonRegion.east => 'ES',
+    CameroonRegion.farNorth => 'EN',
+    CameroonRegion.littoral => 'LT',
+    CameroonRegion.north => 'NO',
+    CameroonRegion.northWest => 'NW',
+    CameroonRegion.south => 'SU',
+    CameroonRegion.southWest => 'SW',
+    CameroonRegion.west => 'OU',
+  };
 
-  String get label => switch (this) {
-        CameroonRegion.adamawa => 'Adamawa',
-        CameroonRegion.centre => 'Centre',
-        CameroonRegion.east => 'East',
-        CameroonRegion.farNorth => 'Far North',
-        CameroonRegion.littoral => 'Littoral',
-        CameroonRegion.north => 'North',
-        CameroonRegion.northWest => 'North West',
-        CameroonRegion.south => 'South',
-        CameroonRegion.southWest => 'South West',
-        CameroonRegion.west => 'West',
-      };
+  String label(AppLocalizations t) => switch (this) {
+    CameroonRegion.adamawa => t.regionAdamawa,
+    CameroonRegion.centre => t.regionCentre,
+    CameroonRegion.east => t.regionEast,
+    CameroonRegion.farNorth => t.regionFarNorth,
+    CameroonRegion.littoral => t.regionLittoral,
+    CameroonRegion.north => t.regionNorth,
+    CameroonRegion.northWest => t.regionNorthWest,
+    CameroonRegion.south => t.regionSouth,
+    CameroonRegion.southWest => t.regionSouthWest,
+    CameroonRegion.west => t.regionWest,
+  };
 }
 
 /// Core election types (admin creates them)
@@ -53,14 +54,14 @@ enum ElectionType {
 }
 
 extension ElectionTypeX on ElectionType {
-  String get label => switch (this) {
-        ElectionType.presidential => 'Presidential',
-        ElectionType.parliamentary => 'Parliamentary',
-        ElectionType.municipal => 'Municipal',
-        ElectionType.regional => 'Regional',
-        ElectionType.senatorial => 'Senatorial',
-        ElectionType.referendum => 'Referendum',
-      };
+  String label(AppLocalizations t) => switch (this) {
+    ElectionType.presidential => t.electionTypePresidential,
+    ElectionType.parliamentary => t.electionTypeParliamentary,
+    ElectionType.municipal => t.electionTypeMunicipal,
+    ElectionType.regional => t.electionTypeRegional,
+    ElectionType.senatorial => t.electionTypeSenatorial,
+    ElectionType.referendum => t.electionTypeReferendum,
+  };
 }
 
 /// Candidate/party info (frontend model)
@@ -101,6 +102,11 @@ class Election {
   final DateTime startAt;
   final DateTime endAt;
   final DateTime? registrationDeadline;
+  final DateTime? campaignStartsAt;
+  final DateTime? campaignEndsAt;
+  final DateTime? resultsPublishAt;
+  final DateTime? runoffOpensAt;
+  final DateTime? runoffClosesAt;
   final String description;
   final String scope;
   final String location;
@@ -124,6 +130,11 @@ class Election {
     required this.startAt,
     required this.endAt,
     this.registrationDeadline,
+    this.campaignStartsAt,
+    this.campaignEndsAt,
+    this.resultsPublishAt,
+    this.runoffOpensAt,
+    this.runoffClosesAt,
     this.description = '',
     this.scope = '',
     this.location = '',
@@ -152,21 +163,23 @@ enum VoterStatus {
 }
 
 extension VoterStatusX on VoterStatus {
-  String get label => switch (this) {
-        VoterStatus.pendingVerification => 'Pending verification',
-        VoterStatus.registered => 'Registered',
-        VoterStatus.preEligible => 'Pre-eligible (18–20)',
-        VoterStatus.eligible => 'Eligible (21+)',
-        VoterStatus.voted => 'Voted',
-        VoterStatus.suspended => 'Suspended',
-        VoterStatus.deceased => 'Deceased',
-        VoterStatus.archived => 'Archived',
-      };
+  String label(AppLocalizations t) => switch (this) {
+    VoterStatus.pendingVerification => t.statusPendingVerification,
+    VoterStatus.registered => t.statusRegistered,
+    VoterStatus.preEligible => t.statusPreEligible,
+    VoterStatus.eligible => t.statusEligible,
+    VoterStatus.voted => t.statusVoted,
+    VoterStatus.suspended => t.statusSuspended,
+    VoterStatus.deceased => t.statusDeceased,
+    VoterStatus.archived => t.statusArchived,
+  };
 }
 
 @immutable
 class VoterAdminRecord {
   final String voterId;
+  final String? registrationId;
+  final String? registrationStatus;
   final String fullName;
   final CameroonRegion region;
   final int age;
@@ -182,6 +195,8 @@ class VoterAdminRecord {
 
   const VoterAdminRecord({
     required this.voterId,
+    this.registrationId,
+    this.registrationStatus,
     required this.fullName,
     required this.region,
     required this.age,
@@ -195,15 +210,40 @@ class VoterAdminRecord {
   });
 }
 
+@immutable
+class ObserverAdminRecord {
+  final String uid;
+  final String fullName;
+  final String email;
+  final String role;
+  final String status;
+  final bool mustChangePassword;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const ObserverAdminRecord({
+    required this.uid,
+    required this.fullName,
+    required this.email,
+    required this.role,
+    required this.status,
+    required this.mustChangePassword,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+}
+
 enum AuditEventType {
   electionCreated,
   candidateAdded,
   resultsPublished,
   listCleaned,
+  registrationApproved,
   registrationRejected,
   suspiciousActivity,
   deviceBanned,
   voteCast,
+  roleChanged,
 }
 
 @immutable

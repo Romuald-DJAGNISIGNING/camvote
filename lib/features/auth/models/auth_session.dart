@@ -7,8 +7,5 @@ class AuthSession {
   final AuthUser user;
   final AuthTokens tokens;
 
-  const AuthSession({
-    required this.user,
-    required this.tokens,
-  });
+  const AuthSession({required this.user, required this.tokens});
 }

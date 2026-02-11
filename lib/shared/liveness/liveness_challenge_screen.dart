@@ -9,6 +9,7 @@ import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../../core/branding/brand_palette.dart';
 import '../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../core/widgets/navigation/app_back_button.dart';
 
 class LivenessChallengeScreen extends StatefulWidget {
   const LivenessChallengeScreen({super.key});
@@ -28,7 +29,8 @@ class LivenessChallengeScreen extends StatefulWidget {
   }
 
   @override
-  State<LivenessChallengeScreen> createState() => _LivenessChallengeScreenState();
+  State<LivenessChallengeScreen> createState() =>
+      _LivenessChallengeScreenState();
 }
 
 class _LivenessChallengeScreenState extends State<LivenessChallengeScreen> {
@@ -140,7 +142,10 @@ class _LivenessChallengeScreenState extends State<LivenessChallengeScreen> {
       }
 
       final face = faces.first;
-      _updateFaceCenter(face, Size(image.width.toDouble(), image.height.toDouble()));
+      _updateFaceCenter(
+        face,
+        Size(image.width.toDouble(), image.height.toDouble()),
+      );
       _evaluateTask(face);
     } catch (_) {
       // Ignore occasional ML frame errors.
@@ -214,11 +219,11 @@ class _LivenessChallengeScreenState extends State<LivenessChallengeScreen> {
 
     final size = Size(image.width.toDouble(), image.height.toDouble());
     final camera = _camera!.description;
-    final rotation = InputImageRotationValue.fromRawValue(
-          camera.sensorOrientation,
-        ) ??
+    final rotation =
+        InputImageRotationValue.fromRawValue(camera.sensorOrientation) ??
         InputImageRotation.rotation0deg;
-    final format = InputImageFormatValue.fromRawValue(image.format.raw) ??
+    final format =
+        InputImageFormatValue.fromRawValue(image.format.raw) ??
         InputImageFormat.nv21;
 
     return InputImage.fromBytes(
@@ -251,14 +256,12 @@ class _LivenessChallengeScreenState extends State<LivenessChallengeScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: Text(t.livenessCheckTitle),
       ),
       body: SafeArea(
         child: _error != null
-            ? _ErrorView(
-                message: _error!,
-                showSettings: _permissionDenied,
-              )
+            ? _ErrorView(message: _error!, showSettings: _permissionDenied)
             : Stack(
                 children: [
                   Positioned.fill(child: _buildCameraPreview()),
@@ -314,9 +317,7 @@ class _LivenessChallengeScreenState extends State<LivenessChallengeScreen> {
 
   Widget _buildCameraPreview() {
     if (!_ready || _camera == null || !_camera!.value.isInitialized) {
-      return const Center(
-        child: CamElectionLoader(size: 64, strokeWidth: 6),
-      );
+      return const Center(child: CamElectionLoader(size: 64, strokeWidth: 6));
     }
 
     return LayoutBuilder(
@@ -384,8 +385,8 @@ class _InstructionCard extends StatelessWidget {
                 title,
                 key: ValueKey(title),
                 style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -395,8 +396,8 @@ class _InstructionCard extends StatelessWidget {
                 subtitle,
                 key: ValueKey(subtitle),
                 style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(180),
-                    ),
+                  color: theme.colorScheme.onSurface.withAlpha(180),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -419,8 +420,8 @@ class _InstructionCard extends StatelessWidget {
                   done
                       ? Icons.check_circle
                       : faceVisible && faceCentered
-                          ? Icons.face_retouching_natural
-                          : Icons.face_retouching_off,
+                      ? Icons.face_retouching_natural
+                      : Icons.face_retouching_off,
                   color: done
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurface.withAlpha(160),
@@ -433,8 +434,8 @@ class _InstructionCard extends StatelessWidget {
                       statusMessage,
                       key: ValueKey(statusMessage),
                       style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -466,62 +467,62 @@ class _StatusHeader extends StatelessWidget {
     final status = !ready
         ? t.livenessPreparingCamera
         : !faceVisible
-            ? t.livenessStatusNoFace
-            : faceCentered
-                ? t.livenessStatusFaceCentered
-                : t.livenessStatusAdjustPosition;
+        ? t.livenessStatusNoFace
+        : faceCentered
+        ? t.livenessStatusFaceCentered
+        : t.livenessStatusAdjustPosition;
 
     final statusColor = !ready
         ? theme.colorScheme.outline
         : faceVisible && faceCentered
-            ? BrandPalette.forest
-            : BrandPalette.ember;
+        ? BrandPalette.forest
+        : BrandPalette.ember;
 
     Widget statusPill() => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withAlpha(220),
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: BrandPalette.softShadow,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  status,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-
-    Widget lightPill() => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withAlpha(200),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            t.livenessGoodLight,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w700,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withAlpha(220),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: BrandPalette.softShadow,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
             ),
           ),
-        );
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              status,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    Widget lightPill() => Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withAlpha(200),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        t.livenessGoodLight,
+        style: theme.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -529,11 +530,7 @@ class _StatusHeader extends StatelessWidget {
         if (isNarrow) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              statusPill(),
-              const SizedBox(height: 8),
-              lightPill(),
-            ],
+            children: [statusPill(), const SizedBox(height: 8), lightPill()],
           );
         }
         return Row(
@@ -649,10 +646,30 @@ class _FaceGuidePainter extends CustomPainter {
       ..color = ringColor.withAlpha(200);
 
     final tick = radius * 0.25;
-    _tick(canvas, center + Offset(-radius, 0), Offset(-radius + tick, 0), tickPaint);
-    _tick(canvas, center + Offset(radius, 0), Offset(radius - tick, 0), tickPaint);
-    _tick(canvas, center + Offset(0, -radius), Offset(0, -radius + tick), tickPaint);
-    _tick(canvas, center + Offset(0, radius), Offset(0, radius - tick), tickPaint);
+    _tick(
+      canvas,
+      center + Offset(-radius, 0),
+      Offset(-radius + tick, 0),
+      tickPaint,
+    );
+    _tick(
+      canvas,
+      center + Offset(radius, 0),
+      Offset(radius - tick, 0),
+      tickPaint,
+    );
+    _tick(
+      canvas,
+      center + Offset(0, -radius),
+      Offset(0, -radius + tick),
+      tickPaint,
+    );
+    _tick(
+      canvas,
+      center + Offset(0, radius),
+      Offset(0, radius - tick),
+      tickPaint,
+    );
   }
 
   void _tick(Canvas canvas, Offset a, Offset b, Paint paint) {

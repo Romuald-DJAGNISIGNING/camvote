@@ -33,9 +33,15 @@ class Election {
   final String title;
   final DateTime opensAt;
   final DateTime closesAt;
+  final DateTime? registrationDeadline;
+  final DateTime? campaignStartsAt;
+  final DateTime? campaignEndsAt;
+  final DateTime? resultsPublishAt;
+  final DateTime? runoffOpensAt;
+  final DateTime? runoffClosesAt;
 
   /// For national elections, keep this as "Cameroon".
-  /// For regional breakdown, we’ll extend later.
+  /// For regional breakdowns, provide the region name.
   final String scopeLabel;
 
   final List<Candidate> candidates;
@@ -46,6 +52,12 @@ class Election {
     required this.title,
     required this.opensAt,
     required this.closesAt,
+    this.registrationDeadline,
+    this.campaignStartsAt,
+    this.campaignEndsAt,
+    this.resultsPublishAt,
+    this.runoffOpensAt,
+    this.runoffClosesAt,
     required this.scopeLabel,
     required this.candidates,
   });

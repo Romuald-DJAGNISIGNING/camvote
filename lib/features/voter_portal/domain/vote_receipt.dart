@@ -21,14 +21,14 @@ class VoteReceipt {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'election_id': electionId,
-        'election_title': electionTitle,
-        'candidate_hash': candidateHash,
-        'party_hash': partyHash,
-        'audit_token': auditToken,
-        'cast_at': castAt.toIso8601String(),
-      };
+    'id': id,
+    'election_id': electionId,
+    'election_title': electionTitle,
+    'candidate_hash': candidateHash,
+    'party_hash': partyHash,
+    'audit_token': auditToken,
+    'cast_at': castAt.toIso8601String(),
+  };
 
   factory VoteReceipt.fromJson(Map<String, dynamic> json) {
     return VoteReceipt(
@@ -38,7 +38,8 @@ class VoteReceipt {
       candidateHash: (json['candidate_hash'] as String?) ?? '',
       partyHash: (json['party_hash'] as String?) ?? '',
       auditToken: (json['audit_token'] as String?) ?? '',
-      castAt: DateTime.tryParse((json['cast_at'] as String?) ?? '') ??
+      castAt:
+          DateTime.tryParse((json['cast_at'] as String?) ?? '') ??
           DateTime.now(),
     );
   }

@@ -32,7 +32,8 @@ class CamReveal extends StatefulWidget {
   State<CamReveal> createState() => _CamRevealState();
 }
 
-class _CamRevealState extends State<CamReveal> with SingleTickerProviderStateMixin {
+class _CamRevealState extends State<CamReveal>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _t;
 
@@ -73,10 +74,7 @@ class _CamRevealState extends State<CamReveal> with SingleTickerProviderStateMix
           opacity: opacity,
           child: Transform.translate(
             offset: Offset(0, dy),
-            child: Transform.scale(
-              scale: scale,
-              child: child,
-            ),
+            child: Transform.scale(scale: scale, child: child),
           ),
         );
       },
@@ -126,7 +124,9 @@ class CamStagger extends StatelessWidget {
       children: items,
     );
 
-    return padding == null ? content : Padding(padding: padding!, child: content);
+    return padding == null
+        ? content
+        : Padding(padding: padding!, child: content);
   }
 }
 

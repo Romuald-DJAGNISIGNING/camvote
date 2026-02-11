@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
-import '../../../core/config/app_config.dart';
+import 'package:camvote/core/errors/error_message.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
@@ -15,6 +15,7 @@ import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../providers/about_me_providers.dart';
+import '../models/about_profile.dart';
 import '../models/trello_stats.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 
@@ -27,7 +28,10 @@ class AboutMeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final trelloAsync = ref.watch(trelloStatsProvider);
-    final profile = _buildProfile(t);
+    final aboutAsync = ref.watch(aboutProfileProvider);
+    final fallback = _buildProfile(t);
+    final resolvedProfile = aboutAsync.asData?.value ?? fallback;
+    final profileLoadError = aboutAsync.hasError ? aboutAsync.error : null;
 
     return Scaffold(
       appBar: NotificationAppBar(title: Text(t.about)),
@@ -44,66 +48,104 @@ class AboutMeScreen extends ConsumerWidget {
                     subtitle: t.aboutBuilderSubtitle,
                   ),
                   const SizedBox(height: 12),
-                  _HeroProfile(profile: profile),
-                  const SizedBox(height: 16),
-                  _SectionTitle(title: t.aboutVisionMissionTitle),
-                  const SizedBox(height: 8),
-                  _InfoCard(
-                    title: t.aboutVisionTitle,
-                    body: profile.vision,
-                    icon: Icons.visibility_outlined,
-                  ),
-                  const SizedBox(height: 10),
-                  _InfoCard(
-                    title: t.aboutMissionTitle,
-                    body: profile.mission,
-                    icon: Icons.flag_outlined,
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionTitle(title: t.aboutContactSocialTitle),
-                  const SizedBox(height: 8),
-                  ...profile.socials
-                      .map((s) => _LinkTile(label: s.label, value: s.value)),
-                  const SizedBox(height: 16),
-                  _SectionTitle(title: t.aboutProductFocusTitle),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: profile.focusTags.map((t) => _Tag(t)).toList(),
+                  if (aboutAsync.isLoading)
+                    _LoadingInfoCard(
+                      title: t.aboutProfileLoadingTitle,
+                      body: t.aboutProfileLoadingBody,
+                      icon: Icons.sync,
+                    ),
+                  if (profileLoadError != null)
+                    _InfoCard(
+                      title: t.aboutProfileUnavailableTitle,
+                      body: t.aboutProfileUnavailableBody(
+                        safeErrorMessage(context, profileLoadError),
+                      ),
+                      icon: Icons.warning_amber,
+                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _HeroProfile(profile: resolvedProfile),
+                      const SizedBox(height: 16),
+                      _SectionTitle(title: t.aboutVisionMissionTitle),
+                      const SizedBox(height: 8),
+                      _InfoCard(
+                        title: t.aboutVisionTitle,
+                        body: resolvedProfile.vision,
+                        icon: Icons.visibility_outlined,
+                      ),
+                      const SizedBox(height: 10),
+                      _InfoCard(
+                        title: t.aboutMissionTitle,
+                        body: resolvedProfile.mission,
+                        icon: Icons.flag_outlined,
+                      ),
+                      const SizedBox(height: 16),
+                      _SectionTitle(title: t.aboutContactSocialTitle),
+                      const SizedBox(height: 8),
+                      _LinkTile(
+                        label: t.aboutProfileEmailLabel,
+                        value: resolvedProfile.email,
+                      ),
+                      _LinkTile(
+                        label: t.aboutProfileLinkedInLabel,
+                        value: resolvedProfile.linkedin,
+                      ),
+                      _LinkTile(
+                        label: t.aboutProfileGitHubLabel,
+                        value: resolvedProfile.github,
+                      ),
+                      _LinkTile(
+                        label: t.aboutProfilePortfolioLabel,
+                        value: resolvedProfile.portfolio,
+                      ),
+                      const SizedBox(height: 16),
+                      _SectionTitle(title: t.aboutProductFocusTitle),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: resolvedProfile.focusTags
+                            .map((t) => _Tag(t))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      _SectionTitle(title: t.aboutSkillsHobbiesTitle),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: resolvedProfile.hobbies
+                            .map((t) => _Tag(t))
+                            .toList(),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 18),
                   _SectionTitle(title: t.aboutTrelloTitle),
                   const SizedBox(height: 8),
-                  if (!AppConfig.hasTrelloConfig)
-                    _InfoCard(
-                      title: t.aboutConnectTrelloTitle,
-                      body: t.aboutConnectTrelloBody,
-                      icon: Icons.link,
-                    )
-                  else
-                    trelloAsync.when(
-                      loading: () => _LoadingInfoCard(
-                        title: t.aboutTrelloLoadingTitle,
-                        body: t.aboutTrelloLoadingBody,
-                        icon: Icons.sync,
-                      ),
-                      error: (e, _) => _InfoCard(
-                        title: t.aboutTrelloUnavailableTitle,
-                        body: t.aboutTrelloUnavailableBody(e.toString()),
-                        icon: Icons.warning_amber,
-                      ),
-                      data: (stats) {
-                        if (stats == null) {
-                          return _InfoCard(
-                            title: t.aboutTrelloNotConfiguredTitle,
-                            body: t.aboutTrelloNotConfiguredBody,
-                            icon: Icons.link_off,
-                          );
-                        }
-                        return _TrelloStatsCard(stats: stats);
-                      },
+                  trelloAsync.when(
+                    loading: () => _LoadingInfoCard(
+                      title: t.aboutTrelloLoadingTitle,
+                      body: t.aboutTrelloLoadingBody,
+                      icon: Icons.sync,
                     ),
+                    error: (_, _) => _InfoCard(
+                      title: t.aboutTrelloUnavailableTitle,
+                      body: t.genericErrorLabel,
+                      icon: Icons.warning_amber,
+                    ),
+                    data: (stats) {
+                      if (stats == null) {
+                        return _InfoCard(
+                          title: t.aboutTrelloNotConfiguredTitle,
+                          body: t.aboutTrelloNotConfiguredBody,
+                          icon: Icons.link_off,
+                        );
+                      }
+                      return _TrelloStatsCard(stats: stats);
+                    },
+                  ),
                   const SizedBox(height: 16),
                   _InfoCard(
                     title: t.aboutWhyCamVoteTitle,
@@ -111,7 +153,8 @@ class AboutMeScreen extends ConsumerWidget {
                     icon: Icons.how_to_vote_outlined,
                   ),
                   const SizedBox(height: 18),
-                  _FooterNote(name: profile.name),
+                  const SizedBox(height: 10),
+                  _FooterNote(name: resolvedProfile.name),
                 ],
               ),
             ],
@@ -122,20 +165,17 @@ class AboutMeScreen extends ConsumerWidget {
   }
 }
 
-_DeveloperProfile _buildProfile(AppLocalizations t) {
-  return _DeveloperProfile(
+AboutProfile _buildProfile(AppLocalizations t) {
+  return AboutProfile(
     name: t.aboutProfileName,
     title: t.aboutProfileTitle,
     tagline: t.aboutProfileTagline,
-    videoAsset: _aboutProfileVideoAsset,
     vision: t.aboutProfileVision,
     mission: t.aboutProfileMission,
-    socials: [
-      _SocialLink(label: t.aboutProfileEmailLabel, value: t.aboutProfileEmailValue),
-      _SocialLink(label: t.aboutProfileLinkedInLabel, value: t.aboutProfileLinkedInValue),
-      _SocialLink(label: t.aboutProfileGitHubLabel, value: t.aboutProfileGitHubValue),
-      _SocialLink(label: t.aboutProfilePortfolioLabel, value: t.aboutProfilePortfolioValue),
-    ],
+    email: t.aboutProfileEmailValue,
+    linkedin: t.aboutProfileLinkedInValue,
+    github: t.aboutProfileGitHubValue,
+    portfolio: t.aboutProfilePortfolioValue,
     focusTags: [
       t.aboutTagSecureVoting,
       t.aboutTagBiometrics,
@@ -144,46 +184,23 @@ _DeveloperProfile _buildProfile(AppLocalizations t) {
       t.aboutTagAccessibility,
       t.aboutTagLocalization,
     ],
+    hobbies: [
+      t.aboutHobbyMusic,
+      t.aboutHobbyReading,
+      t.aboutHobbyWriting,
+      t.aboutHobbySinging,
+      t.aboutHobbyCooking,
+      t.aboutHobbyCoding,
+      t.aboutHobbySleeping,
+    ],
   );
-}
-
-class _DeveloperProfile {
-  final String name;
-  final String title;
-  final String tagline;
-  final String videoAsset;
-  final String vision;
-  final String mission;
-  final List<_SocialLink> socials;
-  final List<String> focusTags;
-
-  const _DeveloperProfile({
-    required this.name,
-    required this.title,
-    required this.tagline,
-    required this.videoAsset,
-    required this.vision,
-    required this.mission,
-    required this.socials,
-    required this.focusTags,
-  });
-}
-
-class _SocialLink {
-  final String label;
-  final String value;
-
-  const _SocialLink({required this.label, required this.value});
 }
 
 class _ProfileHeader extends StatelessWidget {
   final String name;
   final String title;
 
-  const _ProfileHeader({
-    required this.name,
-    required this.title,
-  });
+  const _ProfileHeader({required this.name, required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -210,7 +227,7 @@ class _ProfileHeader extends StatelessWidget {
 class _HeroProfile extends StatelessWidget {
   const _HeroProfile({required this.profile});
 
-  final _DeveloperProfile profile;
+  final AboutProfile profile;
 
   @override
   Widget build(BuildContext context) {
@@ -231,10 +248,7 @@ class _HeroProfile extends StatelessWidget {
           final content = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ProfileHeader(
-                name: profile.name,
-                title: profile.title,
-              ),
+              _ProfileHeader(name: profile.name, title: profile.title),
               const SizedBox(height: 12),
               Text(
                 profile.tagline,
@@ -250,20 +264,18 @@ class _HeroProfile extends StatelessWidget {
                   _ActionChip(
                     icon: Icons.email_outlined,
                     label: t.aboutCopyEmail,
-                    value: profile.socials.first.value,
+                    value: profile.email,
                   ),
-                  if (profile.socials.length > 1)
-                    _ActionChip(
-                      icon: Icons.link_outlined,
-                      label: t.aboutCopyLinkedIn,
-                      value: profile.socials[1].value,
-                    ),
-                  if (profile.socials.length > 2)
-                    _ActionChip(
-                      icon: Icons.code,
-                      label: t.aboutCopyGitHub,
-                      value: profile.socials[2].value,
-                    ),
+                  _ActionChip(
+                    icon: Icons.link_outlined,
+                    label: t.aboutCopyLinkedIn,
+                    value: profile.linkedin,
+                  ),
+                  _ActionChip(
+                    icon: Icons.code,
+                    label: t.aboutCopyGitHub,
+                    value: profile.github,
+                  ),
                 ],
               ),
             ],
@@ -279,7 +291,7 @@ class _HeroProfile extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: _AnimatedProfileVideo(
                     name: profile.name,
-                    assetPath: profile.videoAsset,
+                    assetPath: _aboutProfileVideoAsset,
                     size: videoSize,
                   ),
                 ),
@@ -294,7 +306,7 @@ class _HeroProfile extends StatelessWidget {
               const SizedBox(width: 16),
               _AnimatedProfileVideo(
                 name: profile.name,
-                assetPath: profile.videoAsset,
+                assetPath: _aboutProfileVideoAsset,
                 size: videoSize,
               ),
             ],
@@ -316,9 +328,9 @@ class _FooterNote extends StatelessWidget {
     final year = DateTime.now().year;
     return Text(
       t.aboutFooterBuiltBy(name, year),
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
     );
   }
 }
@@ -331,9 +343,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w900,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
     );
   }
 }
@@ -381,11 +393,7 @@ class _LoadingInfoCard extends StatelessWidget {
   final String body;
   final IconData? icon;
 
-  const _LoadingInfoCard({
-    required this.title,
-    required this.body,
-    this.icon,
-  });
+  const _LoadingInfoCard({required this.title, required this.body, this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -402,7 +410,10 @@ class _LoadingInfoCard extends StatelessWidget {
                   const SizedBox(width: 8),
                 ],
                 Flexible(
-                  child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
               ],
             );
@@ -488,10 +499,7 @@ class _Tag extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: cs.primary.withAlpha(80)),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium,
-      ),
+      child: Text(label, style: Theme.of(context).textTheme.labelMedium),
     );
   }
 }
@@ -537,8 +545,10 @@ class _TrelloStatsCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 12),
-            Text(t.aboutTopListsLabel,
-                style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              t.aboutTopListsLabel,
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
             const SizedBox(height: 6),
             ...stats.lists.take(5).map((l) {
               return Padding(
@@ -654,10 +664,7 @@ class _StatPill extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall,
-          ),
+          Text(label, style: theme.textTheme.labelSmall),
         ],
       ),
     );
@@ -740,12 +747,13 @@ class _AnimatedProfileVideoState extends State<_AnimatedProfileVideo>
   @override
   Widget build(BuildContext context) {
     final isLoading =
-        !_failed && (_videoController == null || !_videoController!.value.isInitialized);
+        !_failed &&
+        (_videoController == null || !_videoController!.value.isInitialized);
     final media = _failed
         ? _fallback(context, loading: false)
         : isLoading
-            ? _fallback(context, loading: true)
-            : _videoFrame(context);
+        ? _fallback(context, loading: true)
+        : _videoFrame(context);
 
     return AnimatedBuilder(
       animation: _floatController,
@@ -834,9 +842,9 @@ Future<void> _copy(BuildContext context, String label, String value) async {
   final t = AppLocalizations.of(context);
   await Clipboard.setData(ClipboardData(text: value));
   if (!context.mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(t.copiedMessage(label))),
-  );
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(t.copiedMessage(label))));
 }
 
 String _formatDate(DateTime dt) {

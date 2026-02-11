@@ -1,64 +1,79 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../core/config/app_config.dart';
+import '../../../core/network/worker_client.dart';
+
 import '../models/incident_report.dart';
 
 abstract class IncidentRepository {
   Future<IncidentReportResult> submitIncident(IncidentReport report);
 }
 
-class ApiIncidentRepository implements IncidentRepository {
-  ApiIncidentRepository(this._dio);
+class FirebaseIncidentRepository implements IncidentRepository {
+  FirebaseIncidentRepository({
+    FirebaseAuth? auth,
+    WorkerClient? workerClient,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _workerClient = workerClient ?? WorkerClient();
 
-  final Dio _dio;
-
-  void _ensureApiConfigured() {
-    if (!AppConfig.hasApiBaseUrl) {
-      throw StateError('API base URL is not configured.');
-    }
-  }
+  final FirebaseAuth _auth;
+  final WorkerClient _workerClient;
 
   @override
   Future<IncidentReportResult> submitIncident(IncidentReport report) async {
-    _ensureApiConfigured();
-    final form = FormData();
-    form.fields.addAll([
-      MapEntry('title', report.title),
-      MapEntry('description', report.description),
-      MapEntry('location', report.location),
-      MapEntry('occurredAt', report.occurredAt.toIso8601String()),
-      MapEntry('category', report.category.apiValue),
-      MapEntry('severity', report.severity.apiValue),
-    ]);
-
-    if (report.electionId.trim().isNotEmpty) {
-      form.fields.add(MapEntry('electionId', report.electionId.trim()));
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw StateError('auth_required');
     }
 
+    final urls = <String>[];
     for (final file in report.attachments) {
-      form.files.add(
-        MapEntry(
-          'evidence',
-          await _toMultipart(file),
-        ),
-      );
+      final url = await _uploadEvidence(user.uid, file);
+      urls.add(url);
     }
+    final response = await _workerClient.post(
+      '/v1/incidents/submit',
+      data: {
+        'title': report.title,
+        'description': report.description,
+        'location': report.location,
+        'occurredAt': report.occurredAt.toIso8601String(),
+        'category': report.category.apiValue,
+        'severity': report.severity.apiValue,
+        'electionId': report.electionId.trim().isEmpty
+            ? null
+            : report.electionId.trim(),
+        'attachments': urls,
+      },
+    );
 
-    final res = await _dio.post('/observer/incidents', data: form);
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      return IncidentReportResult.fromJson(data);
-    }
-    throw StateError('Unexpected incident submission response.');
+    return IncidentReportResult(
+      reportId: response['reportId']?.toString() ?? '',
+      status: response['status']?.toString() ?? 'submitted',
+      message: '',
+    );
   }
 
-  Future<MultipartFile> _toMultipart(XFile file) async {
-    if (kIsWeb) {
-      final bytes = await file.readAsBytes();
-      return MultipartFile.fromBytes(bytes, filename: file.name);
+  Future<String> _uploadEvidence(String uid, XFile file) async {
+    final name = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+    final bytes = await file.readAsBytes();
+    final contentType = file.mimeType ?? 'application/octet-stream';
+
+    final result = await _workerClient.post(
+      '/v1/storage/upload',
+      data: {
+        'path': 'incident_attachments/$uid/$name',
+        'contentBase64': base64Encode(bytes),
+        'contentType': contentType,
+      },
+    );
+
+    final url = result['downloadUrl'] as String? ?? '';
+    if (url.isEmpty) {
+      throw StateError('upload_failed');
     }
-    return MultipartFile.fromFile(file.path, filename: file.name);
+    return url;
   }
 }

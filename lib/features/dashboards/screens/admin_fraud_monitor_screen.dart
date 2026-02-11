@@ -1,3 +1,4 @@
+import 'package:camvote/core/errors/error_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,9 +6,11 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
+import '../../tools/models/tools_models.dart';
 import '../../tools/providers/tools_providers.dart';
 
 class AdminFraudMonitorScreen extends ConsumerWidget {
@@ -24,61 +27,65 @@ class AdminFraudMonitorScreen extends ConsumerWidget {
         child: ResponsiveContent(
           child: insight.when(
             loading: () => const Center(child: CamElectionLoader()),
-            error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+            error: (e, _) =>
+                Center(child: Text(safeErrorMessage(context, e))),
             data: (data) => ListView(
               padding: EdgeInsets.zero,
               children: [
-                const SizedBox(height: 6),
-                BrandHeader(
-                  title: t.adminFraudMonitorTitle,
-                  subtitle: t.adminFraudMonitorSubtitle,
-                ),
-                const SizedBox(height: 12),
-                CamReveal(
-                  child: _ScoreCard(
-                    riskScore: data.riskScore,
-                    totalSignals: data.totalSignals,
-                    devicesFlagged: data.devicesFlagged,
-                    accountsAtRisk: data.accountsAtRisk,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  t.fraudSignalsTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                if (data.signals.isEmpty)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(t.noData),
+                CamStagger(
+                  children: [
+                    const SizedBox(height: 6),
+                    BrandHeader(
+                      title: t.adminFraudMonitorTitle,
+                      subtitle: t.adminFraudMonitorSubtitle,
                     ),
-                  )
-                else
-                  ...data.signals.map(
-                    (signal) => Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.bolt_outlined),
-                        title: Text(signal.title),
-                        subtitle: Text(signal.detail),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              t.fraudSignalCount(signal.count),
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            Text(
-                              signal.severity,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                          ],
-                        ),
+                    const SizedBox(height: 12),
+                    CamReveal(
+                      child: _ScoreCard(
+                        riskScore: data.riskScore,
+                        totalSignals: data.totalSignals,
+                        devicesFlagged: data.devicesFlagged,
+                        accountsAtRisk: data.accountsAtRisk,
                       ),
                     ),
-                  ),
-                const SizedBox(height: 18),
+                    const SizedBox(height: 12),
+                    CamSectionHeader(
+                      title: t.fraudSignalsTitle,
+                      icon: Icons.bolt_outlined,
+                    ),
+                    if (data.signals.isEmpty)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(t.noData),
+                        ),
+                      )
+                    else
+                      ...data.signals.map(
+                        (signal) => Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.bolt_outlined),
+                            title: Text(_signalTitle(t, signal)),
+                            subtitle: Text(signal.detail),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  t.fraudSignalCount(signal.count),
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                                Text(
+                                  _signalSeverity(t, signal),
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 18),
+                  ],
+                ),
               ],
             ),
           ),
@@ -114,9 +121,9 @@ class _ScoreCard extends StatelessWidget {
           children: [
             Text(
               t.fraudRiskScoreTitle,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(t.fraudRiskScoreValue(pct.toStringAsFixed(1))),
@@ -127,9 +134,9 @@ class _ScoreCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   '${pct.toStringAsFixed(1)}%',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -139,8 +146,14 @@ class _ScoreCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MetricChip(label: t.fraudSignalTotal, value: totalSignals),
-                _MetricChip(label: t.fraudDevicesFlagged, value: devicesFlagged),
-                _MetricChip(label: t.fraudAccountsAtRisk, value: accountsAtRisk),
+                _MetricChip(
+                  label: t.fraudDevicesFlagged,
+                  value: devicesFlagged,
+                ),
+                _MetricChip(
+                  label: t.fraudAccountsAtRisk,
+                  value: accountsAtRisk,
+                ),
               ],
             ),
           ],
@@ -158,8 +171,42 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(
-      label: Text('$label: $value'),
-    );
+    return Chip(label: Text('$label: $value'));
   }
 }
+
+String _signalTitle(AppLocalizations t, FraudSignal signal) {
+  switch (signal.id) {
+    case 'device_anomaly':
+      return t.fraudSignalDeviceAnomaly;
+    case 'biometric_duplicate':
+      return t.fraudSignalBiometricDuplicate;
+    case 'unverified':
+      return t.fraudSignalUnverified;
+    case 'age_anomaly':
+      return t.fraudSignalAgeAnomaly;
+    case 'status_risk':
+      return t.fraudSignalStatusRisk;
+    case 'vote_state_mismatch':
+      return t.fraudSignalVoteStateMismatch;
+    default:
+      return signal.title;
+  }
+}
+
+String _signalSeverity(AppLocalizations t, FraudSignal signal) {
+  switch (signal.severity.toLowerCase()) {
+    case 'low':
+      return t.riskLow;
+    case 'medium':
+      return t.riskMedium;
+    case 'high':
+      return t.riskHigh;
+    case 'critical':
+      return t.riskCritical;
+    default:
+      return signal.severity;
+  }
+}
+
+

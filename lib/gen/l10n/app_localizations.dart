@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @guidelineAgeRules.
   ///
   /// In en, this message translates to:
-  /// **'Registration: 18+. Voting: 21+. Eligibility is enforced automatically.'**
+  /// **'Registration: 18+. Voting: 20+. Eligibility is enforced automatically.'**
   String get guidelineAgeRules;
 
   /// No description provided for @guidelineOnePersonOneVote.
@@ -398,6 +398,12 @@ abstract class AppLocalizations {
   /// **'This field is required'**
   String get requiredField;
 
+  /// No description provided for @authRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in required to continue.'**
+  String get authRequired;
+
   /// No description provided for @invalidRegNumber.
   ///
   /// In en, this message translates to:
@@ -473,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @verifyStatusRegisteredPreEligible.
   ///
   /// In en, this message translates to:
-  /// **'Registered (18–20, not eligible to vote yet)'**
+  /// **'Registered (18–19, not eligible to vote yet)'**
   String get verifyStatusRegisteredPreEligible;
 
   /// No description provided for @verifyStatusEligible.
@@ -674,6 +680,12 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notificationsTitle;
 
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Security, elections, and system updates.'**
+  String get notificationsSubtitle;
+
   /// No description provided for @markAllRead.
   ///
   /// In en, this message translates to:
@@ -785,7 +797,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationStatusUpdateBody.
   ///
   /// In en, this message translates to:
-  /// **'You are registered (18-20). You will automatically become eligible at 21.'**
+  /// **'You are registered (18-19). You will automatically become eligible at 20.'**
   String get notificationStatusUpdateBody;
 
   /// No description provided for @summaryTab.
@@ -872,6 +884,12 @@ abstract class AppLocalizations {
   /// **'Error'**
   String get error;
 
+  /// No description provided for @genericErrorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get genericErrorLabel;
+
   /// No description provided for @pleaseWait.
   ///
   /// In en, this message translates to:
@@ -908,6 +926,30 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get refresh;
 
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @importAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get importAction;
+
   /// No description provided for @search.
   ///
   /// In en, this message translates to:
@@ -937,6 +979,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FINAL Results'**
   String get resultsFinal;
+
+  /// No description provided for @publicResultsAwaitingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting official results publication.'**
+  String get publicResultsAwaitingData;
 
   /// No description provided for @mapOfWinners.
   ///
@@ -1022,6 +1070,12 @@ abstract class AppLocalizations {
   /// **'Nationality'**
   String get nationality;
 
+  /// No description provided for @nationalityAdminReviewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality will be verified by an admin after document review.'**
+  String get nationalityAdminReviewNote;
+
   /// No description provided for @pickFromGallery.
   ///
   /// In en, this message translates to:
@@ -1069,6 +1123,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejected'**
   String get ocrRejectedTitle;
+
+  /// No description provided for @ocrSummaryVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get ocrSummaryVerified;
+
+  /// No description provided for @ocrSummaryVerifiedPendingNationality.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified • Nationality pending admin review'**
+  String get ocrSummaryVerifiedPendingNationality;
+
+  /// No description provided for @ocrSummaryNationalityPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality pending admin review'**
+  String get ocrSummaryNationalityPending;
+
+  /// No description provided for @ocrIssueNameMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Name mismatch'**
+  String get ocrIssueNameMismatch;
+
+  /// No description provided for @ocrIssueDobMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of birth mismatch'**
+  String get ocrIssueDobMismatch;
+
+  /// No description provided for @ocrIssuePobMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Place of birth mismatch'**
+  String get ocrIssuePobMismatch;
+
+  /// No description provided for @ocrIssueForeignDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Foreign document detected'**
+  String get ocrIssueForeignDocument;
 
   /// No description provided for @ocrVerified.
   ///
@@ -1118,6 +1214,30 @@ abstract class AppLocalizations {
   /// **'Document OCR works on Android/iOS. Use the mobile app for registration.'**
   String get ocrNotSupportedMessage;
 
+  /// No description provided for @foreignDocumentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Document not eligible'**
+  String get foreignDocumentTitle;
+
+  /// No description provided for @foreignDocumentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This document does not appear to be a Cameroonian official document. Registration is limited to Cameroonian citizens.'**
+  String get foreignDocumentBody;
+
+  /// No description provided for @underageRegistrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration not allowed'**
+  String get underageRegistrationTitle;
+
+  /// No description provided for @underageRegistrationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be at least 18 years old to register. Please use the public portal for information and updates.'**
+  String get underageRegistrationBody;
+
   /// No description provided for @userLabel.
   ///
   /// In en, this message translates to:
@@ -1141,6 +1261,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Verify identity, continue securely, and protect every action.'**
   String get loginHeaderSubtitle;
+
+  /// No description provided for @authInvalidCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email/ID or password.'**
+  String get authInvalidCredentials;
+
+  /// No description provided for @authAccountNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No account was found for this user.'**
+  String get authAccountNotFound;
+
+  /// No description provided for @authTooManyRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait and try again.'**
+  String get authTooManyRequests;
+
+  /// No description provided for @authNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network issue detected. Check your connection and retry.'**
+  String get authNetworkError;
+
+  /// No description provided for @authMustChangePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change temporary password'**
+  String get authMustChangePassword;
+
+  /// No description provided for @authMustChangePasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'For transparency and account ownership, set your own password before continuing.'**
+  String get authMustChangePasswordHelp;
+
+  /// No description provided for @authUpdatePasswordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update password'**
+  String get authUpdatePasswordAction;
+
+  /// No description provided for @authPasswordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated successfully.'**
+  String get authPasswordUpdated;
+
+  /// No description provided for @loginRequiresVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Your registration is pending verification. You can sign in once an admin approves your Cameroonian document.'**
+  String get loginRequiresVerification;
 
   /// No description provided for @loginIdentifierLabel.
   ///
@@ -1280,6 +1454,12 @@ abstract class AppLocalizations {
   /// **'Biometrics are not available on this device.'**
   String get biometricNotAvailable;
 
+  /// No description provided for @biometricEnrollRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'No biometrics enrolled. Please enroll Face ID or Fingerprint in your device settings.'**
+  String get biometricEnrollRequired;
+
   /// No description provided for @biometricReasonSignIn.
   ///
   /// In en, this message translates to:
@@ -1303,6 +1483,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Require device biometrics and liveness for sign in.'**
   String get biometricLoginSubtitle;
+
+  /// No description provided for @biometricEnableRequiresLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in before enabling biometric + liveness login.'**
+  String get biometricEnableRequiresLogin;
 
   /// No description provided for @securityChipBiometric.
   ///
@@ -1946,6 +2132,96 @@ abstract class AppLocalizations {
   /// **'Add Trello credentials to enable live stats.'**
   String get aboutTrelloNotConfiguredBody;
 
+  /// No description provided for @aboutProfileLoadingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading profile'**
+  String get aboutProfileLoadingTitle;
+
+  /// No description provided for @aboutProfileLoadingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetching builder profile...'**
+  String get aboutProfileLoadingBody;
+
+  /// No description provided for @aboutProfileUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile unavailable'**
+  String get aboutProfileUnavailableTitle;
+
+  /// No description provided for @aboutProfileUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load profile: {error}'**
+  String aboutProfileUnavailableBody(Object error);
+
+  /// No description provided for @aboutProfileUnavailableEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No profile data'**
+  String get aboutProfileUnavailableEmpty;
+
+  /// No description provided for @aboutSkillsHobbiesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skills & hobbies'**
+  String get aboutSkillsHobbiesTitle;
+
+  /// No description provided for @aboutHobbyMusic.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get aboutHobbyMusic;
+
+  /// No description provided for @aboutHobbyReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading'**
+  String get aboutHobbyReading;
+
+  /// No description provided for @aboutHobbyWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing'**
+  String get aboutHobbyWriting;
+
+  /// No description provided for @aboutHobbySinging.
+  ///
+  /// In en, this message translates to:
+  /// **'Singing'**
+  String get aboutHobbySinging;
+
+  /// No description provided for @aboutHobbyCooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Cooking'**
+  String get aboutHobbyCooking;
+
+  /// No description provided for @aboutHobbyCoding.
+  ///
+  /// In en, this message translates to:
+  /// **'Coding'**
+  String get aboutHobbyCoding;
+
+  /// No description provided for @aboutHobbySleeping.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleeping'**
+  String get aboutHobbySleeping;
+
+  /// No description provided for @legalSourceElecamUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'https://portail.elecam.cm'**
+  String get legalSourceElecamUrl;
+
+  /// No description provided for @legalSourceAssnatUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'https://www.assnat.cm'**
+  String get legalSourceAssnatUrl;
+
   /// No description provided for @aboutWhyCamVoteTitle.
   ///
   /// In en, this message translates to:
@@ -1963,6 +2239,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Copy email'**
   String get aboutCopyEmail;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get emailLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @passwordConfirmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get passwordConfirmLabel;
+
+  /// No description provided for @registrationAuthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your secure account'**
+  String get registrationAuthTitle;
+
+  /// No description provided for @registrationAuthSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email and password will secure access after approval.'**
+  String get registrationAuthSubtitle;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match.'**
+  String get passwordMismatch;
 
   /// No description provided for @aboutCopyLinkedIn.
   ///
@@ -2498,11 +2810,23 @@ abstract class AppLocalizations {
   /// **'Enroll now'**
   String get enrollNow;
 
+  /// No description provided for @reverifyBiometrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-verify biometrics'**
+  String get reverifyBiometrics;
+
   /// No description provided for @runLiveness.
   ///
   /// In en, this message translates to:
   /// **'Run liveness'**
   String get runLiveness;
+
+  /// No description provided for @reverifyLiveness.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-verify liveness'**
+  String get reverifyLiveness;
 
   /// No description provided for @enrollmentCompleteTitle.
   ///
@@ -3017,7 +3341,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultsPublicPortalNote.
   ///
   /// In en, this message translates to:
-  /// **'Live results are available in the Public portal charts.\nHere, you’ll also get your personal vote verification later.'**
+  /// **'Live results are available in the Public portal charts.\nUse the Voter portal for your personal verification and receipt.'**
   String get resultsPublicPortalNote;
 
   /// No description provided for @pastElectionsTitle.
@@ -3080,6 +3404,90 @@ abstract class AppLocalizations {
   /// **'Pending verification. Complete OCR + biometrics.'**
   String get verificationStatusPending;
 
+  /// No description provided for @verificationPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification pending'**
+  String get verificationPendingTitle;
+
+  /// No description provided for @verificationPendingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You are signed in, but voting stays locked until your Cameroonian document is approved.'**
+  String get verificationPendingSubtitle;
+
+  /// No description provided for @verificationPendingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'An admin will review your document and registration details. You will be notified when approved.'**
+  String get verificationPendingBody;
+
+  /// No description provided for @verificationTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification timeline'**
+  String get verificationTimelineTitle;
+
+  /// No description provided for @verificationStepSubmittedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration received'**
+  String get verificationStepSubmittedTitle;
+
+  /// No description provided for @verificationStepSubmittedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We have received your registration package.'**
+  String get verificationStepSubmittedBody;
+
+  /// No description provided for @verificationStepReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin review in progress'**
+  String get verificationStepReviewTitle;
+
+  /// No description provided for @verificationStepReviewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your documents are being checked for validity.'**
+  String get verificationStepReviewBody;
+
+  /// No description provided for @verificationStepDecisionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision notification'**
+  String get verificationStepDecisionTitle;
+
+  /// No description provided for @verificationStepDecisionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will be notified as soon as approval is complete.'**
+  String get verificationStepDecisionBody;
+
+  /// No description provided for @verificationPendingPrimaryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Check registration status'**
+  String get verificationPendingPrimaryAction;
+
+  /// No description provided for @verificationPendingSecondaryAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to public portal'**
+  String get verificationPendingSecondaryAction;
+
+  /// No description provided for @verificationPendingSupportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact support'**
+  String get verificationPendingSupportAction;
+
+  /// No description provided for @verificationPendingSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get verificationPendingSignOut;
+
   /// No description provided for @electoralCardViewSubtitle.
   ///
   /// In en, this message translates to:
@@ -3134,6 +3542,30 @@ abstract class AppLocalizations {
   /// **'Search by city, neighborhood, or center name'**
   String get votingCentersSearchHint;
 
+  /// No description provided for @votingCentersFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get votingCentersFilterAll;
+
+  /// No description provided for @votingCentersFilterCameroon.
+  ///
+  /// In en, this message translates to:
+  /// **'Cameroon'**
+  String get votingCentersFilterCameroon;
+
+  /// No description provided for @votingCentersFilterAbroad.
+  ///
+  /// In en, this message translates to:
+  /// **'Abroad'**
+  String get votingCentersFilterAbroad;
+
+  /// No description provided for @votingCentersFilterEmbassy.
+  ///
+  /// In en, this message translates to:
+  /// **'Missions'**
+  String get votingCentersFilterEmbassy;
+
   /// No description provided for @useMyLocation.
   ///
   /// In en, this message translates to:
@@ -3164,6 +3596,18 @@ abstract class AppLocalizations {
   /// **'Voting center'**
   String get votingCentersLegendCenter;
 
+  /// No description provided for @votingCentersLegendAbroad.
+  ///
+  /// In en, this message translates to:
+  /// **'Abroad'**
+  String get votingCentersLegendAbroad;
+
+  /// No description provided for @votingCentersLegendEmbassy.
+  ///
+  /// In en, this message translates to:
+  /// **'Mission'**
+  String get votingCentersLegendEmbassy;
+
   /// No description provided for @votingCentersLegendYou.
   ///
   /// In en, this message translates to:
@@ -3185,7 +3629,7 @@ abstract class AppLocalizations {
   /// No description provided for @votingCentersEmpty.
   ///
   /// In en, this message translates to:
-  /// **'No centers available. Please refresh or try again later.'**
+  /// **'No centers available right now. Please refresh or check back soon.'**
   String get votingCentersEmpty;
 
   /// No description provided for @distanceKm.
@@ -3295,6 +3739,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pro'**
   String get themeStylePro;
+
+  /// No description provided for @themeStyleMagic.
+  ///
+  /// In en, this message translates to:
+  /// **'Magic'**
+  String get themeStyleMagic;
+
+  /// No description provided for @themeStyleFun.
+  ///
+  /// In en, this message translates to:
+  /// **'Fun'**
+  String get themeStyleFun;
 
   /// No description provided for @deleteAccountHeaderSubtitle.
   ///
@@ -3521,13 +3977,13 @@ abstract class AppLocalizations {
   /// No description provided for @statusPreEligible.
   ///
   /// In en, this message translates to:
-  /// **'Pre-eligible (18–20)'**
+  /// **'Pre-eligible (18–19)'**
   String get statusPreEligible;
 
   /// No description provided for @statusEligible.
   ///
   /// In en, this message translates to:
-  /// **'Eligible (21+)'**
+  /// **'Eligible (20+)'**
   String get statusEligible;
 
   /// No description provided for @statusVoted.
@@ -3596,11 +4052,155 @@ abstract class AppLocalizations {
   /// **'Voters'**
   String get adminActionVoters;
 
+  /// No description provided for @adminObserverAccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer Access'**
+  String get adminObserverAccessTitle;
+
   /// No description provided for @adminActionAuditLogs.
   ///
   /// In en, this message translates to:
   /// **'Audit Logs'**
   String get adminActionAuditLogs;
+
+  /// No description provided for @adminObserverManagementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer access'**
+  String get adminObserverManagementTitle;
+
+  /// No description provided for @adminObserverManagementSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant or revoke read-only observer access.'**
+  String get adminObserverManagementSubtitle;
+
+  /// No description provided for @adminObserverSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search observers by name, email, or UID…'**
+  String get adminObserverSearchHint;
+
+  /// No description provided for @adminObserverAssignTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant observer access'**
+  String get adminObserverAssignTitle;
+
+  /// No description provided for @adminObserverAssignSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a user email or UID. The user must have signed in at least once.'**
+  String get adminObserverAssignSubtitle;
+
+  /// No description provided for @adminObserverIdentifierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User email or UID'**
+  String get adminObserverIdentifierLabel;
+
+  /// No description provided for @adminObserverGrantAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant access'**
+  String get adminObserverGrantAction;
+
+  /// No description provided for @adminObserverRevokeAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke access'**
+  String get adminObserverRevokeAction;
+
+  /// No description provided for @adminObserverCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create observer account'**
+  String get adminObserverCreateTitle;
+
+  /// No description provided for @adminObserverCreateSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Provision observer credentials directly. The observer must change this temporary password at first sign-in.'**
+  String get adminObserverCreateSubtitle;
+
+  /// No description provided for @adminObserverUsernameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Username (optional)'**
+  String get adminObserverUsernameLabel;
+
+  /// No description provided for @adminObserverTempPasswordHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a temporary password (minimum 8 characters).'**
+  String get adminObserverTempPasswordHelp;
+
+  /// No description provided for @adminObserverCreateSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer account created.'**
+  String get adminObserverCreateSuccess;
+
+  /// No description provided for @adminObserverDeleteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete observer'**
+  String get adminObserverDeleteAction;
+
+  /// No description provided for @adminObserverDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this observer account access? The profile will be archived and observer role removed.'**
+  String get adminObserverDeleteConfirm;
+
+  /// No description provided for @adminObserverDeleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer account archived.'**
+  String get adminObserverDeleteSuccess;
+
+  /// No description provided for @adminObserverMustChangePasswordTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset required'**
+  String get adminObserverMustChangePasswordTag;
+
+  /// No description provided for @adminObserverEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No observers yet.'**
+  String get adminObserverEmpty;
+
+  /// No description provided for @adminObserverRoleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Role: {role}'**
+  String adminObserverRoleLabel(Object role);
+
+  /// No description provided for @adminObserverUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date}'**
+  String adminObserverUpdatedLabel(Object date);
+
+  /// No description provided for @adminObserverGrantSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer access granted.'**
+  String get adminObserverGrantSuccess;
+
+  /// No description provided for @adminObserverRevokeSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer access revoked.'**
+  String get adminObserverRevokeSuccess;
+
+  /// No description provided for @adminObserverInvalidIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an email or UID.'**
+  String get adminObserverInvalidIdentifier;
 
   /// No description provided for @liveResultsPreview.
   ///
@@ -3998,6 +4598,96 @@ abstract class AppLocalizations {
   /// **'Add registration deadline'**
   String get addRegistrationDeadline;
 
+  /// No description provided for @campaignStartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign start'**
+  String get campaignStartTitle;
+
+  /// No description provided for @campaignStartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign starts: {date}'**
+  String campaignStartLabel(Object date);
+
+  /// No description provided for @addCampaignStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add campaign start'**
+  String get addCampaignStart;
+
+  /// No description provided for @campaignEndTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign end'**
+  String get campaignEndTitle;
+
+  /// No description provided for @campaignEndLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign ends: {date}'**
+  String campaignEndLabel(Object date);
+
+  /// No description provided for @addCampaignEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add campaign end'**
+  String get addCampaignEnd;
+
+  /// No description provided for @resultsPublishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results publication'**
+  String get resultsPublishTitle;
+
+  /// No description provided for @resultsPublishLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Results publication: {date}'**
+  String resultsPublishLabel(Object date);
+
+  /// No description provided for @addResultsPublish.
+  ///
+  /// In en, this message translates to:
+  /// **'Add results publication'**
+  String get addResultsPublish;
+
+  /// No description provided for @runoffOpenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff opening'**
+  String get runoffOpenTitle;
+
+  /// No description provided for @runoffOpenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff opens: {date}'**
+  String runoffOpenLabel(Object date);
+
+  /// No description provided for @addRunoffOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add runoff opening'**
+  String get addRunoffOpen;
+
+  /// No description provided for @runoffCloseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff closing'**
+  String get runoffCloseTitle;
+
+  /// No description provided for @runoffCloseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff closes: {date}'**
+  String runoffCloseLabel(Object date);
+
+  /// No description provided for @addRunoffClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Add runoff closing'**
+  String get addRunoffClose;
+
   /// No description provided for @clearDeadline.
   ///
   /// In en, this message translates to:
@@ -4052,6 +4742,12 @@ abstract class AppLocalizations {
   /// **'Create'**
   String get createAction;
 
+  /// No description provided for @editAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editAction;
+
   /// No description provided for @partyNameLabel.
   ///
   /// In en, this message translates to:
@@ -4105,6 +4801,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add'**
   String get addAction;
+
+  /// No description provided for @approveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approveAction;
+
+  /// No description provided for @rejectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get rejectAction;
 
   /// No description provided for @electionTypeParliamentary.
   ///
@@ -4178,6 +4886,12 @@ abstract class AppLocalizations {
   /// **'List cleaned'**
   String get auditEventListCleaned;
 
+  /// No description provided for @auditEventRegistrationApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration approved'**
+  String get auditEventRegistrationApproved;
+
   /// No description provided for @auditEventRegistrationRejected.
   ///
   /// In en, this message translates to:
@@ -4201,6 +4915,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vote cast'**
   String get auditEventVoteCast;
+
+  /// No description provided for @auditEventRoleChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Role changed'**
+  String get auditEventRoleChanged;
 
   /// No description provided for @legalHubTitle.
   ///
@@ -4247,7 +4967,7 @@ abstract class AppLocalizations {
   /// No description provided for @legalDocumentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Official text ({language})'**
+  /// **'Key highlights ({language})'**
   String legalDocumentSubtitle(Object language);
 
   /// No description provided for @legalSearchHint.
@@ -4304,6 +5024,144 @@ abstract class AppLocalizations {
   /// **'Admin tools'**
   String get adminToolsTitle;
 
+  /// No description provided for @adminContentSeedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Content studio'**
+  String get adminContentSeedTitle;
+
+  /// No description provided for @adminContentSeedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed civic data, election info, and reference centers.'**
+  String get adminContentSeedSubtitle;
+
+  /// No description provided for @adminContentSeedOverwrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite existing entries'**
+  String get adminContentSeedOverwrite;
+
+  /// No description provided for @adminContentSeedIncludeCenters.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed regional centers (capitals)'**
+  String get adminContentSeedIncludeCenters;
+
+  /// No description provided for @adminContentSeedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed Cameroon content'**
+  String get adminContentSeedAction;
+
+  /// No description provided for @adminContentSeedRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Seeding content...'**
+  String get adminContentSeedRunning;
+
+  /// No description provided for @adminContentSeedReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Seed report'**
+  String get adminContentSeedReportTitle;
+
+  /// No description provided for @adminContentSeedCivicLessons.
+  ///
+  /// In en, this message translates to:
+  /// **'Civic lessons'**
+  String get adminContentSeedCivicLessons;
+
+  /// No description provided for @adminContentSeedElectionCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Election calendar'**
+  String get adminContentSeedElectionCalendar;
+
+  /// No description provided for @adminContentSeedTransparency.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparency updates'**
+  String get adminContentSeedTransparency;
+
+  /// No description provided for @adminContentSeedChecklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation checklist'**
+  String get adminContentSeedChecklist;
+
+  /// No description provided for @adminContentSeedLegalDocs.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal documents'**
+  String get adminContentSeedLegalDocs;
+
+  /// No description provided for @adminContentSeedElectionsInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Elections info'**
+  String get adminContentSeedElectionsInfo;
+
+  /// No description provided for @adminContentSeedCenters.
+  ///
+  /// In en, this message translates to:
+  /// **'Voting centers'**
+  String get adminContentSeedCenters;
+
+  /// No description provided for @adminContentSeedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Content seeded in Firestore.'**
+  String get adminContentSeedSuccess;
+
+  /// No description provided for @adminContentManageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Content manager'**
+  String get adminContentManageTitle;
+
+  /// No description provided for @adminContentManageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create, update, or delete records for civic lessons, calendar, legal texts, transparency, checklist, and public content.'**
+  String get adminContentManageSubtitle;
+
+  /// No description provided for @adminContentManageSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Content saved.'**
+  String get adminContentManageSaved;
+
+  /// No description provided for @adminContentManageEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No content items in this collection yet.'**
+  String get adminContentManageEmpty;
+
+  /// No description provided for @adminContentManageIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Record ID'**
+  String get adminContentManageIdLabel;
+
+  /// No description provided for @adminContentManageJsonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'JSON payload'**
+  String get adminContentManageJsonLabel;
+
+  /// No description provided for @adminContentManageDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this content item? This action cannot be undone.'**
+  String get adminContentManageDeleteConfirm;
+
+  /// No description provided for @adminContentManageDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Content deleted.'**
+  String get adminContentManageDeleted;
+
   /// No description provided for @adminFraudMonitorTitle.
   ///
   /// In en, this message translates to:
@@ -4321,6 +5179,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Active fraud signals'**
   String get fraudSignalsTitle;
+
+  /// No description provided for @fraudSignalDeviceAnomaly.
+  ///
+  /// In en, this message translates to:
+  /// **'Device anomaly'**
+  String get fraudSignalDeviceAnomaly;
+
+  /// No description provided for @fraudSignalBiometricDuplicate.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric duplicate'**
+  String get fraudSignalBiometricDuplicate;
+
+  /// No description provided for @fraudSignalUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Unverified'**
+  String get fraudSignalUnverified;
+
+  /// No description provided for @fraudSignalAgeAnomaly.
+  ///
+  /// In en, this message translates to:
+  /// **'Age anomaly'**
+  String get fraudSignalAgeAnomaly;
+
+  /// No description provided for @fraudSignalStatusRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Status risk'**
+  String get fraudSignalStatusRisk;
+
+  /// No description provided for @fraudSignalVoteStateMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Vote state mismatch'**
+  String get fraudSignalVoteStateMismatch;
 
   /// No description provided for @fraudSignalCount.
   ///
@@ -4436,6 +5330,180 @@ abstract class AppLocalizations {
   /// **'Finalize and publish verified results.'**
   String get adminResultsPublishSubtitle;
 
+  /// No description provided for @adminVotingCentersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voting centers'**
+  String get adminVotingCentersTitle;
+
+  /// No description provided for @adminVotingCentersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} centers in the directory.'**
+  String adminVotingCentersSubtitle(Object count);
+
+  /// No description provided for @adminVotingCentersImportCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Import CSV'**
+  String get adminVotingCentersImportCsv;
+
+  /// No description provided for @adminVotingCentersImportHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste CSV with columns: name,address,city,region_code,region_name,country,country_code,type,latitude,longitude,status,contact,notes'**
+  String get adminVotingCentersImportHint;
+
+  /// No description provided for @adminVotingCentersImportDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} centers.'**
+  String adminVotingCentersImportDone(Object count);
+
+  /// No description provided for @adminVotingCentersEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit voting center'**
+  String get adminVotingCentersEditTitle;
+
+  /// No description provided for @adminVotingCentersCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create voting center'**
+  String get adminVotingCentersCreateTitle;
+
+  /// No description provided for @adminVotingCentersDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this voting center? This cannot be undone.'**
+  String get adminVotingCentersDeleteConfirm;
+
+  /// No description provided for @centerNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Center name'**
+  String get centerNameLabel;
+
+  /// No description provided for @centerAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get centerAddressLabel;
+
+  /// No description provided for @centerCityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get centerCityLabel;
+
+  /// No description provided for @centerRegionCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region code'**
+  String get centerRegionCodeLabel;
+
+  /// No description provided for @centerRegionNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Region name'**
+  String get centerRegionNameLabel;
+
+  /// No description provided for @centerCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get centerCountryLabel;
+
+  /// No description provided for @centerCountryCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country code'**
+  String get centerCountryCodeLabel;
+
+  /// No description provided for @centerLatitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get centerLatitudeLabel;
+
+  /// No description provided for @centerLongitudeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get centerLongitudeLabel;
+
+  /// No description provided for @centerTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Center type'**
+  String get centerTypeLabel;
+
+  /// No description provided for @centerTypeDomestic.
+  ///
+  /// In en, this message translates to:
+  /// **'Domestic'**
+  String get centerTypeDomestic;
+
+  /// No description provided for @centerTypeEmbassy.
+  ///
+  /// In en, this message translates to:
+  /// **'Embassy'**
+  String get centerTypeEmbassy;
+
+  /// No description provided for @centerTypeConsulate.
+  ///
+  /// In en, this message translates to:
+  /// **'Consulate'**
+  String get centerTypeConsulate;
+
+  /// No description provided for @centerTypeDiaspora.
+  ///
+  /// In en, this message translates to:
+  /// **'Diaspora'**
+  String get centerTypeDiaspora;
+
+  /// No description provided for @centerTypeOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get centerTypeOther;
+
+  /// No description provided for @centerStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get centerStatusLabel;
+
+  /// No description provided for @centerStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get centerStatusActive;
+
+  /// No description provided for @centerStatusInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get centerStatusInactive;
+
+  /// No description provided for @centerStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get centerStatusPending;
+
+  /// No description provided for @centerContactLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get centerContactLabel;
+
+  /// No description provided for @centerNotesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get centerNotesLabel;
+
   /// No description provided for @resultsPublishSummary.
   ///
   /// In en, this message translates to:
@@ -4543,11 +5611,251 @@ abstract class AppLocalizations {
     Object end,
   );
 
+  /// No description provided for @accountArchivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account archived'**
+  String get accountArchivedTitle;
+
+  /// No description provided for @accountArchivedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account is inactive'**
+  String get accountArchivedSubtitle;
+
+  /// No description provided for @accountArchivedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account was archived at your request or by an administrator. To restore access, please contact support or sign in to verify your identity.'**
+  String get accountArchivedBody;
+
+  /// No description provided for @accountArchivedLoginAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to login'**
+  String get accountArchivedLoginAction;
+
+  /// No description provided for @accountArchivedPublicAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as public'**
+  String get accountArchivedPublicAction;
+
+  /// No description provided for @accountArchivedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This account is archived. Please sign in to verify or contact support.'**
+  String get accountArchivedMessage;
+
   /// No description provided for @readMoreAction.
   ///
   /// In en, this message translates to:
   /// **'Read more'**
   String get readMoreAction;
+
+  /// No description provided for @countdownsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Countdowns'**
+  String get countdownsTitle;
+
+  /// No description provided for @countdownsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track election moments and personal eligibility timers.'**
+  String get countdownsSubtitle;
+
+  /// No description provided for @countdownElectionsSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Election countdowns'**
+  String get countdownElectionsSectionTitle;
+
+  /// No description provided for @countdownElectionOpensTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens in'**
+  String get countdownElectionOpensTitle;
+
+  /// No description provided for @countdownElectionClosesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Closes in'**
+  String get countdownElectionClosesTitle;
+
+  /// No description provided for @countdownCardExpiryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'e-Electoral card expiry'**
+  String get countdownCardExpiryTitle;
+
+  /// No description provided for @countdownCardExpiryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your card expires on {date}.'**
+  String countdownCardExpiryBody(Object date);
+
+  /// No description provided for @countdownCardExpiryWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew before expiry to keep your voting status active.'**
+  String get countdownCardExpiryWarning;
+
+  /// No description provided for @countdownRenewCardAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Renew card'**
+  String get countdownRenewCardAction;
+
+  /// No description provided for @countdownEligibilityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Eligibility unlock'**
+  String get countdownEligibilityTitle;
+
+  /// No description provided for @countdownEligibilityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You become eligible to vote on {date}.'**
+  String countdownEligibilityBody(Object date);
+
+  /// No description provided for @countdownEligibilityCelebrate.
+  ///
+  /// In en, this message translates to:
+  /// **'You’re now eligible to vote!'**
+  String get countdownEligibilityCelebrate;
+
+  /// No description provided for @countdownSuspensionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspension ends'**
+  String get countdownSuspensionTitle;
+
+  /// No description provided for @countdownSuspensionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspension lifts on {date}.'**
+  String countdownSuspensionBody(Object date);
+
+  /// No description provided for @countdownNoTimersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No active countdowns'**
+  String get countdownNoTimersTitle;
+
+  /// No description provided for @countdownNoTimersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your next timers will appear here as soon as data is available.'**
+  String get countdownNoTimersBody;
+
+  /// No description provided for @countdownExpiredLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get countdownExpiredLabel;
+
+  /// No description provided for @countdownTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get countdownTodayLabel;
+
+  /// No description provided for @countdownViewAllAction.
+  ///
+  /// In en, this message translates to:
+  /// **'View all countdowns'**
+  String get countdownViewAllAction;
+
+  /// No description provided for @voterCountdowns.
+  ///
+  /// In en, this message translates to:
+  /// **'Countdowns'**
+  String get voterCountdowns;
+
+  /// No description provided for @voterCountdownsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track election timers and eligibility updates.'**
+  String get voterCountdownsSubtitle;
+
+  /// No description provided for @countdownPersonalSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal countdowns'**
+  String get countdownPersonalSectionTitle;
+
+  /// No description provided for @countdownRegistrationDeadlineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration closes in'**
+  String get countdownRegistrationDeadlineTitle;
+
+  /// No description provided for @countdownCampaignStartsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign starts in'**
+  String get countdownCampaignStartsTitle;
+
+  /// No description provided for @countdownCampaignEndsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Campaign ends in'**
+  String get countdownCampaignEndsTitle;
+
+  /// No description provided for @countdownResultsPublishTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Results publication in'**
+  String get countdownResultsPublishTitle;
+
+  /// No description provided for @countdownRunoffOpensTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff opens in'**
+  String get countdownRunoffOpensTitle;
+
+  /// No description provided for @countdownRunoffClosesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Runoff closes in'**
+  String get countdownRunoffClosesTitle;
+
+  /// No description provided for @webDownloadAppTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the CAMVOTE mobile app'**
+  String get webDownloadAppTitle;
+
+  /// No description provided for @webDownloadAppSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register, vote, and receive updates faster on your phone.'**
+  String get webDownloadAppSubtitle;
+
+  /// No description provided for @webDownloadPlayStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Get it on Google Play'**
+  String get webDownloadPlayStore;
+
+  /// No description provided for @webDownloadAppStore.
+  ///
+  /// In en, this message translates to:
+  /// **'Download on the App Store'**
+  String get webDownloadAppStore;
+
+  /// No description provided for @webDownloadQrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to download'**
+  String get webDownloadQrTitle;
+
+  /// No description provided for @webDownloadLearnMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Learn more about mobile features'**
+  String get webDownloadLearnMore;
 }
 
 class _AppLocalizationsDelegate

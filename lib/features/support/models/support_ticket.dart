@@ -11,32 +11,23 @@ enum SupportCategory {
 }
 
 extension SupportCategoryX on SupportCategory {
-  String get label => switch (this) {
-        SupportCategory.registration => 'Registration',
-        SupportCategory.voting => 'Voting',
-        SupportCategory.biometrics => 'Biometrics',
-        SupportCategory.fraud => 'Fraud report',
-        SupportCategory.technical => 'Technical',
-        SupportCategory.other => 'Other',
-      };
-
   String labelFor(AppLocalizations t) => switch (this) {
-        SupportCategory.registration => t.supportCategoryRegistration,
-        SupportCategory.voting => t.supportCategoryVoting,
-        SupportCategory.biometrics => t.supportCategoryBiometrics,
-        SupportCategory.fraud => t.supportCategoryFraud,
-        SupportCategory.technical => t.supportCategoryTechnical,
-        SupportCategory.other => t.supportCategoryOther,
-      };
+    SupportCategory.registration => t.supportCategoryRegistration,
+    SupportCategory.voting => t.supportCategoryVoting,
+    SupportCategory.biometrics => t.supportCategoryBiometrics,
+    SupportCategory.fraud => t.supportCategoryFraud,
+    SupportCategory.technical => t.supportCategoryTechnical,
+    SupportCategory.other => t.supportCategoryOther,
+  };
 
   String get apiValue => switch (this) {
-        SupportCategory.registration => 'registration',
-        SupportCategory.voting => 'voting',
-        SupportCategory.biometrics => 'biometrics',
-        SupportCategory.fraud => 'fraud',
-        SupportCategory.technical => 'technical',
-        SupportCategory.other => 'other',
-      };
+    SupportCategory.registration => 'registration',
+    SupportCategory.voting => 'voting',
+    SupportCategory.biometrics => 'biometrics',
+    SupportCategory.fraud => 'fraud',
+    SupportCategory.technical => 'technical',
+    SupportCategory.other => 'other',
+  };
 }
 
 @immutable
@@ -56,12 +47,12 @@ class SupportTicket {
   });
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-        'registration_id': registrationId,
-        'category': category.apiValue,
-        'message': message,
-      };
+    'name': name,
+    'email': email,
+    'registration_id': registrationId,
+    'category': category.apiValue,
+    'message': message,
+  };
 }
 
 class SupportTicketResult {

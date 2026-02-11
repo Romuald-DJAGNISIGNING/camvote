@@ -1,3 +1,4 @@
+import 'package:camvote/core/errors/error_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/sections/cam_section_header.dart';
 import '../domain/election.dart';
 import '../providers/voter_portal_providers.dart';
 
@@ -21,7 +23,7 @@ class VoterElectionsScreen extends ConsumerWidget {
     return Scaffold(
       body: electionsAsync.when(
         loading: () => const Center(child: CamElectionLoader()),
-        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
         data: (elections) {
           final sorted = [...elections]
             ..sort((a, b) => a.opensAt.compareTo(b.opensAt));
@@ -60,13 +62,14 @@ class VoterElectionsScreen extends ConsumerWidget {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withAlpha(18),
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary.withAlpha(18),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(Icons.how_to_vote_outlined),
+                                      child: const Icon(
+                                        Icons.how_to_vote_outlined,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -86,18 +89,18 @@ class VoterElectionsScreen extends ConsumerWidget {
                                           const SizedBox(height: 4),
                                           Text(
                                             e.scopeLabel,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodySmall,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
                                             t.candidatesCountLabel(
                                               e.candidates.length,
                                             ),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelMedium,
                                           ),
                                         ],
                                       ),
@@ -136,9 +139,9 @@ class VoterElectionsScreen extends ConsumerWidget {
             children: [
               Text(
                 e.title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 8),
               Text(t.electionScopeLabel(e.scopeLabel)),
@@ -146,13 +149,11 @@ class VoterElectionsScreen extends ConsumerWidget {
               Text('${t.opensLabel}: $opensLabel'),
               Text('${t.closesLabel}: $closesLabel'),
               const SizedBox(height: 12),
-              Text(
-                t.candidatesLabel,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+              CamSectionHeader(
+                title: t.candidatesLabel,
+                icon: Icons.people_outline,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               ...e.candidates.map(
                 (c) => Card(
                   child: ListTile(
@@ -171,9 +172,9 @@ class VoterElectionsScreen extends ConsumerWidget {
 
   String _formatDateTime(BuildContext context, DateTime value) {
     final date = MaterialLocalizations.of(context).formatMediumDate(value);
-    final time = MaterialLocalizations.of(context).formatTimeOfDay(
-      TimeOfDay.fromDateTime(value),
-    );
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(value));
     return '$date $time';
   }
 }
@@ -182,10 +183,7 @@ class _StatusChip extends StatelessWidget {
   final ElectionStatus status;
   final String label;
 
-  const _StatusChip({
-    required this.status,
-    required this.label,
-  });
+  const _StatusChip({required this.status, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -205,10 +203,12 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
       ),
     );
   }
 }
+
+

@@ -124,7 +124,12 @@ class _CameroonRegionsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final pad = 8.0;
-    final rect = Rect.fromLTWH(pad, pad, size.width - pad * 2, size.height - pad * 2);
+    final rect = Rect.fromLTWH(
+      pad,
+      pad,
+      size.width - pad * 2,
+      size.height - pad * 2,
+    );
 
     // Build region paths in screen coordinates.
     final paths = <String, Path>{};
@@ -148,8 +153,9 @@ class _CameroonRegionsPainter extends CustomPainter {
     // Draw regions
     for (final region in CameroonRegionsMap.regions) {
       final path = paths[region.code]!;
-      final fill = (fillByCode[region.code] ?? theme.colorScheme.surfaceContainerHighest)
-          .withAlpha(215);
+      final fill =
+          (fillByCode[region.code] ?? theme.colorScheme.surfaceContainerHighest)
+              .withAlpha(215);
 
       final fillPaint = Paint()..color = fill;
       canvas.drawPath(path, fillPaint);
@@ -249,8 +255,7 @@ class _CameroonRegionsPainter extends CustomPainter {
   }
 
   void _drawBadge(Canvas canvas, Offset center, String tag) {
-    final bg = Paint()
-      ..color = theme.colorScheme.surface.withAlpha(235);
+    final bg = Paint()..color = theme.colorScheme.surface.withAlpha(235);
 
     final border = Paint()
       ..style = PaintingStyle.stroke
@@ -281,7 +286,10 @@ class _CameroonRegionsPainter extends CustomPainter {
     canvas.drawRRect(r, bg);
     canvas.drawRRect(r, border);
 
-    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
+    tp.paint(
+      canvas,
+      Offset(center.dx - tp.width / 2, center.dy - tp.height / 2),
+    );
   }
 
   void _drawText(

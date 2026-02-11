@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../models/admin_models.dart';
 import '../providers/admin_providers.dart';
@@ -9,6 +10,7 @@ import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/motion/cam_reveal.dart';
 
 class AdminElectionsScreen extends ConsumerWidget {
   const AdminElectionsScreen({super.key});
@@ -32,154 +34,227 @@ class AdminElectionsScreen extends ConsumerWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  const SizedBox(height: 6),
-                  BrandHeader(
-                    title: t.adminElectionManagementTitle,
-                    subtitle: t.adminElectionManagementSubtitle,
-                  ),
-                  const SizedBox(height: 16),
-                  if (items.isEmpty)
-                    Text(t.noElectionsYet)
-                  else
-                    ...items.map((e) {
-                      final typeLabel = _electionTypeLabel(t, e.type);
-                      final scopeLabel = _scopeLabel(t, e.scope);
-                      final ballotLabel = _ballotLabel(t, e.ballotType);
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Card(
+                  CamStagger(
+                    children: [
+                      const SizedBox(height: 6),
+                      BrandHeader(
+                        title: t.adminElectionManagementTitle,
+                        subtitle: t.adminElectionManagementSubtitle,
+                      ),
+                      const SizedBox(height: 16),
+                      if (items.isEmpty)
+                        Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  e.title,
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                if (e.description.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Text(e.description),
-                                ],
-                                const SizedBox(height: 8),
-                                _Row(
-                                  label: t.opensLabel,
-                                  value: _formatDateTime(context, e.startAt),
-                                ),
-                                _Row(
-                                  label: t.closesLabel,
-                                  value: _formatDateTime(context, e.endAt),
-                                ),
-                                if (e.registrationDeadline != null)
-                                  _Row(
-                                    label: t.registrationDeadlineTitle,
-                                    value: _formatDateTime(
-                                      context,
-                                      e.registrationDeadline!,
-                                    ),
-                                  ),
-                                if (scopeLabel.isNotEmpty || e.location.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Wrap(
-                                      spacing: 8,
-                                      runSpacing: 6,
-                                      children: [
-                                        if (scopeLabel.isNotEmpty)
-                                          _chip(context, scopeLabel),
-                                        if (e.location.isNotEmpty)
-                                          _chip(context, e.location),
-                                      ],
-                                    ),
-                                  ),
-                                const SizedBox(height: 6),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 6,
+                            child: Text(t.noElectionsYet),
+                          ),
+                        )
+                      else
+                        ...items.map((e) {
+                          final typeLabel = _electionTypeLabel(t, e.type);
+                          final scopeLabel = _scopeLabel(t, e.scope);
+                          final ballotLabel = _ballotLabel(t, e.ballotType);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _chip(context, typeLabel),
-                                    _chip(context, e.isClosed ? t.electionStatusClosed : t.electionStatusLive),
-                                    if (ballotLabel.isNotEmpty)
-                                      _chip(context, ballotLabel),
-                                    _chip(
-                                      context,
-                                      t.candidatesCountLabel(e.candidates.length),
+                                    Text(
+                                      e.title,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
                                     ),
-                                    _chip(context, t.votesCountLabel(e.totalVotes)),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: FilledButton.tonalIcon(
-                                    onPressed: () =>
-                                        _openAddCandidate(context, ref, e.id),
-                                    icon: const Icon(Icons.person_add_alt_1),
-                                    label: Text(t.addCandidate),
-                                  ),
-                                ),
-                                if (e.candidates.isNotEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  const Divider(),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    t.candidatesLabel,
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ...e.candidates.map(
-                                    (c) => ListTile(
-                                      contentPadding: EdgeInsets.zero,
-                                      leading: CircleAvatar(
-                                        backgroundColor: Color(c.partyColor),
-                                        child: Text(
-                                          c.partyAcronym,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                          ),
+                                    if (e.description.isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      Text(e.description),
+                                    ],
+                                    const SizedBox(height: 8),
+                                    _Row(
+                                      label: t.opensLabel,
+                                      value: _formatDateTime(
+                                        context,
+                                        e.startAt,
+                                      ),
+                                    ),
+                                    _Row(
+                                      label: t.closesLabel,
+                                      value: _formatDateTime(context, e.endAt),
+                                    ),
+                                    if (e.registrationDeadline != null)
+                                      _Row(
+                                        label: t.registrationDeadlineTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.registrationDeadline!,
                                         ),
                                       ),
-                                      title: Text(c.fullName),
-                                      subtitle: Text(
-                                        '${c.partyName} (${c.partyAcronym})'
-                                        '${c.runningMate.isEmpty ? '' : '\n${t.candidateRunningMateLabel}: ${c.runningMate}'}',
+                                    if (e.campaignStartsAt != null)
+                                      _Row(
+                                        label: t.campaignStartTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.campaignStartsAt!,
+                                        ),
                                       ),
-                                      trailing: c.slogan.isEmpty
-                                          ? null
-                                          : Text(
-                                              c.slogan,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                            ),
+                                    if (e.campaignEndsAt != null)
+                                      _Row(
+                                        label: t.campaignEndTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.campaignEndsAt!,
+                                        ),
+                                      ),
+                                    if (e.resultsPublishAt != null)
+                                      _Row(
+                                        label: t.resultsPublishTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.resultsPublishAt!,
+                                        ),
+                                      ),
+                                    if (e.runoffOpensAt != null)
+                                      _Row(
+                                        label: t.runoffOpenTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.runoffOpensAt!,
+                                        ),
+                                      ),
+                                    if (e.runoffClosesAt != null)
+                                      _Row(
+                                        label: t.runoffCloseTitle,
+                                        value: _formatDateTime(
+                                          context,
+                                          e.runoffClosesAt!,
+                                        ),
+                                      ),
+                                    if (scopeLabel.isNotEmpty ||
+                                        e.location.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 6),
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 6,
+                                          children: [
+                                            if (scopeLabel.isNotEmpty)
+                                              _chip(context, scopeLabel),
+                                            if (e.location.isNotEmpty)
+                                              _chip(context, e.location),
+                                          ],
+                                        ),
+                                      ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 6,
+                                      children: [
+                                        _chip(context, typeLabel),
+                                        _chip(
+                                          context,
+                                          e.isClosed
+                                              ? t.electionStatusClosed
+                                              : t.electionStatusLive,
+                                        ),
+                                        if (ballotLabel.isNotEmpty)
+                                          _chip(context, ballotLabel),
+                                        _chip(
+                                          context,
+                                          t.candidatesCountLabel(
+                                            e.candidates.length,
+                                          ),
+                                        ),
+                                        _chip(
+                                          context,
+                                          t.votesCountLabel(e.totalVotes),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ],
+                                    const SizedBox(height: 12),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: FilledButton.tonalIcon(
+                                        onPressed: () => _openAddCandidate(
+                                          context,
+                                          ref,
+                                          e.id,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.person_add_alt_1,
+                                        ),
+                                        label: Text(t.addCandidate),
+                                      ),
+                                    ),
+                                    if (e.candidates.isNotEmpty) ...[
+                                      const SizedBox(height: 10),
+                                      const Divider(),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        t.candidatesLabel,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleMedium,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ...e.candidates.map(
+                                        (c) => ListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          leading: CircleAvatar(
+                                            backgroundColor: Color(
+                                              c.partyColor,
+                                            ),
+                                            child: Text(
+                                              c.partyAcronym,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          title: Text(c.fullName),
+                                          subtitle: Text(
+                                            '${c.partyName} (${c.partyAcronym})'
+                                            '${c.runningMate.isEmpty ? '' : '\n${t.candidateRunningMateLabel}: ${c.runningMate}'}',
+                                          ),
+                                          trailing: c.slogan.isEmpty
+                                              ? null
+                                              : Text(
+                                                  c.slogan,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }),
+                          );
+                        }),
+                      const SizedBox(height: 18),
+                    ],
+                  ),
                 ],
               ),
             ),
           );
         },
-        error: (e, _) => Center(child: Text(t.errorWithDetails(e.toString()))),
+        error: (e, _) => Center(child: Text(safeErrorMessage(context, e))),
         loading: () => const Center(child: CamElectionLoader()),
       ),
     );
   }
 
   Widget _chip(BuildContext context, String text) {
-    return Chip(
-      label: Text(text),
-      shape: const StadiumBorder(),
-    );
+    return Chip(label: Text(text), shape: const StadiumBorder());
   }
 
   Future<void> _openCreateElection(BuildContext context, WidgetRef ref) async {
@@ -195,6 +270,11 @@ class AdminElectionsScreen extends ConsumerWidget {
     DateTime startAt = DateTime.now().add(const Duration(hours: 1));
     DateTime endAt = DateTime.now().add(const Duration(hours: 8));
     DateTime? registrationDeadline;
+    DateTime? campaignStartsAt;
+    DateTime? campaignEndsAt;
+    DateTime? resultsPublishAt;
+    DateTime? runoffOpensAt;
+    DateTime? runoffClosesAt;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -218,6 +298,48 @@ class AdminElectionsScreen extends ConsumerWidget {
               final deadlineLabel = registrationDeadline == null
                   ? ''
                   : _formatDateTime(ctx, registrationDeadline!);
+              final campaignStartLabel = campaignStartsAt == null
+                  ? ''
+                  : _formatDateTime(ctx, campaignStartsAt!);
+              final campaignEndLabel = campaignEndsAt == null
+                  ? ''
+                  : _formatDateTime(ctx, campaignEndsAt!);
+              final resultsPublishLabel = resultsPublishAt == null
+                  ? ''
+                  : _formatDateTime(ctx, resultsPublishAt!);
+              final runoffOpenLabel = runoffOpensAt == null
+                  ? ''
+                  : _formatDateTime(ctx, runoffOpensAt!);
+              final runoffCloseLabel = runoffClosesAt == null
+                  ? ''
+                  : _formatDateTime(ctx, runoffClosesAt!);
+
+              Future<DateTime?> pickDateTime(
+                DateTime? current,
+                DateTime fallback,
+              ) async {
+                final base = current ?? fallback;
+                final pickedDate = await showDatePicker(
+                  context: ctx,
+                  firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                  lastDate: DateTime.now().add(const Duration(days: 3650)),
+                  initialDate: base,
+                );
+                if (pickedDate == null) return null;
+                if (!ctx.mounted) return null;
+                final pickedTime = await showTimePicker(
+                  context: ctx,
+                  initialTime: TimeOfDay.fromDateTime(base),
+                );
+                final time = pickedTime ?? TimeOfDay.fromDateTime(base);
+                return DateTime(
+                  pickedDate.year,
+                  pickedDate.month,
+                  pickedDate.day,
+                  time.hour,
+                  time.minute,
+                );
+              }
 
               final scopeOptions = [
                 _Option('national', local.electionScopeNational),
@@ -237,7 +359,10 @@ class AdminElectionsScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(local.adminCreateElection, style: Theme.of(ctx).textTheme.titleLarge),
+                    Text(
+                      local.adminCreateElection,
+                      style: Theme.of(ctx).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: titleCtrl,
@@ -263,10 +388,12 @@ class AdminElectionsScreen extends ConsumerWidget {
                         border: const OutlineInputBorder(),
                       ),
                       items: ElectionType.values
-                          .map((t) => DropdownMenuItem(
-                                value: t,
-                                child: Text(_electionTypeLabel(local, t)),
-                              ))
+                          .map(
+                            (t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(_electionTypeLabel(local, t)),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => type = v ?? type),
                     ),
@@ -277,14 +404,14 @@ class AdminElectionsScreen extends ConsumerWidget {
                         labelText: local.electionScopeFieldLabel,
                         border: const OutlineInputBorder(),
                       ),
-                    items: scopeOptions
-                        .map(
-                          (option) => DropdownMenuItem(
-                            value: option.value,
-                            child: Text(option.label),
-                          ),
-                        )
-                        .toList(),
+                      items: scopeOptions
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option.value,
+                              child: Text(option.label),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) => setState(() => scope = v ?? ''),
                     ),
                     const SizedBox(height: 12),
@@ -303,8 +430,12 @@ class AdminElectionsScreen extends ConsumerWidget {
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: ctx,
-                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                                lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                firstDate: DateTime.now().subtract(
+                                  const Duration(days: 1),
+                                ),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 3650),
+                                ),
                                 initialDate: startAt,
                               );
                               if (picked == null) return;
@@ -316,11 +447,15 @@ class AdminElectionsScreen extends ConsumerWidget {
                                   startAt.hour,
                                   startAt.minute,
                                 );
-                                if (endAt.isBefore(startAt)) endAt = startAt.add(const Duration(hours: 2));
+                                if (endAt.isBefore(startAt)) {
+                                  endAt = startAt.add(const Duration(hours: 2));
+                                }
                               });
                             },
                             icon: const Icon(Icons.schedule),
-                            label: Text(local.electionStartLabel(startDateLabel)),
+                            label: Text(
+                              local.electionStartLabel(startDateLabel),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -346,7 +481,9 @@ class AdminElectionsScreen extends ConsumerWidget {
                               });
                             },
                             icon: const Icon(Icons.access_time),
-                            label: Text(local.electionStartTimeLabel(startTimeLabel)),
+                            label: Text(
+                              local.electionStartTimeLabel(startTimeLabel),
+                            ),
                           ),
                         ),
                       ],
@@ -359,8 +496,12 @@ class AdminElectionsScreen extends ConsumerWidget {
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: ctx,
-                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                                lastDate: DateTime.now().add(const Duration(days: 3650)),
+                                firstDate: DateTime.now().subtract(
+                                  const Duration(days: 1),
+                                ),
+                                lastDate: DateTime.now().add(
+                                  const Duration(days: 3650),
+                                ),
                                 initialDate: endAt,
                               );
                               if (picked == null) return;
@@ -404,7 +545,9 @@ class AdminElectionsScreen extends ConsumerWidget {
                               });
                             },
                             icon: const Icon(Icons.access_time_filled),
-                            label: Text(local.electionEndTimeLabel(endTimeLabel)),
+                            label: Text(
+                              local.electionEndTimeLabel(endTimeLabel),
+                            ),
                           ),
                         ),
                       ],
@@ -415,31 +558,20 @@ class AdminElectionsScreen extends ConsumerWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () async {
-                              final picked = await showDatePicker(
-                                context: ctx,
-                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                                lastDate: DateTime.now().add(const Duration(days: 3650)),
-                                initialDate: registrationDeadline ?? startAt,
+                              final picked = await pickDateTime(
+                                registrationDeadline,
+                                startAt,
                               );
                               if (picked == null) return;
-                              final time = registrationDeadline == null
-                                  ? TimeOfDay.fromDateTime(startAt)
-                                  : TimeOfDay.fromDateTime(registrationDeadline!);
-                              setState(() {
-                                registrationDeadline = DateTime(
-                                  picked.year,
-                                  picked.month,
-                                  picked.day,
-                                  time.hour,
-                                  time.minute,
-                                );
-                              });
+                              setState(() => registrationDeadline = picked);
                             },
                             icon: const Icon(Icons.event_available),
                             label: Text(
                               registrationDeadline == null
                                   ? local.addRegistrationDeadline
-                                  : local.registrationDeadlineLabel(deadlineLabel),
+                                  : local.registrationDeadlineLabel(
+                                      deadlineLabel,
+                                    ),
                             ),
                           ),
                         ),
@@ -447,7 +579,172 @@ class AdminElectionsScreen extends ConsumerWidget {
                           const SizedBox(width: 12),
                           IconButton(
                             tooltip: local.clearDeadline,
-                            onPressed: () => setState(() => registrationDeadline = null),
+                            onPressed: () =>
+                                setState(() => registrationDeadline = null),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await pickDateTime(
+                                campaignStartsAt,
+                                startAt,
+                              );
+                              if (picked == null) return;
+                              setState(() => campaignStartsAt = picked);
+                            },
+                            icon: const Icon(Icons.campaign_outlined),
+                            label: Text(
+                              campaignStartsAt == null
+                                  ? local.addCampaignStart
+                                  : local.campaignStartLabel(
+                                      campaignStartLabel,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        if (campaignStartsAt != null) ...[
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: local.clearDeadline,
+                            onPressed: () =>
+                                setState(() => campaignStartsAt = null),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await pickDateTime(
+                                campaignEndsAt,
+                                endAt,
+                              );
+                              if (picked == null) return;
+                              setState(() => campaignEndsAt = picked);
+                            },
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: Text(
+                              campaignEndsAt == null
+                                  ? local.addCampaignEnd
+                                  : local.campaignEndLabel(campaignEndLabel),
+                            ),
+                          ),
+                        ),
+                        if (campaignEndsAt != null) ...[
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: local.clearDeadline,
+                            onPressed: () =>
+                                setState(() => campaignEndsAt = null),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await pickDateTime(
+                                resultsPublishAt,
+                                endAt,
+                              );
+                              if (picked == null) return;
+                              setState(() => resultsPublishAt = picked);
+                            },
+                            icon: const Icon(Icons.bar_chart_outlined),
+                            label: Text(
+                              resultsPublishAt == null
+                                  ? local.addResultsPublish
+                                  : local.resultsPublishLabel(
+                                      resultsPublishLabel,
+                                    ),
+                            ),
+                          ),
+                        ),
+                        if (resultsPublishAt != null) ...[
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: local.clearDeadline,
+                            onPressed: () =>
+                                setState(() => resultsPublishAt = null),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await pickDateTime(
+                                runoffOpensAt,
+                                endAt,
+                              );
+                              if (picked == null) return;
+                              setState(() => runoffOpensAt = picked);
+                            },
+                            icon: const Icon(Icons.how_to_vote_outlined),
+                            label: Text(
+                              runoffOpensAt == null
+                                  ? local.addRunoffOpen
+                                  : local.runoffOpenLabel(runoffOpenLabel),
+                            ),
+                          ),
+                        ),
+                        if (runoffOpensAt != null) ...[
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: local.clearDeadline,
+                            onPressed: () =>
+                                setState(() => runoffOpensAt = null),
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final picked = await pickDateTime(
+                                runoffClosesAt,
+                                endAt,
+                              );
+                              if (picked == null) return;
+                              setState(() => runoffClosesAt = picked);
+                            },
+                            icon: const Icon(Icons.timer_outlined),
+                            label: Text(
+                              runoffClosesAt == null
+                                  ? local.addRunoffClose
+                                  : local.runoffCloseLabel(runoffCloseLabel),
+                            ),
+                          ),
+                        ),
+                        if (runoffClosesAt != null) ...[
+                          const SizedBox(width: 12),
+                          IconButton(
+                            tooltip: local.clearDeadline,
+                            onPressed: () =>
+                                setState(() => runoffClosesAt = null),
                             icon: const Icon(Icons.close_rounded),
                           ),
                         ],
@@ -460,14 +757,14 @@ class AdminElectionsScreen extends ConsumerWidget {
                         labelText: local.electionBallotTypeLabel,
                         border: const OutlineInputBorder(),
                       ),
-                    items: ballotOptions
-                        .map(
-                          (option) => DropdownMenuItem(
-                            value: option.value,
-                            child: Text(option.label),
-                          ),
-                        )
-                        .toList(),
+                      items: ballotOptions
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option.value,
+                              child: Text(option.label),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) => setState(() => ballotType = v ?? ''),
                     ),
                     const SizedBox(height: 12),
@@ -496,12 +793,19 @@ class AdminElectionsScreen extends ConsumerWidget {
                           if (title.isEmpty) return;
 
                           Navigator.pop(ctx);
-                          await ref.read(electionsProvider.notifier).createElection(
+                          await ref
+                              .read(electionsProvider.notifier)
+                              .createElection(
                                 title: title,
                                 type: type,
                                 startAt: startAt,
                                 endAt: endAt,
                                 registrationDeadline: registrationDeadline,
+                                campaignStartsAt: campaignStartsAt,
+                                campaignEndsAt: campaignEndsAt,
+                                resultsPublishAt: resultsPublishAt,
+                                runoffOpensAt: runoffOpensAt,
+                                runoffClosesAt: runoffClosesAt,
                                 description: descriptionCtrl.text.trim(),
                                 scope: scope,
                                 location: locationCtrl.text.trim(),
@@ -529,7 +833,11 @@ class AdminElectionsScreen extends ConsumerWidget {
     timezoneCtrl.dispose();
   }
 
-  Future<void> _openAddCandidate(BuildContext context, WidgetRef ref, String electionId) async {
+  Future<void> _openAddCandidate(
+    BuildContext context,
+    WidgetRef ref,
+    String electionId,
+  ) async {
     final nameCtrl = TextEditingController();
     final partyCtrl = TextEditingController();
     final acrCtrl = TextEditingController();
@@ -560,7 +868,10 @@ class AdminElectionsScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(local.addCandidate, style: Theme.of(ctx).textTheme.titleLarge),
+                    Text(
+                      local.addCandidate,
+                      style: Theme.of(ctx).textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: nameCtrl,
@@ -672,7 +983,9 @@ class AdminElectionsScreen extends ConsumerWidget {
                           final full = nameCtrl.text.trim();
                           final party = partyCtrl.text.trim();
                           final acr = acrCtrl.text.trim();
-                          if (full.isEmpty || party.isEmpty || acr.isEmpty) return;
+                          if (full.isEmpty || party.isEmpty || acr.isEmpty) {
+                            return;
+                          }
 
                           final cand = Candidate(
                             id: 'cand_${DateTime.now().millisecondsSinceEpoch}',
@@ -688,7 +1001,9 @@ class AdminElectionsScreen extends ConsumerWidget {
                           );
 
                           Navigator.pop(ctx);
-                          await ref.read(electionsProvider.notifier).addCandidate(
+                          await ref
+                              .read(electionsProvider.notifier)
+                              .addCandidate(
                                 electionId: electionId,
                                 candidate: cand,
                               );
@@ -731,8 +1046,9 @@ class AdminElectionsScreen extends ConsumerWidget {
   }
 
   String _formatTime(BuildContext context, DateTime date) {
-    return MaterialLocalizations.of(context)
-        .formatTimeOfDay(TimeOfDay.fromDateTime(date));
+    return MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(date));
   }
 
   String _formatDateTime(BuildContext context, DateTime date) {
@@ -809,9 +1125,9 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           Text(value),
@@ -820,3 +1136,5 @@ class _Row extends StatelessWidget {
     );
   }
 }
+
+

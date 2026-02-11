@@ -15,11 +15,11 @@ class RegistrationIdentity {
   });
 
   Map<String, dynamic> toMap() => {
-        'fullName': fullName,
-        'dateOfBirth': dateOfBirth.toIso8601String(),
-        'placeOfBirth': placeOfBirth,
-        'nationality': nationality,
-      };
+    'fullName': fullName,
+    'dateOfBirth': dateOfBirth.toIso8601String(),
+    'placeOfBirth': placeOfBirth,
+    'nationality': nationality,
+  };
 
   factory RegistrationIdentity.fromMap(Map<String, dynamic> map) {
     return RegistrationIdentity(

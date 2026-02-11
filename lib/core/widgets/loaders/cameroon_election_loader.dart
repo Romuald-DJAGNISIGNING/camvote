@@ -75,9 +75,9 @@ class _CamElectionLoaderState extends State<CamElectionLoader>
           Text(
             label,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ],
@@ -121,7 +121,13 @@ class _CamVoteFlagLoaderPainter extends CustomPainter {
       ..color = Colors.black.withAlpha(24);
 
     final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect.shift(const Offset(0, 1.6)), startAngle, sweep, false, shadowPaint);
+    canvas.drawArc(
+      rect.shift(const Offset(0, 1.6)),
+      startAngle,
+      sweep,
+      false,
+      shadowPaint,
+    );
 
     // Draw 3 colored segments along the sweep: green → red → yellow
     _drawFlagArc(canvas, rect, startAngle, sweep);
@@ -164,7 +170,12 @@ class _CamVoteFlagLoaderPainter extends CustomPainter {
     canvas.drawArc(rect, startAngle + gSweep + rSweep, ySweep, false, p);
   }
 
-  void _drawStartTriangleCap(Canvas canvas, Offset center, double radius, double angle) {
+  void _drawStartTriangleCap(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double angle,
+  ) {
     final tip = _pointOnCircle(center, radius, angle);
     final tangent = _tangentUnit(angle);
 
@@ -196,7 +207,12 @@ class _CamVoteFlagLoaderPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  void _drawEndRectCap(Canvas canvas, Offset center, double radius, double angle) {
+  void _drawEndRectCap(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double angle,
+  ) {
     final end = _pointOnCircle(center, radius, angle);
     final tangent = _tangentUnit(angle);
     final outward = _radialUnit(angle);
@@ -229,7 +245,13 @@ class _CamVoteFlagLoaderPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  void _drawProgressStars(Canvas canvas, Offset center, double radius, double startAngle, double sweep) {
+  void _drawProgressStars(
+    Canvas canvas,
+    Offset center,
+    double radius,
+    double startAngle,
+    double sweep,
+  ) {
     // We’ll place stars along the sweep.
     // They appear progressively from start → end.
     const starCount = 8;
@@ -278,9 +300,7 @@ class _CamVoteFlagLoaderPainter extends CustomPainter {
   }
 
   double _easeInOutCubic(double x) {
-    return x < 0.5
-        ? 4 * x * x * x
-        : 1 - math.pow(-2 * x + 2, 3).toDouble() / 2;
+    return x < 0.5 ? 4 * x * x * x : 1 - math.pow(-2 * x + 2, 3).toDouble() / 2;
   }
 
   Offset _pointOnCircle(Offset c, double r, double a) =>

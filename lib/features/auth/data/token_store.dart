@@ -3,7 +3,7 @@ import '../models/auth_tokens.dart';
 
 class AuthTokenStore {
   AuthTokenStore({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
@@ -19,7 +19,11 @@ class AuthTokenStore {
     final expRaw = await _storage.read(key: _kExpiresAt);
     final exp = expRaw == null ? null : DateTime.tryParse(expRaw);
 
-    return AuthTokens(accessToken: access, refreshToken: refresh, expiresAt: exp);
+    return AuthTokens(
+      accessToken: access,
+      refreshToken: refresh,
+      expiresAt: exp,
+    );
   }
 
   Future<void> saveTokens(AuthTokens tokens) async {

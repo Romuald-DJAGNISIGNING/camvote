@@ -1,3 +1,4 @@
+import 'package:camvote/core/errors/error_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -10,6 +11,7 @@ import '../../../core/branding/brand_palette.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../models/voting_center.dart';
 import '../providers/voting_centers_providers.dart';
@@ -18,10 +20,7 @@ class VotingCentersMapArgs {
   final bool selectMode;
   final VotingCenter? selectedCenter;
 
-  const VotingCentersMapArgs({
-    this.selectMode = false,
-    this.selectedCenter,
-  });
+  const VotingCentersMapArgs({this.selectMode = false, this.selectedCenter});
 }
 
 class VotingCentersMapScreen extends ConsumerStatefulWidget {
@@ -63,9 +62,19 @@ class _VotingCentersMapScreenState
     final centersState = ref.watch(votingCentersProvider);
     final centers = ref.watch(votingCentersFilteredProvider);
     final location = ref.watch(votingCentersLocationProvider);
+    final filter = ref.watch(votingCentersFilterProvider);
+    final hasAbroad = centers.any((c) => c.isAbroad);
+    final hasEmbassies = centers.any((c) {
+      final type = c.type.toLowerCase();
+      return type.contains('embassy') ||
+          type.contains('consulate') ||
+          type.contains('mission') ||
+          type.contains('commission');
+    });
 
     return Scaffold(
       appBar: AppBar(
+        leading: const AppBackButton(),
         title: Text(
           widget.selectMode ? t.votingCentersSelectTitle : t.votingCentersTitle,
         ),
@@ -125,6 +134,18 @@ class _VotingCentersMapScreenState
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(12),
+                      child: _FilterRow(
+                        filter: filter,
+                        onChanged: (value) => ref
+                            .read(votingCentersFilterProvider.notifier)
+                            .setFilter(value),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
                       child: _ActionRow(
                         onUseMyLocation: () => ref
                             .read(votingCentersProvider.notifier)
@@ -140,15 +161,10 @@ class _VotingCentersMapScreenState
                     loading: () => const Center(
                       child: Padding(
                         padding: EdgeInsets.all(18),
-                        child: CamElectionLoader(
-                          size: 74,
-                          strokeWidth: 6,
-                        ),
+                        child: CamElectionLoader(size: 74, strokeWidth: 6),
                       ),
                     ),
-                    error: (e, _) => _ErrorCard(
-                      message: _errorMessage(t, e),
-                    ),
+                    error: (e, _) => _ErrorCard(message: _errorMessage(t, e)),
                     data: (_) => const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 12),
@@ -157,6 +173,7 @@ class _VotingCentersMapScreenState
                       mapController: _mapController,
                       centers: centers,
                       location: location,
+                      filter: filter,
                       selected: _selected,
                       onSelect: (center) {
                         setState(() => _selected = center);
@@ -170,6 +187,8 @@ class _VotingCentersMapScreenState
                   const SizedBox(height: 10),
                   _MapLegend(
                     hasLocation: location != null,
+                    hasAbroad: hasAbroad,
+                    hasEmbassies: hasEmbassies,
                   ),
                   const SizedBox(height: 12),
                   _ListHeader(
@@ -206,15 +225,12 @@ class _VotingCentersMapScreenState
           t.locationPermissionDeniedForever,
       };
     }
-    return t.errorWithDetails(error.toString());
+    return safeErrorMessage(context, error);
   }
 }
 
 class _SelectionCard extends StatelessWidget {
-  const _SelectionCard({
-    required this.selected,
-    required this.onClear,
-  });
+  const _SelectionCard({required this.selected, required this.onClear});
 
   final VotingCenter? selected;
   final VoidCallback onClear;
@@ -233,7 +249,7 @@ class _SelectionCard extends StatelessWidget {
         subtitle: Text(
           selected == null
               ? t.votingCenterNotSelectedSubtitle
-              : '${selected!.name} • ${selected!.address}',
+              : '${selected!.name} • ${selected!.displaySubtitle}',
         ),
         trailing: selected == null
             ? null
@@ -248,10 +264,7 @@ class _SelectionCard extends StatelessWidget {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar({
-    required this.hintText,
-    required this.onChanged,
-  });
+  const _SearchBar({required this.hintText, required this.onChanged});
 
   final String hintText;
   final ValueChanged<String> onChanged;
@@ -269,11 +282,46 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
+class _FilterRow extends StatelessWidget {
+  const _FilterRow({required this.filter, required this.onChanged});
+
+  final VotingCentersFilter filter;
+  final ValueChanged<VotingCentersFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        ChoiceChip(
+          label: Text(t.votingCentersFilterAll),
+          selected: filter == VotingCentersFilter.all,
+          onSelected: (_) => onChanged(VotingCentersFilter.all),
+        ),
+        ChoiceChip(
+          label: Text(t.votingCentersFilterCameroon),
+          selected: filter == VotingCentersFilter.cameroon,
+          onSelected: (_) => onChanged(VotingCentersFilter.cameroon),
+        ),
+        ChoiceChip(
+          label: Text(t.votingCentersFilterAbroad),
+          selected: filter == VotingCentersFilter.abroad,
+          onSelected: (_) => onChanged(VotingCentersFilter.abroad),
+        ),
+        ChoiceChip(
+          label: Text(t.votingCentersFilterEmbassy),
+          selected: filter == VotingCentersFilter.embassies,
+          onSelected: (_) => onChanged(VotingCentersFilter.embassies),
+        ),
+      ],
+    );
+  }
+}
+
 class _ActionRow extends StatelessWidget {
-  const _ActionRow({
-    required this.onUseMyLocation,
-    required this.onRefresh,
-  });
+  const _ActionRow({required this.onUseMyLocation, required this.onRefresh});
 
   final VoidCallback onUseMyLocation;
   final VoidCallback onRefresh;
@@ -304,9 +352,15 @@ class _ActionRow extends StatelessWidget {
 }
 
 class _MapLegend extends StatelessWidget {
-  const _MapLegend({required this.hasLocation});
+  const _MapLegend({
+    required this.hasLocation,
+    required this.hasAbroad,
+    required this.hasEmbassies,
+  });
 
   final bool hasLocation;
+  final bool hasAbroad;
+  final bool hasEmbassies;
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +385,18 @@ class _MapLegend extends StatelessWidget {
                   icon: Icons.how_to_vote,
                   label: t.votingCentersLegendCenter,
                 ),
+                if (hasAbroad)
+                  _LegendItem(
+                    color: BrandPalette.ember,
+                    icon: Icons.public,
+                    label: t.votingCentersLegendAbroad,
+                  ),
+                if (hasEmbassies)
+                  _LegendItem(
+                    color: BrandPalette.sunrise,
+                    icon: Icons.apartment_outlined,
+                    label: t.votingCentersLegendEmbassy,
+                  ),
                 if (hasLocation)
                   _LegendItem(
                     color: BrandPalette.forest,
@@ -383,6 +449,7 @@ class _MapCard extends StatelessWidget {
     required this.mapController,
     required this.centers,
     required this.location,
+    required this.filter,
     required this.selected,
     required this.onSelect,
   });
@@ -390,15 +457,16 @@ class _MapCard extends StatelessWidget {
   final MapController mapController;
   final List<VotingCenter> centers;
   final LatLng? location;
+  final VotingCentersFilter filter;
   final VotingCenter? selected;
   final ValueChanged<VotingCenter> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final mapCenter = location ?? _VotingCentersMapScreenState._defaultCenter;
-    final zoom = location == null ? 6.4 : 12.4;
     final tileConfig = _MapTileConfig.fromConfig();
+    final mapCenter = tileConfig._mapFocus(location, centers, filter);
+    final zoom = tileConfig._defaultZoom(location, centers, filter);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -427,7 +495,7 @@ class _MapCard extends StatelessWidget {
                 initialCenter: mapCenter,
                 initialZoom: zoom,
                 maxZoom: 18,
-                minZoom: 4,
+                minZoom: 2,
               ),
               children: [
                 TileLayer(
@@ -455,6 +523,7 @@ class _MapCard extends StatelessWidget {
                               onTap: () => onSelect(center),
                               child: _CenterMarker(
                                 selected: selected?.id == center.id,
+                                center: center,
                               ),
                             ),
                           ),
@@ -462,9 +531,7 @@ class _MapCard extends StatelessWidget {
                   ],
                 ),
                 RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution(tileConfig.attribution),
-                  ],
+                  attributions: [TextSourceAttribution(tileConfig.attribution)],
                 ),
               ],
             ),
@@ -514,16 +581,59 @@ class _MapTileConfig {
       attribution: attribution,
     );
   }
+
+  LatLng _mapFocus(
+    LatLng? location,
+    List<VotingCenter> centers,
+    VotingCentersFilter filter,
+  ) {
+    if (location != null) return location;
+    final points = centers.where((c) => c.hasValidCoordinates).toList();
+    if (points.isNotEmpty) {
+      final avgLat =
+          points.map((c) => c.latitude).reduce((a, b) => a + b) / points.length;
+      final avgLng =
+          points.map((c) => c.longitude).reduce((a, b) => a + b) /
+          points.length;
+      return LatLng(avgLat, avgLng);
+    }
+    return _VotingCentersMapScreenState._defaultCenter;
+  }
+
+  double _defaultZoom(
+    LatLng? location,
+    List<VotingCenter> centers,
+    VotingCentersFilter filter,
+  ) {
+    if (location != null) return 12.4;
+    if (filter == VotingCentersFilter.abroad ||
+        centers.any((c) => c.isAbroad)) {
+      return 2.6;
+    }
+    return 6.4;
+  }
 }
 
 class _CenterMarker extends StatelessWidget {
-  const _CenterMarker({required this.selected});
+  const _CenterMarker({required this.selected, required this.center});
 
   final bool selected;
+  final VotingCenter center;
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? BrandPalette.ember : BrandPalette.ocean;
+    final type = center.type.toLowerCase();
+    final isMission =
+        type.contains('embassy') ||
+        type.contains('consulate') ||
+        type.contains('mission') ||
+        type.contains('commission');
+    final base = isMission
+        ? BrandPalette.sunrise
+        : center.isAbroad
+        ? BrandPalette.ember
+        : BrandPalette.ocean;
+    final color = selected ? BrandPalette.ember : base;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
@@ -559,10 +669,7 @@ class _LocationMarker extends StatelessWidget {
 }
 
 class _ListHeader extends StatelessWidget {
-  const _ListHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _ListHeader({required this.title, required this.subtitle});
 
   final String title;
   final String subtitle;
@@ -574,9 +681,9 @@ class _ListHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(subtitle),
@@ -609,7 +716,7 @@ class _CenterCard extends StatelessWidget {
           selected ? Icons.check_circle : Icons.location_on_outlined,
         ),
         title: Text(center.name),
-        subtitle: Text(center.address),
+        subtitle: Text(center.displaySubtitle),
         trailing: center.distanceKm == null
             ? null
             : Text(t.distanceKm(center.distanceKm!.toStringAsFixed(1))),
@@ -661,3 +768,5 @@ class _EmptyState extends StatelessWidget {
     );
   }
 }
+
+

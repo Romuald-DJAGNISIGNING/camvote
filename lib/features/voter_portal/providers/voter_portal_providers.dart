@@ -3,14 +3,15 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../data/voter_elections_repository.dart';
+import '../data/voter_profile_repository.dart';
 import '../domain/election.dart';
 import '../domain/vote_receipt.dart';
+import '../domain/voter_countdown_profile.dart';
 
 /// Bottom tab index
-final voterTabIndexProvider =
-    NotifierProvider<VoterTabIndexController, int>(
+final voterTabIndexProvider = NotifierProvider<VoterTabIndexController, int>(
   VoterTabIndexController.new,
 );
 
@@ -23,7 +24,12 @@ class VoterTabIndexController extends Notifier<int> {
 
 /// Elections source (API)
 final voterElectionsRepositoryProvider = Provider<VoterElectionsRepository>(
-  (ref) => ApiVoterElectionsRepository(ref.watch(dioProvider)),
+  (ref) => ApiVoterElectionsRepository(),
+);
+
+/// Voter profile source (Firestore)
+final voterProfileRepositoryProvider = Provider<VoterProfileRepository>(
+  (ref) => VoterProfileRepository(),
 );
 
 /// Load elections
@@ -32,11 +38,22 @@ final voterElectionsProvider = FutureProvider<List<Election>>((ref) async {
   return repo.fetchAll();
 });
 
+/// Load voter profile (for countdowns)
+final voterCountdownProfileProvider = FutureProvider<VoterCountdownProfile?>((
+  ref,
+) async {
+  final auth = ref.watch(authControllerProvider).asData?.value;
+  final user = auth?.user;
+  if (user == null) return null;
+  final repo = ref.watch(voterProfileRepositoryProvider);
+  return repo.fetchProfile(user.id);
+});
+
 /// One-person-one-vote local enforcement with persistence.
 final votedElectionIdsProvider =
     NotifierProvider<VotedElectionIdsController, Set<String>>(
-  VotedElectionIdsController.new,
-);
+      VotedElectionIdsController.new,
+    );
 
 class VotedElectionIdsController extends Notifier<Set<String>> {
   @override
@@ -68,8 +85,8 @@ final _prefsProvider = FutureProvider<SharedPreferences>((ref) async {
 
 final voteReceiptsProvider =
     NotifierProvider<VoteReceiptsController, List<VoteReceipt>>(
-  VoteReceiptsController.new,
-);
+      VoteReceiptsController.new,
+    );
 
 class VoteReceiptsController extends Notifier<List<VoteReceipt>> {
   @override

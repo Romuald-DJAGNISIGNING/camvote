@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local environment variables (secrets)
+.env
+
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +46,23 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.env
+.env.*
+!.env.public
+/service-account.json
+/android/key.properties
+/android/app/upload-keystore.jks
+cf-worker/node_modules
+scripts/node_modules
+cf-worker/.wrangler/
+cf-worker/.dev.vars
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+*.ipa
+*.apk
+# Large map artifacts
+data/maps/*.pbf
+data/maps/*.pbf.md5
+
+# FVM Version Cache
+.fvm/

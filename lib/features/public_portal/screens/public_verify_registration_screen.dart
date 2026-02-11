@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 import '../models/public_models.dart';
 import '../providers/public_portal_providers.dart';
 import '../../../core/layout/responsive.dart';
@@ -16,10 +17,12 @@ class PublicVerifyRegistrationScreen extends ConsumerStatefulWidget {
   const PublicVerifyRegistrationScreen({super.key});
 
   @override
-  ConsumerState<PublicVerifyRegistrationScreen> createState() => _PublicVerifyRegistrationScreenState();
+  ConsumerState<PublicVerifyRegistrationScreen> createState() =>
+      _PublicVerifyRegistrationScreenState();
 }
 
-class _PublicVerifyRegistrationScreenState extends ConsumerState<PublicVerifyRegistrationScreen> {
+class _PublicVerifyRegistrationScreenState
+    extends ConsumerState<PublicVerifyRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _regCtrl = TextEditingController();
   DateTime? _dob;
@@ -53,10 +56,7 @@ class _PublicVerifyRegistrationScreenState extends ConsumerState<PublicVerifyReg
                     subtitle: t.verifyRegistrationSub,
                   ),
                   const SizedBox(height: 12),
-                  _AlertCard(
-                    tone: _AlertTone.info,
-                    body: t.verifyPrivacyNote,
-                  ),
+                  _AlertCard(tone: _AlertTone.info, body: t.verifyPrivacyNote),
                   const SizedBox(height: 12),
                   if (limiter.blocked)
                     _AlertCard(
@@ -108,8 +108,9 @@ class _PublicVerifyRegistrationScreenState extends ConsumerState<PublicVerifyReg
                                       strokeWidth: 2,
                                     )
                                   : const Icon(Icons.search),
-                              label:
-                                  Text(_submitting ? t.loading : t.verifySubmit),
+                              label: Text(
+                                _submitting ? t.loading : t.verifySubmit,
+                              ),
                             ),
                           ],
                         ),
@@ -135,7 +136,9 @@ class _PublicVerifyRegistrationScreenState extends ConsumerState<PublicVerifyReg
     if (!ok) return;
 
     if (_dob == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t.selectDob)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.selectDob)));
       return;
     }
 
@@ -164,7 +167,13 @@ class _PublicVerifyRegistrationScreenState extends ConsumerState<PublicVerifyReg
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(
+        () => _error = safeErrorMessage(
+          context,
+          e,
+          fallback: t.verifyStatusNotFound,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _submitting = false);
@@ -221,25 +230,27 @@ class _ResultCard extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final expiryLabel = result.cardExpiry == null
         ? null
-        : MaterialLocalizations.of(context).formatMediumDate(
-            result.cardExpiry!,
-          );
+        : MaterialLocalizations.of(
+            context,
+          ).formatMediumDate(result.cardExpiry!);
 
     String statusLabel(PublicVoterLookupStatus s) => switch (s) {
-          PublicVoterLookupStatus.notFound => t.verifyStatusNotFound,
-          PublicVoterLookupStatus.pendingVerification => t.verifyStatusPending,
-          PublicVoterLookupStatus.registeredPreEligible => t.verifyStatusRegisteredPreEligible,
-          PublicVoterLookupStatus.eligible => t.verifyStatusEligible,
-          PublicVoterLookupStatus.voted => t.verifyStatusVoted,
-          PublicVoterLookupStatus.suspended => t.verifyStatusSuspended,
-          PublicVoterLookupStatus.deceased => t.verifyStatusDeceased,
-          PublicVoterLookupStatus.archived => t.verifyStatusArchived,
-        };
+      PublicVoterLookupStatus.notFound => t.verifyStatusNotFound,
+      PublicVoterLookupStatus.pendingVerification => t.verifyStatusPending,
+      PublicVoterLookupStatus.registeredPreEligible =>
+        t.verifyStatusRegisteredPreEligible,
+      PublicVoterLookupStatus.eligible => t.verifyStatusEligible,
+      PublicVoterLookupStatus.voted => t.verifyStatusVoted,
+      PublicVoterLookupStatus.suspended => t.verifyStatusSuspended,
+      PublicVoterLookupStatus.deceased => t.verifyStatusDeceased,
+      PublicVoterLookupStatus.archived => t.verifyStatusArchived,
+    };
 
     final cs = Theme.of(context).colorScheme;
 
     final icon = switch (result.status) {
-      PublicVoterLookupStatus.eligible || PublicVoterLookupStatus.registeredPreEligible => Icons.verified_outlined,
+      PublicVoterLookupStatus.eligible ||
+      PublicVoterLookupStatus.registeredPreEligible => Icons.verified_outlined,
       PublicVoterLookupStatus.voted => Icons.check_circle_outline,
       PublicVoterLookupStatus.pendingVerification => Icons.hourglass_empty,
       PublicVoterLookupStatus.notFound => Icons.search_off,
@@ -249,7 +260,8 @@ class _ResultCard extends StatelessWidget {
     };
 
     final tone = switch (result.status) {
-      PublicVoterLookupStatus.eligible || PublicVoterLookupStatus.registeredPreEligible => cs.primary,
+      PublicVoterLookupStatus.eligible ||
+      PublicVoterLookupStatus.registeredPreEligible => cs.primary,
       PublicVoterLookupStatus.voted => Colors.green,
       PublicVoterLookupStatus.pendingVerification => Colors.orange,
       PublicVoterLookupStatus.notFound => cs.outline,
@@ -273,7 +285,10 @@ class _ResultCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.verifyResultTitle, style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    t.verifyResultTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 6),
                   Text('${t.maskedName}: ${result.maskedName}'),
                   Text('${t.maskedRegNumber}: ${result.maskedRegNumber}'),
@@ -311,10 +326,7 @@ class _AlertCard extends StatelessWidget {
       color: colors.$1,
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Text(
-          body,
-          style: TextStyle(color: colors.$2),
-        ),
+        child: Text(body, style: TextStyle(color: colors.$2)),
       ),
     );
   }

@@ -26,9 +26,9 @@ class RegistrationOcrState {
   });
 
   factory RegistrationOcrState.initial() => const RegistrationOcrState(
-        docType: OfficialDocumentType.nationalId,
-        status: OcrStatus.idle,
-      );
+    docType: OfficialDocumentType.nationalId,
+    status: OcrStatus.idle,
+  );
 
   RegistrationOcrState copyWith({
     OfficialDocumentType? docType,
@@ -50,9 +50,10 @@ class RegistrationOcrState {
 }
 
 final registrationOcrControllerProvider =
-    NotifierProvider.autoDispose<RegistrationOcrController, RegistrationOcrState>(
-  RegistrationOcrController.new,
-);
+    NotifierProvider.autoDispose<
+      RegistrationOcrController,
+      RegistrationOcrState
+    >(RegistrationOcrController.new);
 
 class RegistrationOcrController extends Notifier<RegistrationOcrState> {
   final _picker = ImagePicker();
@@ -67,7 +68,10 @@ class RegistrationOcrController extends Notifier<RegistrationOcrState> {
 
   Future<void> pickFromGallery() async {
     state = state.copyWith(status: OcrStatus.picking, error: null);
-    final img = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 92);
+    final img = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 100,
+    );
     if (img == null) {
       state = state.copyWith(status: OcrStatus.idle);
       return;
@@ -77,7 +81,10 @@ class RegistrationOcrController extends Notifier<RegistrationOcrState> {
 
   Future<void> captureWithCamera() async {
     state = state.copyWith(status: OcrStatus.picking, error: null);
-    final img = await _picker.pickImage(source: ImageSource.camera, imageQuality: 92);
+    final img = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 100,
+    );
     if (img == null) {
       state = state.copyWith(status: OcrStatus.idle);
       return;
@@ -92,7 +99,11 @@ class RegistrationOcrController extends Notifier<RegistrationOcrState> {
       return;
     }
 
-    state = state.copyWith(status: OcrStatus.processing, error: null, validation: null);
+    state = state.copyWith(
+      status: OcrStatus.processing,
+      error: null,
+      validation: null,
+    );
 
     try {
       final extracted = await _ocr.recognize(
@@ -106,6 +117,7 @@ class RegistrationOcrController extends Notifier<RegistrationOcrState> {
         expectedDob: expected.dateOfBirth,
         expectedPlaceOfBirth: expected.placeOfBirth,
         expectedNationality: expected.nationality,
+        docType: state.docType,
         extracted: extracted,
       );
 
@@ -115,10 +127,7 @@ class RegistrationOcrController extends Notifier<RegistrationOcrState> {
         validation: validation,
       );
     } catch (e) {
-      state = state.copyWith(
-        status: OcrStatus.failed,
-        error: e.toString(),
-      );
+      state = state.copyWith(status: OcrStatus.failed, error: e.toString());
     }
   }
 

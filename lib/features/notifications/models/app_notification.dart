@@ -1,11 +1,6 @@
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
-enum AppNotificationType {
-  election,
-  system,
-  security,
-  status,
-}
+enum AppNotificationType { election, system, security, status }
 
 enum AppNotificationTemplate {
   electionSoon,
@@ -22,8 +17,10 @@ class AppNotificationText {
     return switch (template) {
       AppNotificationTemplate.electionSoon => t.notificationElectionSoonTitle,
       AppNotificationTemplate.electionOpen => t.notificationElectionOpenTitle,
-      AppNotificationTemplate.electionClosed => t.notificationElectionClosedTitle,
-      AppNotificationTemplate.securityNotice => t.notificationSecurityNoticeTitle,
+      AppNotificationTemplate.electionClosed =>
+        t.notificationElectionClosedTitle,
+      AppNotificationTemplate.securityNotice =>
+        t.notificationSecurityNoticeTitle,
       AppNotificationTemplate.statusUpdate => t.notificationStatusUpdateTitle,
     };
   }
@@ -32,8 +29,10 @@ class AppNotificationText {
     return switch (template) {
       AppNotificationTemplate.electionSoon => t.notificationElectionSoonBody,
       AppNotificationTemplate.electionOpen => t.notificationElectionOpenBody,
-      AppNotificationTemplate.electionClosed => t.notificationElectionClosedBody,
-      AppNotificationTemplate.securityNotice => t.notificationSecurityNoticeBody,
+      AppNotificationTemplate.electionClosed =>
+        t.notificationElectionClosedBody,
+      AppNotificationTemplate.securityNotice =>
+        t.notificationSecurityNoticeBody,
       AppNotificationTemplate.statusUpdate => t.notificationStatusUpdateBody,
     };
   }

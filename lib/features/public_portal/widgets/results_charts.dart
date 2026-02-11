@@ -116,19 +116,15 @@ class _ResultsChartsState extends State<ResultsCharts> {
     final t = AppLocalizations.of(context);
     final hasCandidates = candidates.isNotEmpty;
 
-    final trend = (widget.turnoutTrend != null &&
-            widget.turnoutTrend!.length >= 2)
+    final trend =
+        (widget.turnoutTrend != null && widget.turnoutTrend!.length >= 2)
         ? widget.turnoutTrend!
         : const <double>[];
 
     switch (_kind) {
       case _ChartKind.bar:
         if (!hasCandidates) {
-          return _EmptyChart(
-            key: key,
-            height: 260,
-            message: t.noData,
-          );
+          return _EmptyChart(key: key, height: 260, message: t.noData);
         }
         return _ChartFrame(
           key: key,
@@ -144,11 +140,7 @@ class _ResultsChartsState extends State<ResultsCharts> {
 
       case _ChartKind.pie:
         if (!hasCandidates) {
-          return _EmptyChart(
-            key: key,
-            height: 260,
-            message: t.noData,
-          );
+          return _EmptyChart(key: key, height: 260, message: t.noData);
         }
         return _ChartFrame(
           key: key,
@@ -164,11 +156,7 @@ class _ResultsChartsState extends State<ResultsCharts> {
 
       case _ChartKind.line:
         if (trend.length < 2) {
-          return _EmptyChart(
-            key: key,
-            height: 260,
-            message: t.noData,
-          );
+          return _EmptyChart(key: key, height: 260, message: t.noData);
         }
         return _ChartFrame(
           key: key,
@@ -186,11 +174,7 @@ class _ResultsChartsState extends State<ResultsCharts> {
 }
 
 class _EmptyChart extends StatelessWidget {
-  const _EmptyChart({
-    super.key,
-    required this.height,
-    required this.message,
-  });
+  const _EmptyChart({super.key, required this.height, required this.message});
 
   final double height;
   final String message;
@@ -214,11 +198,7 @@ class _EmptyChart extends StatelessWidget {
 }
 
 class _ChartFrame extends StatelessWidget {
-  const _ChartFrame({
-    super.key,
-    required this.child,
-    required this.height,
-  });
+  const _ChartFrame({super.key, required this.child, required this.height});
 
   final Widget child;
   final double height;
@@ -270,10 +250,7 @@ class _AnimatedChart extends StatelessWidget {
 }
 
 class _ChartProgressScope extends InheritedWidget {
-  const _ChartProgressScope({
-    required this.progress,
-    required super.child,
-  });
+  const _ChartProgressScope({required this.progress, required super.child});
 
   final double progress;
 
@@ -335,7 +312,12 @@ class _BarChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final pad = 8.0;
-    final chart = Rect.fromLTWH(pad, pad, size.width - pad * 2, size.height - pad * 2);
+    final chart = Rect.fromLTWH(
+      pad,
+      pad,
+      size.width - pad * 2,
+      size.height - pad * 2,
+    );
 
     // grid
     _drawGrid(canvas, chart);
@@ -370,10 +352,7 @@ class _BarChartPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withAlpha(80),
-            Colors.white.withAlpha(0),
-          ],
+          colors: [Colors.white.withAlpha(80), Colors.white.withAlpha(0)],
           stops: const [0, 1],
         ).createShader(barRect);
       canvas.drawRRect(rrect, shine);
@@ -656,7 +635,12 @@ class _LineChartPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final pad = 10.0;
-    final chart = Rect.fromLTWH(pad, pad, size.width - pad * 2, size.height - pad * 2);
+    final chart = Rect.fromLTWH(
+      pad,
+      pad,
+      size.width - pad * 2,
+      size.height - pad * 2,
+    );
 
     _drawGrid(canvas, chart);
 

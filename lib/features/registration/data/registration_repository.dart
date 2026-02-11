@@ -1,27 +1,23 @@
-import 'package:dio/dio.dart';
-
+import '../../../core/network/worker_client.dart';
 import '../models/registration_submission.dart';
 import '../models/registration_submission_result.dart';
+import '../../../shared/security/device_fingerprint.dart';
 
 class RegistrationRepository {
-  RegistrationRepository(this._dio);
+  RegistrationRepository({WorkerClient? client})
+    : _client = client ?? WorkerClient();
 
-  final Dio _dio;
+  final WorkerClient _client;
 
   Future<RegistrationSubmissionResult> submit(
     RegistrationSubmission submission,
   ) async {
-    final res = await _dio.post(
-      '/registrations',
-      data: submission.toJson(),
+    final deviceHash = await DeviceFingerprint.compute();
+    final result = await _client.post(
+      '/v1/registration/submit',
+      data: {...submission.toJson(), 'deviceHash': deviceHash},
     );
-
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      return RegistrationSubmissionResult.fromJson(data);
-    }
-
-    throw StateError('Unexpected registration response.');
+    return RegistrationSubmissionResult.fromJson(result);
   }
 
   Future<RegistrationSubmissionResult> renew(
@@ -29,27 +25,20 @@ class RegistrationRepository {
     String? existingRegistrationId,
     String? renewalToken,
   }) async {
+    final deviceHash = await DeviceFingerprint.compute();
     final payload = <String, dynamic>{
       ...submission.toJson(),
       'renewal': true,
+      'deviceHash': deviceHash,
     };
     if (existingRegistrationId != null && existingRegistrationId.isNotEmpty) {
-      payload['existing_registration_id'] = existingRegistrationId;
+      payload['existingRegistrationId'] = existingRegistrationId;
     }
     if (renewalToken != null && renewalToken.isNotEmpty) {
-      payload['renewal_token'] = renewalToken;
+      payload['renewalToken'] = renewalToken;
     }
 
-    final res = await _dio.post(
-      '/registrations/renew',
-      data: payload,
-    );
-
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      return RegistrationSubmissionResult.fromJson(data);
-    }
-
-    throw StateError('Unexpected registration renewal response.');
+    final result = await _client.post('/v1/registration/submit', data: payload);
+    return RegistrationSubmissionResult.fromJson(result);
   }
 }

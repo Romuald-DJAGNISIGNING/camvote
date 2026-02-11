@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/routing/route_paths.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 import 'notification_bell.dart';
 
-class NotificationAppBar extends StatelessWidget implements PreferredSizeWidget {
+class NotificationAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final Widget title;
   final PreferredSizeWidget? bottom;
   final List<Widget>? actions;
   final bool centerTitle;
   final bool showBell;
+  final bool showBack;
 
   const NotificationAppBar({
     super.key,
@@ -18,6 +21,7 @@ class NotificationAppBar extends StatelessWidget implements PreferredSizeWidget 
     this.actions,
     this.centerTitle = false,
     this.showBell = true,
+    this.showBack = true,
   });
 
   @override
@@ -26,6 +30,7 @@ class NotificationAppBar extends StatelessWidget implements PreferredSizeWidget 
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final actionList = <Widget>[
       if (showBell)
         NotificationBell(
@@ -37,9 +42,11 @@ class NotificationAppBar extends StatelessWidget implements PreferredSizeWidget 
     ];
 
     return AppBar(
+      leading: showBack ? const AppBackButton() : null,
       title: title,
       centerTitle: centerTitle,
       bottom: bottom,
+      shape: Border(bottom: BorderSide(color: cs.outlineVariant.withAlpha(60))),
       actions: actionList.isEmpty ? null : actionList,
     );
   }

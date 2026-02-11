@@ -34,25 +34,35 @@ class AppSettingsState {
 
 final appSettingsProvider =
     AsyncNotifierProvider<AppSettingsController, AppSettingsState>(
-  AppSettingsController.new,
-);
+      AppSettingsController.new,
+    );
 
 class AppSettingsController extends AsyncNotifier<AppSettingsState> {
   static const _kTheme = 'settings.themeMode';
   static const _kThemeStyle = 'settings.themeStyle';
   static const _kLocale = 'settings.locale';
   static const _kOnboarding = 'settings.onboardingSeen';
+  static const Duration _prefsTimeout = Duration(seconds: 2);
+  static const AppSettingsState _fallback = AppSettingsState(
+    themeMode: ThemeMode.system,
+    themeStyle: AppThemeStyle.classic,
+    locale: Locale('en'),
+    hasSeenOnboarding: false,
+  );
 
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs;
 
   @override
   Future<AppSettingsState> build() async {
-    _prefs = await SharedPreferences.getInstance();
+    final prefs = await _ensurePrefs();
+    if (prefs == null) {
+      return _fallback;
+    }
 
-    final themeRaw = _prefs.getString(_kTheme) ?? 'system';
-    final themeStyleRaw = _prefs.getString(_kThemeStyle) ?? 'classic';
-    final localeRaw = _prefs.getString(_kLocale) ?? 'en';
-    final hasSeenOnboarding = _prefs.getBool(_kOnboarding) ?? false;
+    final themeRaw = prefs.getString(_kTheme) ?? 'system';
+    final themeStyleRaw = prefs.getString(_kThemeStyle) ?? 'classic';
+    final localeRaw = prefs.getString(_kLocale) ?? 'en';
+    final hasSeenOnboarding = prefs.getBool(_kOnboarding) ?? false;
 
     final themeMode = switch (themeRaw) {
       'light' => ThemeMode.light,
@@ -83,7 +93,7 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
       ThemeMode.system => 'system',
     };
 
-    await _prefs.setString(_kTheme, raw);
+    await _setString(_kTheme, raw);
   }
 
   Future<void> setThemeStyle(AppThemeStyle style) async {
@@ -91,7 +101,7 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     if (current == null) return;
 
     state = AsyncValue.data(current.copyWith(themeStyle: style));
-    await _prefs.setString(_kThemeStyle, style.id);
+    await _setString(_kThemeStyle, style.id);
   }
 
   Future<void> setLocale(Locale locale) async {
@@ -99,7 +109,7 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     if (current == null) return;
 
     state = AsyncValue.data(current.copyWith(locale: locale));
-    await _prefs.setString(_kLocale, locale.languageCode);
+    await _setString(_kLocale, locale.languageCode);
   }
 
   Future<void> setOnboardingSeen(bool seen) async {
@@ -107,6 +117,28 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     if (current == null) return;
 
     state = AsyncValue.data(current.copyWith(hasSeenOnboarding: seen));
-    await _prefs.setBool(_kOnboarding, seen);
+    await _setBool(_kOnboarding, seen);
+  }
+
+  Future<SharedPreferences?> _ensurePrefs() async {
+    if (_prefs != null) return _prefs;
+    try {
+      _prefs = await SharedPreferences.getInstance().timeout(_prefsTimeout);
+      return _prefs;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _setString(String key, String value) async {
+    final prefs = await _ensurePrefs();
+    if (prefs == null) return;
+    await prefs.setString(key, value);
+  }
+
+  Future<void> _setBool(String key, bool value) async {
+    final prefs = await _ensurePrefs();
+    if (prefs == null) return;
+    await prefs.setBool(key, value);
   }
 }

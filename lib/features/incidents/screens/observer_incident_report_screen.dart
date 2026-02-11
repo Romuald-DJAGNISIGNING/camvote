@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/motion/cam_reveal.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 import '../models/incident_report.dart';
 import '../providers/incident_providers.dart';
 
@@ -48,147 +52,173 @@ class _ObserverIncidentReportScreenState
     final isSubmitting = submission.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.observerReportIncidentTitle)),
-      body: BrandBackdrop(
-        child: ResponsiveContent(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const SizedBox(height: 6),
-              BrandHeader(
-                title: t.observerReportIncidentTitle,
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.observerReportIncidentTitle),
+      ),
+      body: Stack(
+        children: [
+          BrandBackdrop(
+            child: ResponsiveContent(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  CamStagger(
+                    children: [
+                      const SizedBox(height: 6),
+                      BrandHeader(
+                        title: t.observerReportIncidentTitle,
+                        subtitle: t.observerReportIncidentSubtitle,
+                      ),
+                      const SizedBox(height: 12),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _titleCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentTitleLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? t.requiredField
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                DropdownButtonFormField<IncidentCategory>(
+                                  initialValue: _category,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentCategoryLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  items: IncidentCategory.values
+                                      .map(
+                                        (value) => DropdownMenuItem(
+                                          value: value,
+                                          child: Text(value.label(t)),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (v) => setState(
+                                    () => _category = v ?? _category,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                DropdownButtonFormField<IncidentSeverity>(
+                                  initialValue: _severity,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentSeverityLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  items: IncidentSeverity.values
+                                      .map(
+                                        (value) => DropdownMenuItem(
+                                          value: value,
+                                          child: Text(value.label(t)),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (v) => setState(
+                                    () => _severity = v ?? _severity,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _locationCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentLocationLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? t.requiredField
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _descCtrl,
+                                  maxLines: 4,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentDescriptionLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  validator: (v) =>
+                                      (v == null || v.trim().isEmpty)
+                                      ? t.requiredField
+                                      : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _electionCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: t.incidentElectionIdLabel,
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _OccurredAtField(
+                                  label: t.incidentDateTimeLabel,
+                                  value: _occurredAt,
+                                  onPick: () => _pickOccurredAt(context),
+                                ),
+                                const SizedBox(height: 12),
+                                _EvidencePicker(
+                                  attachments: _attachments,
+                                  onAddCamera: _addFromCamera,
+                                  onAddGallery: _addFromGallery,
+                                  onRemove: _removeAttachment,
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: FilledButton(
+                                    onPressed: isSubmitting
+                                        ? null
+                                        : () => _submit(context),
+                                    child: isSubmitting
+                                        ? const CamElectionLoader(
+                                            size: 24,
+                                            strokeWidth: 3,
+                                          )
+                                        : Text(t.incidentSubmitAction),
+                                  ),
+                                ),
+                                if (submission.hasError) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    _errorMessage(submission.error, t),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.error,
+                                        ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isSubmitting)
+            Positioned.fill(
+              child: CamVoteLoadingOverlay(
+                title: t.incidentSubmitAction,
                 subtitle: t.observerReportIncidentSubtitle,
               ),
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: _titleCtrl,
-                          decoration: InputDecoration(
-                            labelText: t.incidentTitleLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? t.requiredField
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<IncidentCategory>(
-                          initialValue: _category,
-                          decoration: InputDecoration(
-                            labelText: t.incidentCategoryLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          items: IncidentCategory.values
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value.label(t)),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _category = v ?? _category),
-                        ),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<IncidentSeverity>(
-                          initialValue: _severity,
-                          decoration: InputDecoration(
-                            labelText: t.incidentSeverityLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          items: IncidentSeverity.values
-                              .map(
-                                (value) => DropdownMenuItem(
-                                  value: value,
-                                  child: Text(value.label(t)),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _severity = v ?? _severity),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _locationCtrl,
-                          decoration: InputDecoration(
-                            labelText: t.incidentLocationLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? t.requiredField
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _descCtrl,
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            labelText: t.incidentDescriptionLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty)
-                              ? t.requiredField
-                              : null,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _electionCtrl,
-                          decoration: InputDecoration(
-                            labelText: t.incidentElectionIdLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _OccurredAtField(
-                          label: t.incidentDateTimeLabel,
-                          value: _occurredAt,
-                          onPick: () => _pickOccurredAt(context),
-                        ),
-                        const SizedBox(height: 12),
-                        _EvidencePicker(
-                          attachments: _attachments,
-                          onAddCamera: _addFromCamera,
-                          onAddGallery: _addFromGallery,
-                          onRemove: _removeAttachment,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton(
-                            onPressed: isSubmitting
-                                ? null
-                                : () => _submit(context),
-                            child: isSubmitting
-                                ? const CamElectionLoader(size: 24, strokeWidth: 3)
-                                : Text(t.incidentSubmitAction),
-                          ),
-                        ),
-                        if (submission.hasError) ...[
-                          const SizedBox(height: 10),
-                          Text(
-                            t.errorWithDetails(
-                              submission.error?.toString() ?? '',
-                            ),
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.error,
-                                    ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -236,7 +266,18 @@ class _ObserverIncidentReportScreenState
   }
 
   void _removeAttachment(XFile file) {
-    setState(() => _attachments = _attachments.where((f) => f != file).toList());
+    setState(
+      () => _attachments = _attachments.where((f) => f != file).toList(),
+    );
+  }
+
+  String _errorMessage(Object? error, AppLocalizations t) {
+    if (error == null) return t.incidentSubmissionFailed;
+    final message = error.toString();
+    if (message.contains('auth_required')) {
+      return t.authRequired;
+    }
+    return safeErrorMessage(context, error);
   }
 
   Future<void> _submit(BuildContext context) async {
@@ -261,21 +302,15 @@ class _ObserverIncidentReportScreenState
 
     if (result == null || result.status == 'error') {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result?.message ?? t.incidentSubmissionFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.incidentSubmissionFailed)));
       return;
     }
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          result.message.isNotEmpty
-              ? result.message
-              : t.incidentSubmittedBody(result.reportId),
-        ),
-      ),
+      SnackBar(content: Text(t.incidentSubmittedBody(result.reportId))),
     );
     _formKey.currentState?.reset();
     _titleCtrl.clear();
@@ -368,16 +403,14 @@ class _OccurredAtField extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final date = MaterialLocalizations.of(context).formatMediumDate(value);
-    final time =
-        MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(value));
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(value));
     return ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(label),
       subtitle: Text('$date • $time'),
-      trailing: TextButton(
-        onPressed: onPick,
-        child: Text(t.changeAction),
-      ),
+      trailing: TextButton(onPressed: onPick, child: Text(t.changeAction)),
     );
   }
 }

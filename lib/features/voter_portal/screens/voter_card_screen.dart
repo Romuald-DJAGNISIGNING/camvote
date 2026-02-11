@@ -8,6 +8,8 @@ import '../../../shared/liveness/liveness_challenge_screen.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
+import '../../../core/motion/cam_reveal.dart';
 import '../../registration/providers/registration_providers.dart';
 import '../../registration/models/registration_draft.dart';
 
@@ -27,58 +29,68 @@ class _VoterCardScreenState extends ConsumerState<VoterCardScreen> {
     final draft = ref.watch(voterRegistrationDraftProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.electoralCardTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.electoralCardTitle),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
-              const SizedBox(height: 6),
-              BrandHeader(
-                title: t.electoralCardTitle,
-                subtitle: t.electoralCardSubtitle,
-              ),
-              const SizedBox(height: 12),
-              if (!draft.isValidBasicInfo)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      t.electoralCardIncompleteNote,
-                      style: Theme.of(context).textTheme.bodyMedium,
+              CamStagger(
+                children: [
+                  const SizedBox(height: 6),
+                  BrandHeader(
+                    title: t.electoralCardTitle,
+                    subtitle: t.electoralCardSubtitle,
+                  ),
+                  const SizedBox(height: 12),
+                  if (!draft.isValidBasicInfo)
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.warning_amber_outlined),
+                        title: Text(t.electoralCardIncompleteNote),
+                      ),
+                    )
+                  else
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: _unlocked
+                            ? _CardDetails(draft: draft)
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.lock_outline),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        t.electoralCardLockedTitle,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(t.electoralCardLockedSubtitle),
+                                  const SizedBox(height: 12),
+                                  FilledButton.icon(
+                                    onPressed: _unlock,
+                                    icon: const Icon(Icons.lock_open_outlined),
+                                    label: Text(t.verifyToUnlock),
+                                  ),
+                                ],
+                              ),
+                      ),
                     ),
-                  ),
-                )
-              else
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: _unlocked
-                        ? _CardDetails(draft: draft)
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.electoralCardLockedTitle,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(t.electoralCardLockedSubtitle),
-                              const SizedBox(height: 12),
-                              FilledButton.icon(
-                                onPressed: _unlock,
-                                icon: const Icon(Icons.lock_open_outlined),
-                                label: Text(t.verifyToUnlock),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
         ),
@@ -92,9 +104,9 @@ class _VoterCardScreenState extends ConsumerState<VoterCardScreen> {
     final supported = await bio.isSupported();
     if (!supported) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.biometricNotAvailable)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.biometricNotAvailable)));
       return;
     }
     final bioOk = await bio.requireBiometric(
@@ -102,9 +114,9 @@ class _VoterCardScreenState extends ConsumerState<VoterCardScreen> {
     );
     if (!bioOk) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.biometricVerificationFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.biometricVerificationFailed)));
       return;
     }
 
@@ -112,9 +124,9 @@ class _VoterCardScreenState extends ConsumerState<VoterCardScreen> {
     final liveOk = await LivenessChallengeScreen.run(context);
     if (!liveOk) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.livenessCheckFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.livenessCheckFailed)));
       return;
     }
 
@@ -138,9 +150,9 @@ class _CardDetails extends StatelessWidget {
       children: [
         Text(
           t.electoralCardTitle,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w900,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 12),
         _Row(label: t.fullName, value: draft.fullName),
@@ -150,7 +162,8 @@ class _CardDetails extends StatelessWidget {
         ),
         _Row(label: t.regionLabel, value: regionLabel),
         _Row(label: t.placeOfBirth, value: draft.placeOfBirth),
-        _Row(label: t.nationality, value: draft.nationality),
+        if (draft.nationality.trim().isNotEmpty)
+          _Row(label: t.nationality, value: draft.nationality),
         const SizedBox(height: 16),
         Center(
           child: QrImageView(
@@ -206,9 +219,9 @@ class _Row extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
           Text(value.isEmpty ? t.unknown : value),

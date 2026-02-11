@@ -110,7 +110,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get guidelineAgeRules =>
-      'Registration: 18+. Voting: 21+. Eligibility is enforced automatically.';
+      'Registration: 18+. Voting: 20+. Eligibility is enforced automatically.';
 
   @override
   String get guidelineOnePersonOneVote =>
@@ -176,6 +176,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get requiredField => 'This field is required';
 
   @override
+  String get authRequired => 'Sign in required to continue.';
+
+  @override
   String get invalidRegNumber =>
       'Registration number must be at least 4 characters';
 
@@ -215,7 +218,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifyStatusRegisteredPreEligible =>
-      'Registered (18–20, not eligible to vote yet)';
+      'Registered (18–19, not eligible to vote yet)';
 
   @override
   String get verifyStatusEligible => 'Eligible to vote';
@@ -321,6 +324,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationsTitle => 'Notifications';
 
   @override
+  String get notificationsSubtitle =>
+      'Security, elections, and system updates.';
+
+  @override
   String get markAllRead => 'Mark all read';
 
   @override
@@ -380,7 +387,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationStatusUpdateBody =>
-      'You are registered (18-20). You will automatically become eligible at 21.';
+      'You are registered (18-19). You will automatically become eligible at 20.';
 
   @override
   String get summaryTab => 'Summary';
@@ -426,6 +433,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
+  String get genericErrorLabel => 'Something went wrong. Please try again.';
+
+  @override
   String get pleaseWait => 'Please wait';
 
   @override
@@ -444,6 +454,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refresh => 'Refresh';
 
   @override
+  String get add => 'Add';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get importAction => 'Import';
+
+  @override
   String get search => 'Search';
 
   @override
@@ -457,6 +479,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultsFinal => 'FINAL Results';
+
+  @override
+  String get publicResultsAwaitingData =>
+      'Awaiting official results publication.';
 
   @override
   String get mapOfWinners => 'Map of Regional Winners';
@@ -502,6 +528,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nationality => 'Nationality';
 
   @override
+  String get nationalityAdminReviewNote =>
+      'Nationality will be verified by an admin after document review.';
+
+  @override
   String get pickFromGallery => 'Gallery';
 
   @override
@@ -524,6 +554,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ocrRejectedTitle => 'Rejected';
+
+  @override
+  String get ocrSummaryVerified => 'Verified';
+
+  @override
+  String get ocrSummaryVerifiedPendingNationality =>
+      'Verified • Nationality pending admin review';
+
+  @override
+  String get ocrSummaryNationalityPending => 'Nationality pending admin review';
+
+  @override
+  String get ocrIssueNameMismatch => 'Name mismatch';
+
+  @override
+  String get ocrIssueDobMismatch => 'Date of birth mismatch';
+
+  @override
+  String get ocrIssuePobMismatch => 'Place of birth mismatch';
+
+  @override
+  String get ocrIssueForeignDocument => 'Foreign document detected';
 
   @override
   String get ocrVerified => 'Document verified ✅';
@@ -551,6 +603,20 @@ class AppLocalizationsEn extends AppLocalizations {
       'Document OCR works on Android/iOS. Use the mobile app for registration.';
 
   @override
+  String get foreignDocumentTitle => 'Document not eligible';
+
+  @override
+  String get foreignDocumentBody =>
+      'This document does not appear to be a Cameroonian official document. Registration is limited to Cameroonian citizens.';
+
+  @override
+  String get underageRegistrationTitle => 'Registration not allowed';
+
+  @override
+  String get underageRegistrationBody =>
+      'You must be at least 18 years old to register. Please use the public portal for information and updates.';
+
+  @override
   String get userLabel => 'User';
 
   @override
@@ -566,6 +632,37 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loginHeaderSubtitle =>
       'Verify identity, continue securely, and protect every action.';
+
+  @override
+  String get authInvalidCredentials => 'Invalid email/ID or password.';
+
+  @override
+  String get authAccountNotFound => 'No account was found for this user.';
+
+  @override
+  String get authTooManyRequests =>
+      'Too many attempts. Please wait and try again.';
+
+  @override
+  String get authNetworkError =>
+      'Network issue detected. Check your connection and retry.';
+
+  @override
+  String get authMustChangePassword => 'Change temporary password';
+
+  @override
+  String get authMustChangePasswordHelp =>
+      'For transparency and account ownership, set your own password before continuing.';
+
+  @override
+  String get authUpdatePasswordAction => 'Update password';
+
+  @override
+  String get authPasswordUpdated => 'Password updated successfully.';
+
+  @override
+  String get loginRequiresVerification =>
+      'Your registration is pending verification. You can sign in once an admin approves your Cameroonian document.';
 
   @override
   String get loginIdentifierLabel => 'Email or registration ID';
@@ -647,6 +744,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Biometrics are not available on this device.';
 
   @override
+  String get biometricEnrollRequired =>
+      'No biometrics enrolled. Please enroll Face ID or Fingerprint in your device settings.';
+
+  @override
   String get biometricReasonSignIn => 'Confirm your identity to sign in.';
 
   @override
@@ -658,6 +759,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get biometricLoginSubtitle =>
       'Require device biometrics and liveness for sign in.';
+
+  @override
+  String get biometricEnableRequiresLogin =>
+      'Please sign in before enabling biometric + liveness login.';
 
   @override
   String get securityChipBiometric => 'Biometric gate';
@@ -1007,6 +1112,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'Add Trello credentials to enable live stats.';
 
   @override
+  String get aboutProfileLoadingTitle => 'Loading profile';
+
+  @override
+  String get aboutProfileLoadingBody => 'Fetching builder profile...';
+
+  @override
+  String get aboutProfileUnavailableTitle => 'Profile unavailable';
+
+  @override
+  String aboutProfileUnavailableBody(Object error) {
+    return 'Unable to load profile: $error';
+  }
+
+  @override
+  String get aboutProfileUnavailableEmpty => 'No profile data';
+
+  @override
+  String get aboutSkillsHobbiesTitle => 'Skills & hobbies';
+
+  @override
+  String get aboutHobbyMusic => 'Music';
+
+  @override
+  String get aboutHobbyReading => 'Reading';
+
+  @override
+  String get aboutHobbyWriting => 'Writing';
+
+  @override
+  String get aboutHobbySinging => 'Singing';
+
+  @override
+  String get aboutHobbyCooking => 'Cooking';
+
+  @override
+  String get aboutHobbyCoding => 'Coding';
+
+  @override
+  String get aboutHobbySleeping => 'Sleeping';
+
+  @override
+  String get legalSourceElecamUrl => 'https://portail.elecam.cm';
+
+  @override
+  String get legalSourceAssnatUrl => 'https://www.assnat.cm';
+
+  @override
   String get aboutWhyCamVoteTitle => 'Why CamVote';
 
   @override
@@ -1015,6 +1167,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutCopyEmail => 'Copy email';
+
+  @override
+  String get emailLabel => 'Email address';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get passwordConfirmLabel => 'Confirm password';
+
+  @override
+  String get registrationAuthTitle => 'Create your secure account';
+
+  @override
+  String get registrationAuthSubtitle =>
+      'Your email and password will secure access after approval.';
+
+  @override
+  String get passwordMismatch => 'Passwords do not match.';
 
   @override
   String get aboutCopyLinkedIn => 'Copy LinkedIn';
@@ -1312,7 +1483,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enrollNow => 'Enroll now';
 
   @override
+  String get reverifyBiometrics => 'Re-verify biometrics';
+
+  @override
   String get runLiveness => 'Run liveness';
+
+  @override
+  String get reverifyLiveness => 'Re-verify liveness';
 
   @override
   String get enrollmentCompleteTitle => 'Enrollment complete';
@@ -1601,7 +1778,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resultsPublicPortalNote =>
-      'Live results are available in the Public portal charts.\nHere, you’ll also get your personal vote verification later.';
+      'Live results are available in the Public portal charts.\nUse the Voter portal for your personal verification and receipt.';
 
   @override
   String get pastElectionsTitle => 'Past elections';
@@ -1639,6 +1816,53 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pending verification. Complete OCR + biometrics.';
 
   @override
+  String get verificationPendingTitle => 'Verification pending';
+
+  @override
+  String get verificationPendingSubtitle =>
+      'You are signed in, but voting stays locked until your Cameroonian document is approved.';
+
+  @override
+  String get verificationPendingBody =>
+      'An admin will review your document and registration details. You will be notified when approved.';
+
+  @override
+  String get verificationTimelineTitle => 'Verification timeline';
+
+  @override
+  String get verificationStepSubmittedTitle => 'Registration received';
+
+  @override
+  String get verificationStepSubmittedBody =>
+      'We have received your registration package.';
+
+  @override
+  String get verificationStepReviewTitle => 'Admin review in progress';
+
+  @override
+  String get verificationStepReviewBody =>
+      'Your documents are being checked for validity.';
+
+  @override
+  String get verificationStepDecisionTitle => 'Decision notification';
+
+  @override
+  String get verificationStepDecisionBody =>
+      'You will be notified as soon as approval is complete.';
+
+  @override
+  String get verificationPendingPrimaryAction => 'Check registration status';
+
+  @override
+  String get verificationPendingSecondaryAction => 'Go to public portal';
+
+  @override
+  String get verificationPendingSupportAction => 'Contact support';
+
+  @override
+  String get verificationPendingSignOut => 'Sign out';
+
+  @override
   String get electoralCardViewSubtitle => 'View your digital voter card';
 
   @override
@@ -1670,6 +1894,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Search by city, neighborhood, or center name';
 
   @override
+  String get votingCentersFilterAll => 'All';
+
+  @override
+  String get votingCentersFilterCameroon => 'Cameroon';
+
+  @override
+  String get votingCentersFilterAbroad => 'Abroad';
+
+  @override
+  String get votingCentersFilterEmbassy => 'Missions';
+
+  @override
   String get useMyLocation => 'Use my location';
 
   @override
@@ -1686,6 +1922,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get votingCentersLegendCenter => 'Voting center';
 
   @override
+  String get votingCentersLegendAbroad => 'Abroad';
+
+  @override
+  String get votingCentersLegendEmbassy => 'Mission';
+
+  @override
   String get votingCentersLegendYou => 'You are here';
 
   @override
@@ -1697,7 +1939,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get votingCentersEmpty =>
-      'No centers available. Please refresh or try again later.';
+      'No centers available right now. Please refresh or check back soon.';
 
   @override
   String distanceKm(Object km) {
@@ -1760,6 +2002,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeStylePro => 'Pro';
+
+  @override
+  String get themeStyleMagic => 'Magic';
+
+  @override
+  String get themeStyleFun => 'Fun';
 
   @override
   String get deleteAccountHeaderSubtitle =>
@@ -1889,10 +2137,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusRegistered => 'Registered';
 
   @override
-  String get statusPreEligible => 'Pre-eligible (18–20)';
+  String get statusPreEligible => 'Pre-eligible (18–19)';
 
   @override
-  String get statusEligible => 'Eligible (21+)';
+  String get statusEligible => 'Eligible (20+)';
 
   @override
   String get statusVoted => 'Voted';
@@ -1929,7 +2177,89 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminActionVoters => 'Voters';
 
   @override
+  String get adminObserverAccessTitle => 'Observer Access';
+
+  @override
   String get adminActionAuditLogs => 'Audit Logs';
+
+  @override
+  String get adminObserverManagementTitle => 'Observer access';
+
+  @override
+  String get adminObserverManagementSubtitle =>
+      'Grant or revoke read-only observer access.';
+
+  @override
+  String get adminObserverSearchHint =>
+      'Search observers by name, email, or UID…';
+
+  @override
+  String get adminObserverAssignTitle => 'Grant observer access';
+
+  @override
+  String get adminObserverAssignSubtitle =>
+      'Enter a user email or UID. The user must have signed in at least once.';
+
+  @override
+  String get adminObserverIdentifierLabel => 'User email or UID';
+
+  @override
+  String get adminObserverGrantAction => 'Grant access';
+
+  @override
+  String get adminObserverRevokeAction => 'Revoke access';
+
+  @override
+  String get adminObserverCreateTitle => 'Create observer account';
+
+  @override
+  String get adminObserverCreateSubtitle =>
+      'Provision observer credentials directly. The observer must change this temporary password at first sign-in.';
+
+  @override
+  String get adminObserverUsernameLabel => 'Username (optional)';
+
+  @override
+  String get adminObserverTempPasswordHelp =>
+      'Use a temporary password (minimum 8 characters).';
+
+  @override
+  String get adminObserverCreateSuccess => 'Observer account created.';
+
+  @override
+  String get adminObserverDeleteAction => 'Delete observer';
+
+  @override
+  String get adminObserverDeleteConfirm =>
+      'Delete this observer account access? The profile will be archived and observer role removed.';
+
+  @override
+  String get adminObserverDeleteSuccess => 'Observer account archived.';
+
+  @override
+  String get adminObserverMustChangePasswordTag => 'Password reset required';
+
+  @override
+  String get adminObserverEmpty => 'No observers yet.';
+
+  @override
+  String adminObserverRoleLabel(Object role) {
+    return 'Role: $role';
+  }
+
+  @override
+  String adminObserverUpdatedLabel(Object date) {
+    return 'Updated $date';
+  }
+
+  @override
+  String get adminObserverGrantSuccess => 'Observer access granted.';
+
+  @override
+  String get adminObserverRevokeSuccess => 'Observer access revoked.';
+
+  @override
+  String get adminObserverInvalidIdentifier => 'Please enter an email or UID.';
 
   @override
   String get liveResultsPreview => 'Live Results Preview';
@@ -2156,6 +2486,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addRegistrationDeadline => 'Add registration deadline';
 
   @override
+  String get campaignStartTitle => 'Campaign start';
+
+  @override
+  String campaignStartLabel(Object date) {
+    return 'Campaign starts: $date';
+  }
+
+  @override
+  String get addCampaignStart => 'Add campaign start';
+
+  @override
+  String get campaignEndTitle => 'Campaign end';
+
+  @override
+  String campaignEndLabel(Object date) {
+    return 'Campaign ends: $date';
+  }
+
+  @override
+  String get addCampaignEnd => 'Add campaign end';
+
+  @override
+  String get resultsPublishTitle => 'Results publication';
+
+  @override
+  String resultsPublishLabel(Object date) {
+    return 'Results publication: $date';
+  }
+
+  @override
+  String get addResultsPublish => 'Add results publication';
+
+  @override
+  String get runoffOpenTitle => 'Runoff opening';
+
+  @override
+  String runoffOpenLabel(Object date) {
+    return 'Runoff opens: $date';
+  }
+
+  @override
+  String get addRunoffOpen => 'Add runoff opening';
+
+  @override
+  String get runoffCloseTitle => 'Runoff closing';
+
+  @override
+  String runoffCloseLabel(Object date) {
+    return 'Runoff closes: $date';
+  }
+
+  @override
+  String get addRunoffClose => 'Add runoff closing';
+
+  @override
   String get clearDeadline => 'Clear deadline';
 
   @override
@@ -2183,6 +2568,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createAction => 'Create';
 
   @override
+  String get editAction => 'Edit';
+
+  @override
   String get partyNameLabel => 'Party name';
 
   @override
@@ -2208,6 +2596,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addAction => 'Add';
+
+  @override
+  String get approveAction => 'Approve';
+
+  @override
+  String get rejectAction => 'Reject';
 
   @override
   String get electionTypeParliamentary => 'Parliamentary Election';
@@ -2248,6 +2642,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auditEventListCleaned => 'List cleaned';
 
   @override
+  String get auditEventRegistrationApproved => 'Registration approved';
+
+  @override
   String get auditEventRegistrationRejected => 'Registration rejected';
 
   @override
@@ -2258,6 +2655,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get auditEventVoteCast => 'Vote cast';
+
+  @override
+  String get auditEventRoleChanged => 'Role changed';
 
   @override
   String get legalHubTitle => 'Electoral laws & codes';
@@ -2283,7 +2683,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String legalDocumentSubtitle(Object language) {
-    return 'Official text ($language)';
+    return 'Key highlights ($language)';
   }
 
   @override
@@ -2316,6 +2716,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminToolsTitle => 'Admin tools';
 
   @override
+  String get adminContentSeedTitle => 'Content studio';
+
+  @override
+  String get adminContentSeedSubtitle =>
+      'Seed civic data, election info, and reference centers.';
+
+  @override
+  String get adminContentSeedOverwrite => 'Overwrite existing entries';
+
+  @override
+  String get adminContentSeedIncludeCenters =>
+      'Seed regional centers (capitals)';
+
+  @override
+  String get adminContentSeedAction => 'Seed Cameroon content';
+
+  @override
+  String get adminContentSeedRunning => 'Seeding content...';
+
+  @override
+  String get adminContentSeedReportTitle => 'Seed report';
+
+  @override
+  String get adminContentSeedCivicLessons => 'Civic lessons';
+
+  @override
+  String get adminContentSeedElectionCalendar => 'Election calendar';
+
+  @override
+  String get adminContentSeedTransparency => 'Transparency updates';
+
+  @override
+  String get adminContentSeedChecklist => 'Observation checklist';
+
+  @override
+  String get adminContentSeedLegalDocs => 'Legal documents';
+
+  @override
+  String get adminContentSeedElectionsInfo => 'Elections info';
+
+  @override
+  String get adminContentSeedCenters => 'Voting centers';
+
+  @override
+  String get adminContentSeedSuccess => 'Content seeded in Firestore.';
+
+  @override
+  String get adminContentManageTitle => 'Content manager';
+
+  @override
+  String get adminContentManageSubtitle =>
+      'Create, update, or delete records for civic lessons, calendar, legal texts, transparency, checklist, and public content.';
+
+  @override
+  String get adminContentManageSaved => 'Content saved.';
+
+  @override
+  String get adminContentManageEmpty =>
+      'No content items in this collection yet.';
+
+  @override
+  String get adminContentManageIdLabel => 'Record ID';
+
+  @override
+  String get adminContentManageJsonLabel => 'JSON payload';
+
+  @override
+  String get adminContentManageDeleteConfirm =>
+      'Delete this content item? This action cannot be undone.';
+
+  @override
+  String get adminContentManageDeleted => 'Content deleted.';
+
+  @override
   String get adminFraudMonitorTitle => 'Fraud monitor';
 
   @override
@@ -2324,6 +2798,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fraudSignalsTitle => 'Active fraud signals';
+
+  @override
+  String get fraudSignalDeviceAnomaly => 'Device anomaly';
+
+  @override
+  String get fraudSignalBiometricDuplicate => 'Biometric duplicate';
+
+  @override
+  String get fraudSignalUnverified => 'Unverified';
+
+  @override
+  String get fraudSignalAgeAnomaly => 'Age anomaly';
+
+  @override
+  String get fraudSignalStatusRisk => 'Status risk';
+
+  @override
+  String get fraudSignalVoteStateMismatch => 'Vote state mismatch';
 
   @override
   String fraudSignalCount(Object count) {
@@ -2394,6 +2886,99 @@ class AppLocalizationsEn extends AppLocalizations {
       'Finalize and publish verified results.';
 
   @override
+  String get adminVotingCentersTitle => 'Voting centers';
+
+  @override
+  String adminVotingCentersSubtitle(Object count) {
+    return '$count centers in the directory.';
+  }
+
+  @override
+  String get adminVotingCentersImportCsv => 'Import CSV';
+
+  @override
+  String get adminVotingCentersImportHint =>
+      'Paste CSV with columns: name,address,city,region_code,region_name,country,country_code,type,latitude,longitude,status,contact,notes';
+
+  @override
+  String adminVotingCentersImportDone(Object count) {
+    return 'Imported $count centers.';
+  }
+
+  @override
+  String get adminVotingCentersEditTitle => 'Edit voting center';
+
+  @override
+  String get adminVotingCentersCreateTitle => 'Create voting center';
+
+  @override
+  String get adminVotingCentersDeleteConfirm =>
+      'Delete this voting center? This cannot be undone.';
+
+  @override
+  String get centerNameLabel => 'Center name';
+
+  @override
+  String get centerAddressLabel => 'Address';
+
+  @override
+  String get centerCityLabel => 'City';
+
+  @override
+  String get centerRegionCodeLabel => 'Region code';
+
+  @override
+  String get centerRegionNameLabel => 'Region name';
+
+  @override
+  String get centerCountryLabel => 'Country';
+
+  @override
+  String get centerCountryCodeLabel => 'Country code';
+
+  @override
+  String get centerLatitudeLabel => 'Latitude';
+
+  @override
+  String get centerLongitudeLabel => 'Longitude';
+
+  @override
+  String get centerTypeLabel => 'Center type';
+
+  @override
+  String get centerTypeDomestic => 'Domestic';
+
+  @override
+  String get centerTypeEmbassy => 'Embassy';
+
+  @override
+  String get centerTypeConsulate => 'Consulate';
+
+  @override
+  String get centerTypeDiaspora => 'Diaspora';
+
+  @override
+  String get centerTypeOther => 'Other';
+
+  @override
+  String get centerStatusLabel => 'Status';
+
+  @override
+  String get centerStatusActive => 'Active';
+
+  @override
+  String get centerStatusInactive => 'Inactive';
+
+  @override
+  String get centerStatusPending => 'Pending';
+
+  @override
+  String get centerContactLabel => 'Contact';
+
+  @override
+  String get centerNotesLabel => 'Notes';
+
+  @override
   String resultsPublishSummary(Object votes, Object precincts) {
     return '$votes votes • $precincts precincts reporting';
   }
@@ -2460,5 +3045,138 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get accountArchivedTitle => 'Account archived';
+
+  @override
+  String get accountArchivedSubtitle => 'Your account is inactive';
+
+  @override
+  String get accountArchivedBody =>
+      'Your account was archived at your request or by an administrator. To restore access, please contact support or sign in to verify your identity.';
+
+  @override
+  String get accountArchivedLoginAction => 'Go to login';
+
+  @override
+  String get accountArchivedPublicAction => 'Continue as public';
+
+  @override
+  String get accountArchivedMessage =>
+      'This account is archived. Please sign in to verify or contact support.';
+
+  @override
   String get readMoreAction => 'Read more';
+
+  @override
+  String get countdownsTitle => 'Countdowns';
+
+  @override
+  String get countdownsSubtitle =>
+      'Track election moments and personal eligibility timers.';
+
+  @override
+  String get countdownElectionsSectionTitle => 'Election countdowns';
+
+  @override
+  String get countdownElectionOpensTitle => 'Opens in';
+
+  @override
+  String get countdownElectionClosesTitle => 'Closes in';
+
+  @override
+  String get countdownCardExpiryTitle => 'e-Electoral card expiry';
+
+  @override
+  String countdownCardExpiryBody(Object date) {
+    return 'Your card expires on $date.';
+  }
+
+  @override
+  String get countdownCardExpiryWarning =>
+      'Renew before expiry to keep your voting status active.';
+
+  @override
+  String get countdownRenewCardAction => 'Renew card';
+
+  @override
+  String get countdownEligibilityTitle => 'Eligibility unlock';
+
+  @override
+  String countdownEligibilityBody(Object date) {
+    return 'You become eligible to vote on $date.';
+  }
+
+  @override
+  String get countdownEligibilityCelebrate => 'You’re now eligible to vote!';
+
+  @override
+  String get countdownSuspensionTitle => 'Suspension ends';
+
+  @override
+  String countdownSuspensionBody(Object date) {
+    return 'Suspension lifts on $date.';
+  }
+
+  @override
+  String get countdownNoTimersTitle => 'No active countdowns';
+
+  @override
+  String get countdownNoTimersBody =>
+      'Your next timers will appear here as soon as data is available.';
+
+  @override
+  String get countdownExpiredLabel => 'Expired';
+
+  @override
+  String get countdownTodayLabel => 'Today';
+
+  @override
+  String get countdownViewAllAction => 'View all countdowns';
+
+  @override
+  String get voterCountdowns => 'Countdowns';
+
+  @override
+  String get voterCountdownsSubtitle =>
+      'Track election timers and eligibility updates.';
+
+  @override
+  String get countdownPersonalSectionTitle => 'Personal countdowns';
+
+  @override
+  String get countdownRegistrationDeadlineTitle => 'Registration closes in';
+
+  @override
+  String get countdownCampaignStartsTitle => 'Campaign starts in';
+
+  @override
+  String get countdownCampaignEndsTitle => 'Campaign ends in';
+
+  @override
+  String get countdownResultsPublishTitle => 'Results publication in';
+
+  @override
+  String get countdownRunoffOpensTitle => 'Runoff opens in';
+
+  @override
+  String get countdownRunoffClosesTitle => 'Runoff closes in';
+
+  @override
+  String get webDownloadAppTitle => 'Get the CAMVOTE mobile app';
+
+  @override
+  String get webDownloadAppSubtitle =>
+      'Register, vote, and receive updates faster on your phone.';
+
+  @override
+  String get webDownloadPlayStore => 'Get it on Google Play';
+
+  @override
+  String get webDownloadAppStore => 'Download on the App Store';
+
+  @override
+  String get webDownloadQrTitle => 'Scan to download';
+
+  @override
+  String get webDownloadLearnMore => 'Learn more about mobile features';
 }

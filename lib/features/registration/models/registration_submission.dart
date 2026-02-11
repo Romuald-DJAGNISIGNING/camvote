@@ -36,21 +36,21 @@ class RegistrationSubmission {
   });
 
   Map<String, dynamic> toJson() => {
-        'full_name': fullName,
-        'date_of_birth': dateOfBirth.toIso8601String(),
-        'place_of_birth': placeOfBirth,
-        'nationality': nationality,
-        'region_code': regionCode,
-        'document_type': documentType,
-        'ocr_raw_text': ocrRawText,
-        'ocr_summary': ocrSummary,
-        'ocr_name_ok': ocrNameOk,
-        'ocr_dob_ok': ocrDobOk,
-        'ocr_pob_ok': ocrPobOk,
-        'ocr_nationality_ok': ocrNationalityOk,
-        'biometric_enrolled': biometricEnrolled,
-        'liveness_verified': livenessVerified,
-        'enrollment_completed_at': enrollmentCompletedAt?.toIso8601String(),
-        'preferred_center_id': preferredCenterId,
-      };
+    'full_name': fullName,
+    'date_of_birth': dateOfBirth.toIso8601String(),
+    'place_of_birth': placeOfBirth,
+    'nationality': nationality,
+    'region_code': regionCode,
+    'document_type': documentType,
+    'ocr_raw_text': ocrRawText,
+    'ocr_summary': ocrSummary,
+    'ocr_name_ok': ocrNameOk,
+    'ocr_dob_ok': ocrDobOk,
+    'ocr_pob_ok': ocrPobOk,
+    'ocr_nationality_ok': ocrNationalityOk,
+    'biometric_enrolled': biometricEnrolled,
+    'liveness_verified': livenessVerified,
+    'enrollment_completed_at': enrollmentCompletedAt?.toIso8601String(),
+    'preferred_center_id': preferredCenterId,
+  };
 }

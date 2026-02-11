@@ -4,24 +4,21 @@ import 'package:camvote/gen/l10n/app_localizations.dart';
 import 'brand_palette.dart';
 
 class CamVoteLogo extends StatelessWidget {
-  const CamVoteLogo({
-    super.key,
-    this.size = 72,
-    this.showText = false,
-  });
+  const CamVoteLogo({super.key, this.size = 72, this.showText = false});
 
   final double size;
   final bool showText;
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w900,
-        );
+    final textStyle = Theme.of(
+      context,
+    ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isTight = constraints.maxWidth > 0 &&
+        final isTight =
+            constraints.maxWidth > 0 &&
             constraints.maxWidth < (size * (showText ? 2.6 : 1.2));
         final logo = CustomPaint(
           size: Size.square(size),

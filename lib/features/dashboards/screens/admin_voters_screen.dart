@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
+import 'package:camvote/core/errors/error_message.dart';
 
 import '../models/admin_models.dart';
 import '../providers/admin_providers.dart';
@@ -9,6 +10,7 @@ import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/motion/cam_reveal.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../utils/fraud_risk.dart';
 
@@ -45,112 +47,122 @@ class AdminVotersScreen extends ConsumerWidget {
                 height: constraints.maxHeight,
                 child: Column(
                   children: [
-                    const SizedBox(height: 6),
-                    BrandHeader(
-                      title: t.adminVoterManagementTitle,
-                      subtitle: t.adminVoterManagementSubtitle,
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: t.voterSearchHint,
-                                border: const OutlineInputBorder(),
-                                prefixIcon: const Icon(Icons.search),
-                              ),
-                              onChanged: (v) => ref
-                                  .read(votersQueryProvider.notifier)
-                                  .update(q.copyWith(query: v)),
+                    CamStagger(
+                      children: [
+                        const SizedBox(height: 6),
+                        BrandHeader(
+                          title: t.adminVoterManagementTitle,
+                          subtitle: t.adminVoterManagementSubtitle,
+                        ),
+                        const SizedBox(height: 12),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    decoration: InputDecoration(
+                                      hintText: t.voterSearchHint,
+                                      border: const OutlineInputBorder(),
+                                      prefixIcon: const Icon(Icons.search),
+                                    ),
+                                    onChanged: (v) => ref
+                                        .read(votersQueryProvider.notifier)
+                                        .update(q.copyWith(query: v)),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                PopupMenuButton<String>(
+                                  icon: const Icon(Icons.filter_alt),
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: 'region',
+                                      child: Text(t.filterRegion),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'status',
+                                      child: Text(t.filterStatus),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'clear',
+                                      child: Text(t.clearFilters),
+                                    ),
+                                  ],
+                                  onSelected: (value) async {
+                                    if (value == 'clear') {
+                                      ref
+                                          .read(votersQueryProvider.notifier)
+                                          .update(
+                                            q.copyWith(
+                                              clearRegion: true,
+                                              clearStatus: true,
+                                              query: q.query,
+                                            ),
+                                          );
+                                      return;
+                                    }
+                                    if (value == 'region') {
+                                      final picked = await _pickRegion(
+                                        context,
+                                        q.region,
+                                      );
+                                      if (picked == null) return;
+                                      ref
+                                          .read(votersQueryProvider.notifier)
+                                          .update(q.copyWith(region: picked));
+                                      return;
+                                    }
+                                    if (value == 'status') {
+                                      final picked = await _pickStatus(
+                                        context,
+                                        q.status,
+                                      );
+                                      if (picked == null) return;
+                                      ref
+                                          .read(votersQueryProvider.notifier)
+                                          .update(q.copyWith(status: picked));
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          PopupMenuButton<String>(
-                            icon: const Icon(Icons.filter_alt),
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'region',
-                                child: Text(t.filterRegion),
-                              ),
-                              PopupMenuItem(
-                                value: 'status',
-                                child: Text(t.filterStatus),
-                              ),
-                              PopupMenuItem(
-                                value: 'clear',
-                                child: Text(t.clearFilters),
-                              ),
-                            ],
-                            onSelected: (value) async {
-                              if (value == 'clear') {
-                                ref.read(votersQueryProvider.notifier).update(
-                                    q.copyWith(
-                                      clearRegion: true,
-                                      clearStatus: true,
-                                      query: q.query,
-                                    ),
-                                  );
-                                return;
-                              }
-                              if (value == 'region') {
-                                final picked =
-                                    await _pickRegion(context, q.region);
-                                if (picked == null) return;
-                                ref.read(votersQueryProvider.notifier).update(
-                                      q.copyWith(region: picked),
-                                    );
-                                return;
-                              }
-                              if (value == 'status') {
-                                final picked =
-                                    await _pickStatus(context, q.status);
-                                if (picked == null) return;
-                                ref.read(votersQueryProvider.notifier).update(
-                                      q.copyWith(status: picked),
-                                    );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (q.region != null || q.status != null)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 0),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (q.region != null)
-                              Chip(
-                                label: Text(
-                                  t.regionFilterLabel(
-                                    _regionLabel(t, q.region!),
-                                  ),
-                                ),
-                              ),
-                            if (q.status != null)
-                              Chip(
-                                label: Text(
-                                  t.statusFilterLabel(
-                                    _statusLabel(t, q.status!),
-                                  ),
-                                ),
-                              ),
-                          ],
                         ),
-                      ),
-                    const SizedBox(height: 8),
+                        if (q.region != null || q.status != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 0),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                if (q.region != null)
+                                  Chip(
+                                    label: Text(
+                                      t.regionFilterLabel(
+                                        _regionLabel(t, q.region!),
+                                      ),
+                                    ),
+                                  ),
+                                if (q.status != null)
+                                  Chip(
+                                    label: Text(
+                                      t.statusFilterLabel(
+                                        _statusLabel(t, q.status!),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
                     Expanded(
                       child: voters.when(
                         data: (items) {
                           if (items.isEmpty) {
-                            return Center(
-                              child: Text(t.noVotersMatchFilters),
-                            );
+                            return Center(child: Text(t.noVotersMatchFilters));
                           }
 
                           return ListView.separated(
@@ -200,9 +212,40 @@ class AdminVotersScreen extends ConsumerWidget {
                                         v.hasVoted
                                             ? t.voterHasVotedLabel
                                             : t.voterNotVotedLabel,
-                                        style:
-                                            Theme.of(context).textTheme.labelSmall,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.labelSmall,
                                       ),
+                                      if ((v.registrationId ?? '').isNotEmpty &&
+                                          (v.status ==
+                                                  VoterStatus
+                                                      .pendingVerification ||
+                                              v.verified == false)) ...[
+                                        const SizedBox(height: 6),
+                                        PopupMenuButton<String>(
+                                          onSelected: (action) async {
+                                            await _handleDecision(
+                                              context: context,
+                                              ref: ref,
+                                              approve: action == 'approve',
+                                              registrationId:
+                                                  v.registrationId ?? '',
+                                              voterId: v.voterId,
+                                            );
+                                          },
+                                          itemBuilder: (context) => [
+                                            PopupMenuItem(
+                                              value: 'approve',
+                                              child: Text(t.approveAction),
+                                            ),
+                                            PopupMenuItem(
+                                              value: 'reject',
+                                              child: Text(t.rejectAction),
+                                            ),
+                                          ],
+                                          icon: const Icon(Icons.more_vert),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
@@ -210,10 +253,10 @@ class AdminVotersScreen extends ConsumerWidget {
                             },
                           );
                         },
-                        error: (e, _) =>
-                            Center(child: Text(t.errorWithDetails(e.toString()))),
-                        loading: () =>
-                            const Center(child: CamElectionLoader()),
+                        error: (e, _) => Center(
+                          child: Text(safeErrorMessage(context, e)),
+                        ),
+                        loading: () => const Center(child: CamElectionLoader()),
                       ),
                     ),
                   ],
@@ -226,7 +269,10 @@ class AdminVotersScreen extends ConsumerWidget {
     );
   }
 
-  Future<CameroonRegion?> _pickRegion(BuildContext context, CameroonRegion? selected) async {
+  Future<CameroonRegion?> _pickRegion(
+    BuildContext context,
+    CameroonRegion? selected,
+  ) async {
     final t = AppLocalizations.of(context);
     return showDialog<CameroonRegion>(
       context: context,
@@ -255,7 +301,10 @@ class AdminVotersScreen extends ConsumerWidget {
     );
   }
 
-  Future<VoterStatus?> _pickStatus(BuildContext context, VoterStatus? selected) async {
+  Future<VoterStatus?> _pickStatus(
+    BuildContext context,
+    VoterStatus? selected,
+  ) async {
     final t = AppLocalizations.of(context);
     return showDialog<VoterStatus>(
       context: context,
@@ -300,6 +349,37 @@ String _regionLabel(AppLocalizations t, CameroonRegion region) {
   };
 }
 
+Future<void> _handleDecision({
+  required BuildContext context,
+  required WidgetRef ref,
+  required bool approve,
+  required String registrationId,
+  required String voterId,
+}) async {
+  final t = AppLocalizations.of(context);
+  try {
+    await ref.read(adminRepositoryProvider).decideRegistration(
+          registrationId: registrationId,
+          approve: approve,
+          voterId: voterId,
+        );
+    ref.invalidate(votersProvider);
+    ref.invalidate(adminStatsProvider);
+    ref.invalidate(auditEventsProvider);
+    if (context.mounted) {
+      CamToast.show(
+        context,
+        message:
+            approve ? t.registrationStatusApproved : t.registrationStatusRejected,
+      );
+    }
+  } catch (_) {
+    if (context.mounted) {
+      CamToast.show(context, message: t.genericErrorLabel);
+    }
+  }
+}
+
 String _statusLabel(AppLocalizations t, VoterStatus status) {
   return switch (status) {
     VoterStatus.pendingVerification => t.statusPendingVerification,
@@ -340,10 +420,14 @@ class _RiskChip extends StatelessWidget {
       child: Text(
         t.riskLabel(label),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
 }
+
+
+
+

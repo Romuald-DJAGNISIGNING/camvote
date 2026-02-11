@@ -7,6 +7,7 @@ import '../../auth/providers/auth_providers.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 
 class AccountDeleteScreen extends ConsumerStatefulWidget {
   const AccountDeleteScreen({super.key});
@@ -32,7 +33,10 @@ class _AccountDeleteScreenState extends ConsumerState<AccountDeleteScreen> {
     final isLoading = authAsync.isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.deleteAccount)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.deleteAccount),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: ListView(
@@ -60,7 +64,9 @@ class _AccountDeleteScreenState extends ConsumerState<AccountDeleteScreen> {
                     : () async {
                         if (_confirmCtrl.text.trim() != t.deleteKeyword) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(t.deleteAccountConfirmError)),
+                            SnackBar(
+                              content: Text(t.deleteAccountConfirmError),
+                            ),
                           );
                           return;
                         }
@@ -72,7 +78,9 @@ class _AccountDeleteScreenState extends ConsumerState<AccountDeleteScreen> {
                         if (!ok) {
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(t.biometricVerificationFailed)),
+                            SnackBar(
+                              content: Text(t.biometricVerificationFailed),
+                            ),
                           );
                           return;
                         }
@@ -83,9 +91,7 @@ class _AccountDeleteScreenState extends ConsumerState<AccountDeleteScreen> {
                         if (!context.mounted) return;
                         Navigator.of(context).pop();
                       },
-                child: Text(
-                  isLoading ? t.deletingAccount : t.deleteAccount,
-                ),
+                child: Text(isLoading ? t.deletingAccount : t.deleteAccount),
               ),
             ],
           ),

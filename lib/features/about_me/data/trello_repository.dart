@@ -1,84 +1,57 @@
-import 'package:dio/dio.dart';
-import '../../../core/config/app_config.dart';
+import '../../../core/network/worker_client.dart';
 import '../models/trello_stats.dart';
 
 class TrelloRepository {
-  TrelloRepository({Dio? dio})
-      : _dio = dio ?? Dio(BaseOptions(baseUrl: 'https://api.trello.com/1'));
+  TrelloRepository({WorkerClient? workerClient})
+    : _workerClient = workerClient ?? WorkerClient();
+  final WorkerClient _workerClient;
 
-  final Dio _dio;
+  Future<TrelloStats?> fetchBoardStats() async {
+    return _fetchFromWorker();
+  }
 
-  Future<TrelloStats> fetchBoardStats() async {
-    final key = AppConfig.trelloKey;
-    final token = AppConfig.trelloToken;
-    final boardId = AppConfig.trelloBoardId;
-
-    final boardRes = await _dio.get(
-      '/boards/$boardId',
-      queryParameters: {
-        'key': key,
-        'token': token,
-        'fields': 'name,desc,dateLastActivity,shortUrl',
-      },
-    );
-    final board = boardRes.data as Map<String, dynamic>;
-    final boardName = (board['name'] as String?) ?? 'Trello board';
-    final boardUrl = (board['shortUrl'] as String?) ?? '';
-    final last = board['dateLastActivity'] as String?;
-    final lastAt = last == null ? null : DateTime.tryParse(last);
-
-    final listsRes = await _dio.get(
-      '/boards/$boardId/lists',
-      queryParameters: {
-        'key': key,
-        'token': token,
-        'fields': 'name,closed',
-      },
-    );
-    final lists = (listsRes.data as List).cast<Map<String, dynamic>>();
-    final activeLists = lists.where((l) => (l['closed'] as bool?) != true).toList();
-
-    final cardsRes = await _dio.get(
-      '/boards/$boardId/cards',
-      queryParameters: {
-        'key': key,
-        'token': token,
-        'fields': 'idList,closed,dateLastActivity',
-      },
-    );
-    final cards = (cardsRes.data as List).cast<Map<String, dynamic>>();
-
-    final listStats = <TrelloListStat>[];
-    int totalCards = 0;
-    int openCards = 0;
-
-    for (final l in activeLists) {
-      final listId = l['id'] as String?;
-      if (listId == null) continue;
-      final name = (l['name'] as String?) ?? 'List';
-
-      final inList = cards.where((c) => c['idList'] == listId).toList();
-      final total = inList.length;
-      final open = inList.where((c) => (c['closed'] as bool?) != true).length;
-
-      totalCards += total;
-      openCards += open;
-
-      listStats.add(
-        TrelloListStat(name: name, totalCards: total, openCards: open),
+  Future<TrelloStats?> _fetchFromWorker() async {
+    try {
+      final response = await _workerClient.get(
+        '/v1/public/trello-stats',
+        authRequired: false,
       );
+      final configured = response['configured'] == true;
+      if (!configured) return null;
+      final stats =
+          (response['stats'] as Map<String, dynamic>?) ??
+          const <String, dynamic>{};
+      final listsRaw = stats['lists'];
+      final lists = listsRaw is List
+          ? listsRaw
+                .whereType<Map>()
+                .map(
+                  (entry) => TrelloListStat(
+                    name: '${entry['name'] ?? 'List'}',
+                    totalCards: _asInt(entry['totalCards']),
+                    openCards: _asInt(entry['openCards']),
+                  ),
+                )
+                .toList()
+          : const <TrelloListStat>[];
+      final lastRaw = '${stats['lastActivityAt'] ?? ''}'.trim();
+      return TrelloStats(
+        boardName: '${stats['boardName'] ?? 'Trello board'}'.trim(),
+        boardUrl: '${stats['boardUrl'] ?? ''}'.trim(),
+        lastActivityAt: lastRaw.isEmpty ? null : DateTime.tryParse(lastRaw),
+        totalCards: _asInt(stats['totalCards']),
+        openCards: _asInt(stats['openCards']),
+        doneCards: _asInt(stats['doneCards']),
+        lists: lists,
+      );
+    } catch (_) {
+      return null;
     }
+  }
 
-    listStats.sort((a, b) => b.totalCards.compareTo(a.totalCards));
-
-    return TrelloStats(
-      boardName: boardName,
-      boardUrl: boardUrl,
-      lastActivityAt: lastAt,
-      totalCards: totalCards,
-      openCards: openCards,
-      doneCards: totalCards - openCards,
-      lists: listStats,
-    );
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

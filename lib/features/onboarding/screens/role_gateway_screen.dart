@@ -12,19 +12,44 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/marketing/app_download_card.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 
 class RoleGatewayScreen extends ConsumerWidget {
-  const RoleGatewayScreen({super.key});
+  const RoleGatewayScreen({
+    super.key,
+    this.isGeneralWebPortal = false,
+    this.adminOnly = false,
+  });
+
+  final bool isGeneralWebPortal;
+  final bool adminOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
+    final auth = ref.watch(authControllerProvider).asData?.value;
 
     final isWeb = kIsWeb;
-
-    return Scaffold(
-      appBar: NotificationAppBar(title: Text(t.appName)),
+    final generalWebPortal = isWeb && isGeneralWebPortal && !adminOnly;
+    final adminOnlyMode = adminOnly;
+    final isAdminAuthed =
+        auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
+    final webHint = adminOnlyMode
+        ? t.modeAdminTitle
+        : '${t.modePublicTitle} - ${t.modeObserverTitle}';
+    final screen = Scaffold(
+      appBar: NotificationAppBar(
+        showBack: false,
+        title: Row(
+          children: [
+            const CamVoteLogo(size: 28),
+            const SizedBox(width: 10),
+            Text(t.appName),
+          ],
+        ),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: SingleChildScrollView(
@@ -32,73 +57,105 @@ class RoleGatewayScreen extends ConsumerWidget {
               padding: EdgeInsets.zero,
               children: [
                 const SizedBox(height: 6),
-                _HeroBanner(
-                  title: t.appName,
-                  slogan: t.slogan,
-                ),
+                _HeroBanner(title: t.appName, slogan: t.slogan),
                 const SizedBox(height: 16),
                 BrandHeader(
-                  title: t.chooseModeTitle,
-                  subtitle: t.roleGatewaySubtitle,
+                  title: adminOnlyMode ? t.modeAdminTitle : t.chooseModeTitle,
+                  subtitle: adminOnlyMode
+                      ? t.modeAdminSubtitle
+                      : t.roleGatewaySubtitle,
                 ),
                 const SizedBox(height: 16),
-                _FeatureStrip(items: [
-                  _FeatureItem(
-                    icon: Icons.verified_user_outlined,
-                    title: t.roleGatewayFeatureVerifiedTitle,
-                    subtitle: t.roleGatewayFeatureVerifiedSubtitle,
-                  ),
-                  _FeatureItem(
-                    icon: Icons.shield_outlined,
-                    title: t.roleGatewayFeatureFraudTitle,
-                    subtitle: t.roleGatewayFeatureFraudSubtitle,
-                  ),
-                  _FeatureItem(
-                    icon: Icons.public,
-                    title: t.roleGatewayFeatureTransparencyTitle,
-                    subtitle: t.roleGatewayFeatureTransparencySubtitle,
-                  ),
-                ]),
-                const SizedBox(height: 16),
-                _RoleCard(
-                  title: t.modePublicTitle,
-                  subtitle: t.modePublicSubtitle,
-                  icon: Icons.public,
-                  onTap: () {
-                    ref.read(currentRoleProvider.notifier).setRole(AppRole.public);
-                    context.go(RoutePaths.publicHome);
-                  },
+                _FeatureStrip(
+                  items: [
+                    _FeatureItem(
+                      icon: Icons.verified_user_outlined,
+                      title: t.roleGatewayFeatureVerifiedTitle,
+                      subtitle: t.roleGatewayFeatureVerifiedSubtitle,
+                    ),
+                    _FeatureItem(
+                      icon: Icons.shield_outlined,
+                      title: t.roleGatewayFeatureFraudTitle,
+                      subtitle: t.roleGatewayFeatureFraudSubtitle,
+                    ),
+                    _FeatureItem(
+                      icon: Icons.public,
+                      title: t.roleGatewayFeatureTransparencyTitle,
+                      subtitle: t.roleGatewayFeatureTransparencySubtitle,
+                    ),
+                  ],
                 ),
-                if (!isWeb)
-                  _RoleCard(
-                    title: t.modeVoterTitle,
-                    subtitle: t.modeVoterSubtitle,
-                    icon: Icons.how_to_vote_outlined,
-                    onTap: () {
-                      context.go('${RoutePaths.authLogin}?role=voter');
-                    },
-                  ),
-                if (isWeb) ...[
-                  _RoleCard(
-                    title: t.modeObserverTitle,
-                    subtitle: t.modeObserverSubtitle,
-                    icon: Icons.visibility_outlined,
-                    onTap: () {
-                      context.go('${RoutePaths.authLogin}?role=observer');
-                    },
-                  ),
+                const SizedBox(height: 16),
+                if (adminOnlyMode)
                   _RoleCard(
                     title: t.modeAdminTitle,
-                    subtitle: t.modeAdminSubtitle,
+                    subtitle: isAdminAuthed
+                        ? t.adminDashboardHeaderSubtitle
+                        : t.modeAdminSubtitle,
                     icon: Icons.admin_panel_settings_outlined,
                     onTap: () {
-                      context.go('${RoutePaths.authLogin}?role=admin');
+                      ref
+                          .read(currentRoleProvider.notifier)
+                          .setRole(AppRole.admin);
+                      if (isAdminAuthed) {
+                        context.go(RoutePaths.adminDashboard);
+                        return;
+                      }
+                      context.go(
+                        '${RoutePaths.authLogin}?role=admin&entry=admin',
+                      );
+                    },
+                  )
+                else ...[
+                  _RoleCard(
+                    title: t.modePublicTitle,
+                    subtitle: t.modePublicSubtitle,
+                    icon: Icons.public,
+                    onTap: () {
+                      ref
+                          .read(currentRoleProvider.notifier)
+                          .setRole(AppRole.public);
+                      context.go(RoutePaths.publicHome);
                     },
                   ),
+                  if (!isWeb && !generalWebPortal)
+                    _RoleCard(
+                      title: t.modeVoterTitle,
+                      subtitle: isWeb
+                          ? t.webDownloadAppSubtitle
+                          : t.modeVoterSubtitle,
+                      icon: Icons.how_to_vote_outlined,
+                      onTap: () {
+                        if (isWeb) {
+                          context.go(RoutePaths.voterWebRedirect);
+                        } else {
+                          context.go('${RoutePaths.authLogin}?role=voter');
+                        }
+                      },
+                    ),
+                  if (generalWebPortal)
+                    _RoleCard(
+                      title: t.modeObserverTitle,
+                      subtitle: t.modeObserverSubtitle,
+                      icon: Icons.visibility_outlined,
+                      onTap: () {
+                        context.go('${RoutePaths.authLogin}?role=observer');
+                      },
+                    ),
+                  if (generalWebPortal) ...[
+                    const SizedBox(height: 12),
+                    const AppDownloadCard(),
+                  ],
                 ],
                 const SizedBox(height: 16),
                 FilledButton.icon(
-                  onPressed: () => context.push(RoutePaths.settings),
+                  onPressed: () => context.push(
+                    adminOnlyMode
+                        ? '${RoutePaths.settings}?entry=admin'
+                        : generalWebPortal
+                        ? '${RoutePaths.settings}?entry=general'
+                        : RoutePaths.settings,
+                  ),
                   icon: const Icon(Icons.settings_outlined),
                   label: Text(t.settings),
                 ),
@@ -118,7 +175,7 @@ class RoleGatewayScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
-                      t.roleGatewayWebHint,
+                      adminOnlyMode ? t.modeAdminSubtitle : webHint,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -126,7 +183,9 @@ class RoleGatewayScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(
-                      t.roleGatewayMobileHint,
+                      adminOnlyMode
+                          ? t.modeAdminSubtitle
+                          : t.roleGatewayMobileHint,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -136,6 +195,29 @@ class RoleGatewayScreen extends ConsumerWidget {
         ),
       ),
     );
+
+    if (generalWebPortal) {
+      return Theme(data: _portalTheme(context, AppRole.public), child: screen);
+    }
+    if (adminOnlyMode) {
+      return Theme(data: _portalTheme(context, AppRole.admin), child: screen);
+    }
+
+    return screen;
+  }
+
+  ThemeData _portalTheme(BuildContext context, AppRole role) {
+    final base = Theme.of(context);
+    final primary = RoleTheme.accentFor(role);
+    final secondary = RoleTheme.secondaryFor(role);
+    final scheme = base.colorScheme.copyWith(
+      primary: primary,
+      primaryContainer: primary.withAlpha(28),
+      secondary: secondary,
+      secondaryContainer: secondary.withAlpha(25),
+      inversePrimary: primary.withAlpha(200),
+    );
+    return base.copyWith(colorScheme: scheme);
   }
 }
 
@@ -175,16 +257,15 @@ class _HeroBanner extends StatelessWidget {
   final String title;
   final String slogan;
 
-  const _HeroBanner({
-    required this.title,
-    required this.slogan,
-  });
+  const _HeroBanner({required this.title, required this.slogan});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final gradient = isDark ? BrandPalette.darkHeroGradient : BrandPalette.heroGradient;
+    final gradient = isDark
+        ? BrandPalette.darkHeroGradient
+        : BrandPalette.heroGradient;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -247,7 +328,9 @@ class _FeatureStrip extends StatelessWidget {
         return Row(
           children: [
             for (int i = 0; i < items.length; i++) ...[
-              Expanded(child: _FeatureCard(item: items[i], cs: cs)),
+              Expanded(
+                child: _FeatureCard(item: items[i], cs: cs),
+              ),
               if (i < items.length - 1) const SizedBox(width: 10),
             ],
           ],
@@ -278,9 +361,9 @@ class _FeatureCard extends StatelessWidget {
           Text(
             item.title,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Text(

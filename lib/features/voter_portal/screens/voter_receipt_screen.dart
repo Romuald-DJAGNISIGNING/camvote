@@ -13,6 +13,7 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/navigation/app_back_button.dart';
 import '../domain/vote_receipt.dart';
 
 class VoterReceiptScreen extends StatelessWidget {
@@ -28,7 +29,10 @@ class VoterReceiptScreen extends StatelessWidget {
     final castAtLabel = _formatDateTime(context, receipt.castAt);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.voteReceiptTitle)),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        title: Text(t.voteReceiptTitle),
+      ),
       body: BrandBackdrop(
         child: ResponsiveContent(
           child: ListView(
@@ -167,8 +171,12 @@ class VoterReceiptScreen extends StatelessWidget {
                                     final ok = await _confirmSensitive(context);
                                     if (!ok) return;
                                     await Printing.layoutPdf(
-                                      onLayout: (format) =>
-                                          _buildPdf(format, receipt, t, castAtLabel),
+                                      onLayout: (format) => _buildPdf(
+                                        format,
+                                        receipt,
+                                        t,
+                                        castAtLabel,
+                                      ),
                                     );
                                   },
                                   icon: const Icon(Icons.print_outlined),
@@ -208,19 +216,17 @@ class VoterReceiptScreen extends StatelessWidget {
     final supported = await bio.isSupported();
     if (!supported) {
       if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.biometricNotAvailable)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.biometricNotAvailable)));
       return false;
     }
-    final bioOk = await bio.requireBiometric(
-      reason: t.receiptBiometricReason,
-    );
+    final bioOk = await bio.requireBiometric(reason: t.receiptBiometricReason);
     if (!bioOk) {
       if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.biometricVerificationFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.biometricVerificationFailed)));
       return false;
     }
 
@@ -228,9 +234,9 @@ class VoterReceiptScreen extends StatelessWidget {
     final liveOk = await LivenessChallengeScreen.run(context);
     if (!liveOk) {
       if (!context.mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.livenessCheckFailed)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t.livenessCheckFailed)));
       return false;
     }
     return true;
@@ -283,9 +289,7 @@ class VoterReceiptScreen extends StatelessWidget {
                 pw.SizedBox(height: 10),
                 pw.Text('${t.auditTokenLabel}: ${receipt.auditToken}'),
                 pw.SizedBox(height: 12),
-                pw.Text(
-                  t.receiptPrivacyNote,
-                ),
+                pw.Text(t.receiptPrivacyNote),
               ],
             ),
           ],
@@ -308,9 +312,9 @@ class VoterReceiptScreen extends StatelessWidget {
 
   String _formatDateTime(BuildContext context, DateTime value) {
     final date = MaterialLocalizations.of(context).formatMediumDate(value);
-    final time = MaterialLocalizations.of(context).formatTimeOfDay(
-      TimeOfDay.fromDateTime(value),
-    );
+    final time = MaterialLocalizations.of(
+      context,
+    ).formatTimeOfDay(TimeOfDay.fromDateTime(value));
     return '$date $time';
   }
 }

@@ -9,6 +9,7 @@ class AuthUser {
   final AppRole role;
   final String? voterId;
   final bool verified;
+  final bool mustChangePassword;
 
   const AuthUser({
     required this.id,
@@ -17,6 +18,7 @@ class AuthUser {
     required this.role,
     required this.voterId,
     required this.verified,
+    required this.mustChangePassword,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
@@ -27,15 +29,17 @@ class AuthUser {
       role: AppRoleX.fromApi(json['role'] as String?) ?? AppRole.public,
       voterId: json['voter_id'] as String?,
       verified: (json['verified'] as bool?) ?? false,
+      mustChangePassword: (json['must_change_password'] as bool?) ?? false,
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'full_name': fullName,
-        'email': email,
-        'role': role.apiValue,
-        'voter_id': voterId,
-        'verified': verified,
-      };
+    'id': id,
+    'full_name': fullName,
+    'email': email,
+    'role': role.apiValue,
+    'voter_id': voterId,
+    'verified': verified,
+    'must_change_password': mustChangePassword,
+  };
 }

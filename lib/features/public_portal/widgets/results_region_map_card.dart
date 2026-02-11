@@ -124,14 +124,13 @@ class _ResultsRegionMapCardState extends State<ResultsRegionMapCard>
                         child: AnimatedBuilder(
                           animation: _c,
                           builder: (context, child) {
-                            final tValue =
-                                Curves.easeInOutCubic.transform(_c.value);
-                            final idx = (tValue * allCodes.length).floor().clamp(
-                              0,
-                              allCodes.length - 1,
+                            final tValue = Curves.easeInOutCubic.transform(
+                              _c.value,
                             );
-                            final highlighted =
-                                hasData ? allCodes[idx] : null;
+                            final idx = (tValue * allCodes.length)
+                                .floor()
+                                .clamp(0, allCodes.length - 1);
+                            final highlighted = hasData ? allCodes[idx] : null;
 
                             return ClipRRect(
                               borderRadius: BorderRadius.circular(18),
@@ -139,7 +138,8 @@ class _ResultsRegionMapCardState extends State<ResultsRegionMapCard>
                                 children: [
                                   Container(
                                     color: theme
-                                        .colorScheme.surfaceContainerHighest
+                                        .colorScheme
+                                        .surfaceContainerHighest
                                         .withAlpha(70),
                                     padding: const EdgeInsets.all(8),
                                     child: CameroonRegionsMap(
@@ -148,8 +148,10 @@ class _ResultsRegionMapCardState extends State<ResultsRegionMapCard>
                                       winnerTagByCode: tagByCode,
                                       highlightedCode: highlighted,
                                       onRegionTap: hasData
-                                          ? (code) =>
-                                              _showRegionDetails(context, code)
+                                          ? (code) => _showRegionDetails(
+                                              context,
+                                              code,
+                                            )
                                           : null,
                                     ),
                                   ),
@@ -160,13 +162,12 @@ class _ResultsRegionMapCardState extends State<ResultsRegionMapCard>
                                             .withAlpha(180),
                                         child: Center(
                                           child: Text(
-                                            widget.emptyMessage ??
-                                                t.noData,
+                                            widget.emptyMessage ?? t.noData,
                                             textAlign: TextAlign.center,
                                             style: theme.textTheme.bodyMedium
                                                 ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                         ),
                                       ),
@@ -181,10 +182,7 @@ class _ResultsRegionMapCardState extends State<ResultsRegionMapCard>
                     const SizedBox(width: 12),
 
                     // Legend
-                    Expanded(
-                      flex: 2,
-                      child: _Legend(winners: widget.winners),
-                    ),
+                    Expanded(flex: 2, child: _Legend(winners: widget.winners)),
                   ],
                 );
               },

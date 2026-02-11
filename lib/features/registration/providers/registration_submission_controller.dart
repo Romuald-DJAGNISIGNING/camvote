@@ -1,20 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/config/app_config.dart';
-import '../../../core/network/api_client.dart';
+import '../../../core/network/worker_client.dart';
 import '../data/registration_repository.dart';
 import '../models/registration_submission.dart';
 import '../models/registration_submission_result.dart';
 
 final registrationRepositoryProvider = Provider<RegistrationRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return RegistrationRepository(dio);
+  return RegistrationRepository(client: ref.read(workerClientProvider));
 });
 
-final registrationSubmissionProvider = AsyncNotifierProvider<
-    RegistrationSubmissionController, RegistrationSubmissionResult?>(
-  RegistrationSubmissionController.new,
-);
+final registrationSubmissionProvider =
+    AsyncNotifierProvider<
+      RegistrationSubmissionController,
+      RegistrationSubmissionResult?
+    >(RegistrationSubmissionController.new);
 
 class RegistrationSubmissionController
     extends AsyncNotifier<RegistrationSubmissionResult?> {
@@ -24,17 +22,6 @@ class RegistrationSubmissionController
   Future<RegistrationSubmissionResult?> submit(
     RegistrationSubmission submission,
   ) async {
-    if (!AppConfig.hasApiBaseUrl) {
-      state = AsyncData(
-        const RegistrationSubmissionResult(
-          registrationId: '',
-          status: 'error',
-          message: 'API base URL is not configured.',
-        ),
-      );
-      return state.value;
-    }
-
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(registrationRepositoryProvider);
@@ -49,17 +36,6 @@ class RegistrationSubmissionController
     String? existingRegistrationId,
     String? renewalToken,
   }) async {
-    if (!AppConfig.hasApiBaseUrl) {
-      state = AsyncData(
-        const RegistrationSubmissionResult(
-          registrationId: '',
-          status: 'error',
-          message: 'API base URL is not configured.',
-        ),
-      );
-      return state.value;
-    }
-
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(registrationRepositoryProvider);

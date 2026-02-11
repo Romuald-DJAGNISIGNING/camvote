@@ -5,14 +5,15 @@ enum AppRole { public, voter, observer, admin }
 
 extension AppRoleX on AppRole {
   String get apiValue => switch (this) {
-        AppRole.public => 'public',
-        AppRole.voter => 'voter',
-        AppRole.observer => 'observer',
-        AppRole.admin => 'admin',
-      };
+    AppRole.public => 'public',
+    AppRole.voter => 'voter',
+    AppRole.observer => 'observer',
+    AppRole.admin => 'admin',
+  };
 
   static AppRole? fromApi(String? value) {
-    return switch (value) {
+    final normalized = value?.trim().toLowerCase();
+    return switch (normalized) {
       'public' => AppRole.public,
       'voter' => AppRole.voter,
       'observer' => AppRole.observer,
@@ -29,9 +30,10 @@ class CurrentRoleController extends Notifier<AppRole> {
   void setRole(AppRole role) => state = role;
 }
 
-/// Global role state (temporary until real auth is implemented).
-final currentRoleProvider =
-    NotifierProvider<CurrentRoleController, AppRole>(CurrentRoleController.new);
+/// Global role state synchronized from auth providers.
+final currentRoleProvider = NotifierProvider<CurrentRoleController, AppRole>(
+  CurrentRoleController.new,
+);
 
 class RoleTheme {
   // Cameroon-inspired base colors (premium civic-tech).

@@ -1,23 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/config/app_settings_controller.dart';
+
 import '../data/public_portal_repository.dart';
 import '../models/public_models.dart';
 
 final publicPortalRepositoryProvider = Provider<PublicPortalRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return PublicPortalRepository(dio);
+  return PublicPortalRepository();
 });
 
-final publicResultsProvider =
-    FutureProvider.autoDispose<PublicResultsState>((ref) async {
+final publicResultsProvider = FutureProvider.autoDispose<PublicResultsState>((
+  ref,
+) async {
   final repo = ref.watch(publicPortalRepositoryProvider);
   return repo.fetchResults();
 });
 
+final publicElectionsInfoProvider =
+    FutureProvider.autoDispose<PublicElectionsInfoState?>((ref) async {
+      final repo = ref.watch(publicPortalRepositoryProvider);
+      final settings = ref.watch(appSettingsProvider).asData?.value;
+      final locale = settings?.locale.languageCode ?? 'en';
+      return repo.fetchElectionsInfo(localeCode: locale);
+    });
+
 /// Privacy-safe lookup attempt limiter (client-side only).
 final lookupLimiterProvider =
-    NotifierProvider<LookupLimiterController, LookupLimiterState>(LookupLimiterController.new);
+    NotifierProvider<LookupLimiterController, LookupLimiterState>(
+      LookupLimiterController.new,
+    );
 
 class LookupLimiterState {
   final List<DateTime> attempts;

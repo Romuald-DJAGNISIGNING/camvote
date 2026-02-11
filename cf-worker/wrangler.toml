@@ -1,0 +1,20 @@
+name = "camvote"
+main = "src/index.ts"
+compatibility_date = "2024-11-05"
+
+[[r2_buckets]]
+binding = "R2_PRIMARY"
+bucket_name = "camvote-primary"
+preview_bucket_name = "camvote-primary-preview"
+
+[[r2_buckets]]
+binding = "R2_BACKUP"
+bucket_name = "camvote-backup"
+preview_bucket_name = "camvote-backup-preview"
+
+[vars]
+# Comma-separated list of allowed origins. Use "*" to allow all.
+ALLOWED_ORIGINS = "*"
+# Optional public board id for Trello dashboard proxy.
+TRELLO_BOARD_ID = "6958e93f42229fbf46c11df3"
+

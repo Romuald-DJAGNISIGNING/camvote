@@ -1,18 +1,21 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import '../../../core/network/worker_client.dart';
 
-import '../../../core/config/app_config.dart';
 import '../models/public_models.dart';
 
 class PublicPortalRepository {
-  PublicPortalRepository(this._dio);
+  PublicPortalRepository({WorkerClient? workerClient})
+    : _workerClient = workerClient ?? WorkerClient();
 
-  final Dio _dio;
+  final WorkerClient _workerClient;
 
   Future<PublicResultsState> fetchResults() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/public/results');
-    final data = _asMap(res.data);
+    final response = await _workerClient.get(
+      '/v1/public/results',
+      authRequired: false,
+    );
+    final data =
+        (response['data'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
 
     final candidates = _parseCandidates(data['candidates']);
     final regions = _parseRegionalWinners(data['regions'], candidates);
@@ -34,29 +37,49 @@ class PublicPortalRepository {
     required String regNumber,
     required DateTime dob,
   }) async {
-    _ensureApiConfigured();
-    final res = await _dio.post(
-      '/public/verify',
+    final response = await _workerClient.post(
+      '/v1/public/voter-lookup',
       data: {
-        'registrationNumber': regNumber,
-        'dateOfBirth': dob.toIso8601String(),
+        'regNumber': regNumber,
+        'dob': dob.toIso8601String(),
       },
+      authRequired: false,
     );
-    final data = _asMap(res.data);
-    final status = _parseStatus(data['status']);
-
+    final statusRaw = _asString(response['status']);
+    final status = switch (statusRaw) {
+      'eligible' => PublicVoterLookupStatus.eligible,
+      'pending_verification' => PublicVoterLookupStatus.pendingVerification,
+      _ => PublicVoterLookupStatus.notFound,
+    };
     return PublicVoterLookupResult(
       status: status,
-      maskedName: _asString(data['maskedName']),
-      maskedRegNumber: _asString(data['maskedRegNumber']),
-      cardExpiry: _parseDate(data['cardExpiry']),
+      maskedName: _asString(response['maskedName']),
+      maskedRegNumber:
+          _asString(response['maskedRegNumber']).isNotEmpty
+              ? _asString(response['maskedRegNumber'])
+              : _maskReg(regNumber),
+      cardExpiry: _parseDate(response['cardExpiry']),
     );
   }
 
-  void _ensureApiConfigured() {
-    if (!AppConfig.hasApiBaseUrl) {
-      throw StateError('API base URL is not configured.');
-    }
+  Future<PublicElectionsInfoState?> fetchElectionsInfo({
+    String? localeCode,
+  }) async {
+    final response = await _workerClient.get(
+      '/v1/public/elections-info',
+      queryParameters: {'locale': (localeCode ?? 'en').toLowerCase()},
+      authRequired: false,
+    );
+    final data = response['data'];
+    if (data is! Map<String, dynamic>) return null;
+    final locale = (localeCode ?? 'en').toLowerCase();
+    return PublicElectionsInfoState(
+      title: _localized(data, 'title', locale),
+      subtitle: _localized(data, 'subtitle', locale),
+      sections: _parseInfoSections(data['sections'], locale),
+      guidelines: _parseInfoGuidelines(data['guidelines'], locale),
+      lastUpdated: _parseDate(data['lastUpdated']),
+    );
   }
 
   List<CandidateLiveResult> _parseCandidates(dynamic raw) {
@@ -86,9 +109,7 @@ class PublicPortalRepository {
               candidateName: c.candidateName,
               partyName: c.partyName,
               votes: c.votes,
-              percent: c.percent > 0
-                  ? c.percent
-                  : (c.votes / totalVotes) * 100,
+              percent: c.percent > 0 ? c.percent : (c.votes / totalVotes) * 100,
             ),
           )
           .toList();
@@ -105,14 +126,12 @@ class PublicPortalRepository {
     final list = <RegionalWinner>[];
 
     for (final item in raw.whereType<Map<String, dynamic>>()) {
-      final winnerName =
-          _asString(item['winnerName'] ?? item['candidateName']);
+      final winnerName = _asString(item['winnerName'] ?? item['candidateName']);
       list.add(
         RegionalWinner(
           regionCode: _asString(item['regionCode'] ?? item['region']),
           winnerName: winnerName,
-          winnerColor:
-              _parseColor(item['winnerColor'], winnerName, candidates),
+          winnerColor: _parseColor(item['winnerColor'], winnerName, candidates),
           totalVotesInRegion: _asInt(item['totalVotes'] ?? item['regionVotes']),
           winnerVotesInRegion: _asInt(item['winnerVotes']),
         ),
@@ -127,26 +146,50 @@ class PublicPortalRepository {
     return raw.map((v) => _asDouble(v)).where((v) => v > 0).toList();
   }
 
-  PublicVoterLookupStatus _parseStatus(dynamic raw) {
-    final value = _asString(raw).toLowerCase();
-    return switch (value) {
-      'pending' || 'pending_verification' => PublicVoterLookupStatus.pendingVerification,
-      'registered_pre_eligible' || 'pre_eligible' => PublicVoterLookupStatus.registeredPreEligible,
-      'eligible' => PublicVoterLookupStatus.eligible,
-      'voted' => PublicVoterLookupStatus.voted,
-      'suspended' => PublicVoterLookupStatus.suspended,
-      'deceased' => PublicVoterLookupStatus.deceased,
-      'archived' => PublicVoterLookupStatus.archived,
-      _ => PublicVoterLookupStatus.notFound,
-    };
+  List<PublicElectionsInfoSection> _parseInfoSections(
+    dynamic raw,
+    String locale,
+  ) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => PublicElectionsInfoSection(
+            id: _asString(item['id']),
+            title: _localized(item, 'title', locale),
+            body: _localized(item, 'body', locale),
+            sourceUrl: _asString(item['sourceUrl'] ?? item['source_url']),
+            sourceLabel: _asString(item['sourceLabel'] ?? item['source_label']),
+          ),
+        )
+        .toList();
   }
 
-  Map<String, dynamic> _asMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    return const {};
+  List<PublicElectionsInfoGuideline> _parseInfoGuidelines(
+    dynamic raw,
+    String locale,
+  ) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (item) => PublicElectionsInfoGuideline(
+            text: _localized(item, 'text', locale),
+            sourceUrl: _asString(item['sourceUrl'] ?? item['source_url']),
+            sourceLabel: _asString(item['sourceLabel'] ?? item['source_label']),
+          ),
+        )
+        .toList();
   }
 
   String _asString(dynamic value) => value?.toString().trim() ?? '';
+
+  String _localized(Map<String, dynamic> data, String key, String locale) {
+    final localizedKey = '${key}_$locale';
+    final localized = _asString(data[localizedKey]);
+    if (localized.isNotEmpty) return localized;
+    return _asString(data[key]);
+  }
 
   int _asInt(dynamic value) {
     if (value is int) return value;
@@ -221,5 +264,12 @@ class PublicPortalRepository {
     if (name.trim().isEmpty) return palette.first;
     final idx = name.hashCode.abs() % palette.length;
     return palette[idx];
+  }
+
+  String _maskReg(String reg) {
+    if (reg.length <= 4) return '****';
+    final start = reg.substring(0, 2);
+    final end = reg.substring(reg.length - 2);
+    return '$start****$end';
   }
 }

@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../core/config/app_config.dart';
+import '../../../core/network/worker_client.dart';
 import '../models/tools_models.dart';
 
 abstract class ToolsRepository {
@@ -9,30 +9,32 @@ abstract class ToolsRepository {
   Future<List<IncidentOverview>> fetchIncidentOverview({String? status});
   Future<List<ResultsPublishStatus>> fetchResultsPublishing();
   Future<void> publishResults(String electionId);
-  Future<List<TransparencyUpdate>> fetchTransparencyFeed();
-  Future<List<ObservationChecklistItem>> fetchObservationChecklist();
+  Future<List<TransparencyUpdate>> fetchTransparencyFeed({String? localeCode});
+  Future<List<ObservationChecklistItem>> fetchObservationChecklist({
+    String? localeCode,
+  });
   Future<void> updateChecklistItem(String itemId, bool completed);
   Future<List<IncidentOverview>> fetchObserverIncidents({String? status});
-  Future<List<ElectionCalendarEntry>> fetchElectionCalendar();
-  Future<List<CivicLesson>> fetchCivicLessons();
+  Future<List<ElectionCalendarEntry>> fetchElectionCalendar({
+    String? localeCode,
+  });
+  Future<List<CivicLesson>> fetchCivicLessons({String? localeCode});
 }
 
 class ApiToolsRepository implements ToolsRepository {
-  ApiToolsRepository(this._dio);
+  ApiToolsRepository({WorkerClient? workerClient, FirebaseAuth? auth})
+    : _workerClient = workerClient ?? WorkerClient(),
+      _auth = auth ?? FirebaseAuth.instance;
 
-  final Dio _dio;
-
-  void _ensureApiConfigured() {
-    if (!AppConfig.hasApiBaseUrl) {
-      throw StateError('API base URL is not configured.');
-    }
-  }
+  final WorkerClient _workerClient;
+  final FirebaseAuth _auth;
 
   @override
   Future<FraudInsight> fetchFraudInsight() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/admin/fraud/insights');
-    final data = _asMap(res.data);
+    final response = await _workerClient.get('/v1/tools/fraud-insight');
+    final data =
+        (response['data'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
     return FraudInsight(
       riskScore: _asDouble(data['riskScore']),
       totalSignals: _asInt(data['totalSignals']),
@@ -45,108 +47,190 @@ class ApiToolsRepository implements ToolsRepository {
 
   @override
   Future<List<DeviceRisk>> fetchDeviceRisks() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/admin/security/devices');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw.whereType<Map<String, dynamic>>().map(_parseDevice).toList();
+    final response = await _workerClient.get('/v1/tools/device-risks');
+    final items = response['risks'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseDevice({'id': doc['id'], ...data});
+        })
+        .toList();
   }
 
   @override
   Future<List<IncidentOverview>> fetchIncidentOverview({String? status}) async {
-    _ensureApiConfigured();
-    final res = await _dio.get(
-      '/admin/incidents',
+    final response = await _workerClient.get(
+      '/v1/tools/incidents',
       queryParameters: {
         if (status != null && status.trim().isNotEmpty) 'status': status,
       },
     );
-    return _parseIncidents(res.data);
+    final items = response['incidents'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseIncident({'id': doc['id'], ...data});
+        })
+        .toList();
   }
 
   @override
   Future<List<ResultsPublishStatus>> fetchResultsPublishing() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/admin/results/publishing');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map<String, dynamic>>()
-        .map(_parsePublishStatus)
+    final response = await _workerClient.get('/v1/tools/results-publishing');
+    final items = response['results'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data = doc.cast<String, dynamic>();
+          return ResultsPublishStatus(
+            electionId: _asString(data['electionId']),
+            electionTitle: _asString(data['electionTitle']),
+            readyToPublish: _asBool(data['readyToPublish']),
+            totalVotes: _asInt(data['totalVotes']),
+            precinctsReporting: _asInt(data['precinctsReporting']),
+            lastPublishedAt: _parseDate(data['lastPublishedAt']),
+          );
+        })
         .toList();
   }
 
   @override
   Future<void> publishResults(String electionId) async {
-    _ensureApiConfigured();
-    await _dio.post('/admin/results/$electionId/publish');
+    await _workerClient.post(
+      '/v1/tools/results/publish',
+      data: {'electionId': electionId},
+    );
   }
 
   @override
-  Future<List<TransparencyUpdate>> fetchTransparencyFeed() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/observer/transparency-feed');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map<String, dynamic>>()
-        .map(_parseTransparencyUpdate)
+  Future<List<TransparencyUpdate>> fetchTransparencyFeed({
+    String? localeCode,
+  }) async {
+    final locale = (localeCode ?? 'en').toLowerCase();
+    final response = await _workerClient.get(
+      '/v1/tools/transparency',
+      queryParameters: {'locale': locale},
+      authRequired: false,
+    );
+    final items = response['updates'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseTransparencyUpdate({'id': doc['id'], ...data});
+        })
         .toList();
   }
 
   @override
-  Future<List<ObservationChecklistItem>> fetchObservationChecklist() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/observer/observation-checklist');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map<String, dynamic>>()
-        .map(_parseChecklistItem)
+  Future<List<ObservationChecklistItem>> fetchObservationChecklist({
+    String? localeCode,
+  }) async {
+    final locale = (localeCode ?? 'en').toLowerCase();
+    final response = await _workerClient.get(
+      '/v1/tools/observation-checklist',
+      queryParameters: {'locale': locale},
+      authRequired: false,
+    );
+    final items = response['items'];
+    if (items is! List) return const [];
+    final uid = _auth.currentUser?.uid;
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseChecklistItem({'id': doc['id'], ...data}, uid);
+        })
         .toList();
   }
 
   @override
   Future<void> updateChecklistItem(String itemId, bool completed) async {
-    _ensureApiConfigured();
-    await _dio.post(
-      '/observer/observation-checklist/$itemId',
-      data: {'completed': completed},
+    await _workerClient.post(
+      '/v1/tools/observation-checklist/update',
+      data: {'itemId': itemId, 'completed': completed},
     );
   }
 
   @override
-  Future<List<IncidentOverview>> fetchObserverIncidents(
-      {String? status}) async {
-    _ensureApiConfigured();
-    final res = await _dio.get(
-      '/observer/incidents',
+  Future<List<IncidentOverview>> fetchObserverIncidents({
+    String? status,
+  }) async {
+    final response = await _workerClient.get(
+      '/v1/tools/observer-incidents',
       queryParameters: {
         if (status != null && status.trim().isNotEmpty) 'status': status,
       },
     );
-    return _parseIncidents(res.data);
-  }
-
-  @override
-  Future<List<ElectionCalendarEntry>> fetchElectionCalendar() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/public/election-calendar');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map<String, dynamic>>()
-        .map(_parseCalendarEntry)
+    final items = response['incidents'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseIncident({'id': doc['id'], ...data});
+        })
         .toList();
   }
 
   @override
-  Future<List<CivicLesson>> fetchCivicLessons() async {
-    _ensureApiConfigured();
-    final res = await _dio.get('/public/civic-education');
-    final raw = res.data;
-    if (raw is! List) return const [];
-    return raw.whereType<Map<String, dynamic>>().map(_parseLesson).toList();
+  Future<List<ElectionCalendarEntry>> fetchElectionCalendar({
+    String? localeCode,
+  }) async {
+    final locale = (localeCode ?? 'en').toLowerCase();
+    final response = await _workerClient.get(
+      '/v1/tools/election-calendar',
+      queryParameters: {'locale': locale},
+      authRequired: false,
+    );
+    final items = response['calendar'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseCalendarEntry({'id': doc['id'], ...data});
+        })
+        .toList();
+  }
+
+  @override
+  Future<List<CivicLesson>> fetchCivicLessons({String? localeCode}) async {
+    final locale = (localeCode ?? 'en').toLowerCase();
+    final response = await _workerClient.get(
+      '/v1/tools/civic-lessons',
+      queryParameters: {'locale': locale},
+      authRequired: false,
+    );
+    final items = response['lessons'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((doc) {
+          final data =
+              (doc['data'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return _parseLesson({'id': doc['id'], ...data});
+        })
+        .toList();
   }
 
   List<FraudSignal> _parseSignals(dynamic raw) {
@@ -176,11 +260,6 @@ class ApiToolsRepository implements ToolsRepository {
     );
   }
 
-  List<IncidentOverview> _parseIncidents(dynamic raw) {
-    if (raw is! List) return const [];
-    return raw.whereType<Map<String, dynamic>>().map(_parseIncident).toList();
-  }
-
   IncidentOverview _parseIncident(Map<String, dynamic> data) {
     final attachments = data['attachments'];
     return IncidentOverview(
@@ -189,22 +268,18 @@ class ApiToolsRepository implements ToolsRepository {
       status: _asString(data['status']),
       severity: _asString(data['severity']),
       location: _asString(data['location']),
-      reportedAt: _parseDate(data['reportedAt']) ?? DateTime.now(),
+      reportedAt:
+          _parseDate(
+            data['reportedAt'] ?? data['occurredAt'] ?? data['createdAt'],
+          ) ??
+          DateTime.now(),
       reporterRole: _asString(data['reporterRole'] ?? data['role']),
       attachments: attachments is List
-          ? attachments.map((a) => _asString(a)).where((a) => a.isNotEmpty).toList()
+          ? attachments
+                .map((a) => _asString(a))
+                .where((a) => a.isNotEmpty)
+                .toList()
           : const [],
-    );
-  }
-
-  ResultsPublishStatus _parsePublishStatus(Map<String, dynamic> data) {
-    return ResultsPublishStatus(
-      electionId: _asString(data['electionId'] ?? data['id']),
-      electionTitle: _asString(data['electionTitle'] ?? data['title']),
-      readyToPublish: _asBool(data['readyToPublish']),
-      totalVotes: _asInt(data['totalVotes']),
-      precinctsReporting: _asInt(data['precinctsReporting']),
-      lastPublishedAt: _parseDate(data['lastPublishedAt']),
     );
   }
 
@@ -218,13 +293,22 @@ class ApiToolsRepository implements ToolsRepository {
     );
   }
 
-  ObservationChecklistItem _parseChecklistItem(Map<String, dynamic> data) {
+  ObservationChecklistItem _parseChecklistItem(
+    Map<String, dynamic> data,
+    String? uid,
+  ) {
+    final completedBy = data['completedBy'];
+    final isCompleted =
+        _asBool(data['completed']) ||
+        (uid != null &&
+            completedBy is List &&
+            completedBy.map((e) => e.toString()).contains(uid));
     return ObservationChecklistItem(
       id: _asString(data['id']),
       title: _asString(data['title']),
       description: _asString(data['description']),
       required: _asBool(data['required']),
-      completed: _asBool(data['completed']),
+      completed: isCompleted,
     );
   }
 
@@ -250,11 +334,6 @@ class ApiToolsRepository implements ToolsRepository {
     );
   }
 
-  Map<String, dynamic> _asMap(dynamic value) {
-    if (value is Map<String, dynamic>) return value;
-    return const {};
-  }
-
   String _asString(dynamic value) => value?.toString().trim() ?? '';
 
   int _asInt(dynamic value) {
@@ -278,6 +357,9 @@ class ApiToolsRepository implements ToolsRepository {
   DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true).toLocal();
+    }
     return DateTime.tryParse(value.toString());
   }
 }

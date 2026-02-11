@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/config/app_settings_controller.dart';
 import '../data/tools_repository.dart';
 import '../models/tools_models.dart';
 
 final toolsRepositoryProvider = Provider<ToolsRepository>((ref) {
-  final dio = ref.watch(dioProvider);
-  return ApiToolsRepository(dio);
+  return ApiToolsRepository();
 });
 
 final adminFraudInsightProvider = FutureProvider<FraudInsight>((ref) {
@@ -19,8 +18,8 @@ final adminDeviceRisksProvider = FutureProvider<List<DeviceRisk>>((ref) {
 
 final adminIncidentFilterProvider =
     NotifierProvider<AdminIncidentFilterController, String>(
-  AdminIncidentFilterController.new,
-);
+      AdminIncidentFilterController.new,
+    );
 
 class AdminIncidentFilterController extends Notifier<String> {
   @override
@@ -31,20 +30,20 @@ class AdminIncidentFilterController extends Notifier<String> {
 
 final adminIncidentsProvider =
     FutureProvider.family<List<IncidentOverview>, String>((ref, status) {
-  return ref
-      .read(toolsRepositoryProvider)
-      .fetchIncidentOverview(status: status == 'all' ? null : status);
-});
+      return ref
+          .read(toolsRepositoryProvider)
+          .fetchIncidentOverview(status: status == 'all' ? null : status);
+    });
 
 final adminResultsPublishingProvider =
     FutureProvider<List<ResultsPublishStatus>>((ref) {
-  return ref.read(toolsRepositoryProvider).fetchResultsPublishing();
-});
+      return ref.read(toolsRepositoryProvider).fetchResultsPublishing();
+    });
 
 final observerIncidentFilterProvider =
     NotifierProvider<ObserverIncidentFilterController, String>(
-  ObserverIncidentFilterController.new,
-);
+      ObserverIncidentFilterController.new,
+    );
 
 class ObserverIncidentFilterController extends Notifier<String> {
   @override
@@ -55,27 +54,43 @@ class ObserverIncidentFilterController extends Notifier<String> {
 
 final observerIncidentsProvider =
     FutureProvider.family<List<IncidentOverview>, String>((ref, status) {
+      return ref
+          .read(toolsRepositoryProvider)
+          .fetchObserverIncidents(status: status == 'all' ? null : status);
+    });
+
+final observerTransparencyProvider = FutureProvider<List<TransparencyUpdate>>((
+  ref,
+) {
+  final settings = ref.watch(appSettingsProvider).asData?.value;
+  final locale = settings?.locale.languageCode ?? 'en';
   return ref
       .read(toolsRepositoryProvider)
-      .fetchObserverIncidents(status: status == 'all' ? null : status);
-});
-
-final observerTransparencyProvider =
-    FutureProvider<List<TransparencyUpdate>>((ref) {
-  return ref.read(toolsRepositoryProvider).fetchTransparencyFeed();
+      .fetchTransparencyFeed(localeCode: locale);
 });
 
 final observerChecklistProvider =
     FutureProvider<List<ObservationChecklistItem>>((ref) {
-  return ref.read(toolsRepositoryProvider).fetchObservationChecklist();
-});
+      final settings = ref.watch(appSettingsProvider).asData?.value;
+      final locale = settings?.locale.languageCode ?? 'en';
+      return ref
+          .read(toolsRepositoryProvider)
+          .fetchObservationChecklist(localeCode: locale);
+    });
 
 final publicElectionCalendarProvider =
     FutureProvider<List<ElectionCalendarEntry>>((ref) {
-  return ref.read(toolsRepositoryProvider).fetchElectionCalendar();
-});
+      final settings = ref.watch(appSettingsProvider).asData?.value;
+      final locale = settings?.locale.languageCode ?? 'en';
+      return ref
+          .read(toolsRepositoryProvider)
+          .fetchElectionCalendar(localeCode: locale);
+    });
 
-final publicCivicEducationProvider =
-    FutureProvider<List<CivicLesson>>((ref) {
-  return ref.read(toolsRepositoryProvider).fetchCivicLessons();
+final publicCivicEducationProvider = FutureProvider<List<CivicLesson>>((ref) {
+  final settings = ref.watch(appSettingsProvider).asData?.value;
+  final locale = settings?.locale.languageCode ?? 'en';
+  return ref
+      .read(toolsRepositoryProvider)
+      .fetchCivicLessons(localeCode: locale);
 });

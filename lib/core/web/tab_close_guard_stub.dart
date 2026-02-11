@@ -1,0 +1,1 @@
+void setTabCloseWarningEnabled(bool enabled) {}
