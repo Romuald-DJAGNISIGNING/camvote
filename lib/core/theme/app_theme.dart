@@ -22,7 +22,6 @@ class AppTheme {
     final flavor = _flavor(style, role);
     final lightScheme = _lightScheme(flavor);
     final darkScheme = _darkScheme(flavor);
-    final forceLightOnWeb = kIsWeb;
 
     ThemeData base(ColorScheme scheme, bool isDark) => ThemeData(
       useMaterial3: true,
@@ -235,11 +234,6 @@ class AppTheme {
         },
       ),
     );
-
-    if (forceLightOnWeb) {
-      final light = base(lightScheme, false);
-      return AppThemePack(light: light, dark: light);
-    }
 
     return AppThemePack(
       light: base(lightScheme, false),

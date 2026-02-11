@@ -1,7 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
 
 import '../theme/app_theme_style.dart';
 
@@ -43,6 +44,8 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
   static const _kThemeStyle = 'settings.themeStyle';
   static const _kLocale = 'settings.locale';
   static const _kOnboarding = 'settings.onboardingSeen';
+  static const _kOnboardingVersion = 'settings.onboardingSeenVersion';
+  static const _currentOnboardingVersion = 20260211;
   static const Duration _prefsTimeout = Duration(seconds: 2);
   static const AppSettingsState _fallback = AppSettingsState(
     themeMode: ThemeMode.system,
@@ -72,7 +75,8 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     var themeRaw = prefs.getString(_kTheme) ?? 'system';
     var themeStyleRaw = prefs.getString(_kThemeStyle) ?? 'classic';
     final localeRaw = prefs.getString(_kLocale) ?? 'en';
-    final hasSeenOnboarding = prefs.getBool(_kOnboarding) ?? false;
+    final hasSeenOnboardingLegacy = prefs.getBool(_kOnboarding) ?? false;
+    final seenOnboardingVersion = prefs.getInt(_kOnboardingVersion);
 
     var needsWriteBack = false;
     if (themeRaw != 'light' && themeRaw != 'dark' && themeRaw != 'system') {
@@ -81,6 +85,14 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     }
     if (!_allowedThemeStyleIds.contains(themeStyleRaw)) {
       themeStyleRaw = 'classic';
+      needsWriteBack = true;
+    }
+
+    final hasSeenOnboarding =
+        seenOnboardingVersion == _currentOnboardingVersion;
+    final shouldMigrateLegacyOnboarding =
+        seenOnboardingVersion == null && hasSeenOnboardingLegacy;
+    if (shouldMigrateLegacyOnboarding) {
       needsWriteBack = true;
     }
 
@@ -104,6 +116,9 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
       // Normalize corrupted/legacy values so future startups stay stable.
       unawaited(_setString(_kTheme, themeRaw));
       unawaited(_setString(_kThemeStyle, themeStyleRaw));
+      if (shouldMigrateLegacyOnboarding) {
+        unawaited(_setInt(_kOnboardingVersion, _currentOnboardingVersion));
+      }
     }
 
     return resolved;
@@ -146,6 +161,11 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
 
     state = AsyncValue.data(current.copyWith(hasSeenOnboarding: seen));
     await _setBool(_kOnboarding, seen);
+    if (seen) {
+      await _setInt(_kOnboardingVersion, _currentOnboardingVersion);
+      return;
+    }
+    await _removeKey(_kOnboardingVersion);
   }
 
   Future<SharedPreferences?> _ensurePrefs() async {
@@ -173,6 +193,26 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     if (prefs == null) return;
     try {
       await prefs.setBool(key, value);
+    } catch (_) {
+      // Fail open: the in-memory state is already updated.
+    }
+  }
+
+  Future<void> _setInt(String key, int value) async {
+    final prefs = await _ensurePrefs();
+    if (prefs == null) return;
+    try {
+      await prefs.setInt(key, value);
+    } catch (_) {
+      // Fail open: the in-memory state is already updated.
+    }
+  }
+
+  Future<void> _removeKey(String key) async {
+    final prefs = await _ensurePrefs();
+    if (prefs == null) return;
+    try {
+      await prefs.remove(key);
     } catch (_) {
       // Fail open: the in-memory state is already updated.
     }
