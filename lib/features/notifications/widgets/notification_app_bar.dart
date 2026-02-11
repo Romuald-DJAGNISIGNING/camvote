@@ -14,6 +14,7 @@ class NotificationAppBar extends StatelessWidget
   final bool centerTitle;
   final bool showBell;
   final bool showBack;
+  final bool showOnWeb;
 
   const NotificationAppBar({
     super.key,
@@ -23,14 +24,23 @@ class NotificationAppBar extends StatelessWidget
     this.centerTitle = false,
     this.showBell = true,
     this.showBack = true,
+    this.showOnWeb = false,
   });
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize {
+    if (kIsWeb && !showOnWeb) return Size.zero;
+    return Size.fromHeight(
+      kToolbarHeight + (bottom?.preferredSize.height ?? 0),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb && !showOnWeb) {
+      return const SizedBox.shrink();
+    }
+
     final cs = Theme.of(context).colorScheme;
     final actionList = <Widget>[
       if (showBell)
