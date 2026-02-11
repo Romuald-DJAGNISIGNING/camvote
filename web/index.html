@@ -16,19 +16,50 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="CamVote helps citizens register, vote, and verify results with transparency and integrity.">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="camvote">
+  <meta name="apple-mobile-web-app-title" content="CamVote">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="format-detection" content="telephone=no">
+
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.indexOf('Macintosh') > -1 && 'ontouchend' in document);
+      if (isIOS) {
+        window.flutterWebRenderer = 'html';
+      }
+    })();
+  </script>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="favicon.png?v=20260211">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png?v=20260211">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/Icon-192.png?v=20260211">
+  <link rel="shortcut icon" href="favicon.png?v=20260211">
 
-  <title>camvote</title>
+  <title>CamVote</title>
   <link rel="manifest" href="manifest.json">
+  
+  
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+
+  <link rel="preload" href="flutter_bootstrap.js" as="script">
+  <link rel="preload" href="main.dart.js" as="script">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   <style id="splash-screen-style">
     html {
       height: 100%
@@ -48,6 +79,33 @@
       left: 50%;
       -ms-transform: translate(-50%, -50%);
       transform: translate(-50%, -50%);
+    }
+
+    #splash .center {
+      animation: camvotePulse 1.3s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    #splash {
+      opacity: 1;
+      transition: opacity 220ms ease;
+    }
+
+    #splash.is-fading {
+      opacity: 0;
+    }
+
+    @keyframes camvotePulse {
+      0%, 100% {
+        -ms-transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.92;
+      }
+      50% {
+        -ms-transform: translate(-50%, -50%) scale(1.045);
+        transform: translate(-50%, -50%) scale(1.045);
+        opacity: 1;
+      }
     }
 
     .contain {
@@ -86,15 +144,162 @@
       bottom: 0;
       right: 0;
     }
+
+    #startup-fallback {
+      position: fixed;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: none;
+      width: min(92vw, 520px);
+      border-radius: 14px;
+      background: rgba(12, 17, 22, 0.92);
+      color: #f2f6fb;
+      padding: 14px 16px;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      text-align: center;
+    }
+
+    #startup-fallback .title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 4px 0;
+    }
+
+    #startup-fallback .body {
+      font-size: 12px;
+      opacity: 0.9;
+      margin: 0 0 10px 0;
+    }
+
+    #startup-fallback button {
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #1f6feb;
+      color: #ffffff;
+    }
   </style>
   <script id="splash-screen-script">
+    (function () {
+      var timerId = null;
+      var observer = null;
+      var settled = false;
+      var hideScheduled = false;
+      var bootStartedAt = Date.now();
+      var minSplashMs = 1350;
+
+      function isFlutterReady() {
+        return !!(
+          document.querySelector('flt-glass-pane') ||
+          document.querySelector('flutter-view') ||
+          document.querySelector('flt-scene-host') ||
+          document.querySelector('flt-semantics-host')
+        );
+      }
+
+      function stopObserver() {
+        if (!observer) return;
+        observer.disconnect();
+        observer = null;
+      }
+
+      function onAppReady() {
+        if (hideScheduled) return;
+        hideScheduled = true;
+        var elapsed = Date.now() - bootStartedAt;
+        var delayMs = Math.max(0, minSplashMs - elapsed);
+        window.setTimeout(function () {
+          clearFallback(true);
+          removeSplashFromWeb();
+        }, delayMs);
+      }
+
+      function showFallback() {
+        if (settled) return;
+        if (isFlutterReady()) {
+          onAppReady();
+          return;
+        }
+        var splash = document.getElementById('splash');
+        if (!splash) {
+          clearFallback(true);
+          return;
+        }
+        var fallback = document.getElementById('startup-fallback');
+        if (!fallback) return;
+        fallback.style.display = 'block';
+      }
+
+      function clearFallback(markSettled) {
+        if (markSettled) {
+          settled = true;
+        }
+        if (timerId) {
+          clearTimeout(timerId);
+          timerId = null;
+        }
+        stopObserver();
+        var fallback = document.getElementById('startup-fallback');
+        if (fallback) {
+          fallback.style.display = 'none';
+        }
+      }
+
+      window.__camvoteStartupWatchdog = {
+        clear: function () {
+          clearFallback(true);
+        },
+      };
+
+      window.addEventListener('flutter-first-frame', onAppReady, { once: true });
+
+      document.addEventListener('DOMContentLoaded', function () {
+        timerId = setTimeout(showFallback, 9000);
+        if (typeof MutationObserver !== 'undefined' && document.body) {
+          observer = new MutationObserver(function () {
+            if (isFlutterReady()) {
+              onAppReady();
+            }
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+        }
+        if (isFlutterReady()) {
+          onAppReady();
+        }
+      });
+
+      window.addEventListener('load', function () {
+        if (isFlutterReady()) {
+          onAppReady();
+        }
+      });
+    })();
+
     function removeSplashFromWeb() {
-      document.getElementById("splash")?.remove();
+      if (window.__camvoteSplashRemoved) return;
+      window.__camvoteSplashRemoved = true;
+
+      var splash = document.getElementById("splash");
+      if (splash) {
+        splash.classList.add("is-fading");
+        window.setTimeout(function () {
+          splash.remove();
+          document.body.style.background = "transparent";
+        }, 220);
+      } else {
+        document.body.style.background = "transparent";
+      }
+
       document.getElementById("splash-branding")?.remove();
-      document.body.style.background = "transparent";
+      window.__camvoteStartupWatchdog?.clear?.();
     }
   </script>
-  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 </head>
 <body>
   <picture id="splash">
@@ -102,6 +307,17 @@
       <source srcset="splash/img/dark-1x.png 1x, splash/img/dark-2x.png 2x, splash/img/dark-3x.png 3x, splash/img/dark-4x.png 4x" media="(prefers-color-scheme: dark)">
       <img class="center" aria-hidden="true" src="splash/img/light-1x.png" alt="">
   </picture>
+  <div id="startup-fallback" role="status" aria-live="polite">
+    <p class="title">CamVote is taking longer than expected to load.</p>
+    <p class="body">Check your connection, then retry loading the app.</p>
+    <button type="button" onclick="window.location.reload()">Retry</button>
+  </div>
+  
+  
+  
+  
+  
+  
   <script src="flutter_bootstrap.js" async=""></script>
 
 

@@ -1,11 +1,11 @@
 {
-    "name": "camvote",
-    "short_name": "camvote",
+    "name": "CamVote",
+    "short_name": "CamVote",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0B0F12",
     "theme_color": "#00873E",
-    "description": "A new Flutter project.",
+    "description": "CamVote helps citizens register, vote, and verify results with transparency and integrity.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
