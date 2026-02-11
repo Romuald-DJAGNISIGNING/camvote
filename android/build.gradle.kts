@@ -19,6 +19,19 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Ensure core library desugaring version satisfies plugins like flutter_local_notifications
+subprojects {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.android.tools" &&
+                requested.name == "desugar_jdk_libs"
+            ) {
+                useVersion("2.1.4")
+            }
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
