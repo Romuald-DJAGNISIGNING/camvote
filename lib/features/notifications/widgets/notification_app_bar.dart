@@ -24,15 +24,14 @@ class NotificationAppBar extends StatelessWidget
     this.centerTitle = false,
     this.showBell = true,
     this.showBack = true,
-    this.showOnWeb = false,
+    this.showOnWeb = true,
   });
 
   @override
   Size get preferredSize {
     if (kIsWeb && !showOnWeb) return Size.zero;
-    return Size.fromHeight(
-      kToolbarHeight + (bottom?.preferredSize.height ?? 0),
-    );
+    final toolbarHeight = kIsWeb ? 46.0 : kToolbarHeight;
+    return Size.fromHeight(toolbarHeight + (bottom?.preferredSize.height ?? 0));
   }
 
   @override
@@ -55,6 +54,7 @@ class NotificationAppBar extends StatelessWidget
     return AppBar(
       automaticallyImplyLeading: false,
       forceMaterialTransparency: kIsWeb,
+      toolbarHeight: kIsWeb ? 46 : null,
       leading: showBack ? const AppBackButton(alwaysVisible: false) : null,
       title: title,
       centerTitle: centerTitle,
