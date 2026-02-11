@@ -1,21 +1,22 @@
-Map data sources (Cameroon)
-===========================
+Cameroon map layers (bundled)
+=============================
 
-This folder contains boundary GeoJSON sourced from geoBoundaries (gbOpen).
+Lightweight GeoJSON boundaries used by the Flutter map widgets (region overlays, election heatmaps).
 
-Files:
-- cm_admin0_geoboundaries.geojson (ADM0, simplified)
-- cm_admin1_geoboundaries.geojson (ADM1, simplified)
-- cm_admin2_geoboundaries.geojson (ADM2, simplified)
+Included files
+- `cm_admin0_geoboundaries.geojson` — national boundary (ADM0, simplified)
+- `cm_admin1_geoboundaries.geojson` — regions (ADM1, simplified)
+- `cm_admin2_geoboundaries.geojson` — departments (ADM2, simplified)
 
-Source:
-- geoBoundaries (gbOpen) release data
-  https://www.geoboundaries.org
-  https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM0/
-  https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM1/
-  https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM2/
+Source & refresh
+- geoBoundaries (gbOpen)  
+  - https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM0/  
+  - https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM1/  
+  - https://www.geoboundaries.org/api/current/gbOpen/CMR/ADM2/
+- To update: download the latest gbOpen files above, simplify if needed, and replace the GeoJSONs here. Keep file names stable to avoid code changes.
 
-Licenses:
-- geoBoundaries gbOpen data is provided under the license specified in the
-  respective metadata for each file (CC BY 4.0 or CC BY 3.0 as indicated).
+Offline / heavy data
+- Large OSM extracts live in `data/maps/` so APK/IPA sizes stay reasonable. Do not move them here unless you intend to ship offline maps.
 
+Licensing
+- geoBoundaries gbOpen data is released under the license noted in each metadata file (generally CC BY 4.0 or CC BY 3.0). Preserve attribution in UI where applicable.
