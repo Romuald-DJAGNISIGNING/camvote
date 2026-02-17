@@ -48,10 +48,10 @@ class _AdminSupportTicketsScreenState
 
     return Scaffold(
       appBar: NotificationAppBar(
-        title: const Text('Admin Support'),
+        title: Text(t.adminSupportTitle),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: t.refresh,
             onPressed: _refreshing ? null : _refresh,
             icon: _refreshing
                 ? const SizedBox(
@@ -72,9 +72,8 @@ class _AdminSupportTicketsScreenState
                 children: [
                   const SizedBox(height: 6),
                   BrandHeader(
-                    title: 'Admin Support',
-                    subtitle:
-                        'Review support tickets, respond to users, and track ticket status.',
+                    title: t.adminSupportTitle,
+                    subtitle: t.adminSupportSubtitle,
                   ),
                   const SizedBox(height: 12),
                   Card(
@@ -85,11 +84,10 @@ class _AdminSupportTicketsScreenState
                           TextField(
                             controller: _searchController,
                             textInputAction: TextInputAction.search,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Search by name, email, registration ID, or message',
+                            decoration: InputDecoration(
+                              hintText: t.adminSupportSearchHint,
                               border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.search),
+                              prefixIcon: const Icon(Icons.search),
                             ),
                             onChanged: (value) => ref
                                 .read(adminSupportQueryProvider.notifier)
@@ -103,9 +101,9 @@ class _AdminSupportTicketsScreenState
                               border: const OutlineInputBorder(),
                             ),
                             items: [
-                              const DropdownMenuItem<AdminSupportTicketStatus?>(
+                              DropdownMenuItem<AdminSupportTicketStatus?>(
                                 value: null,
-                                child: Text('All statuses'),
+                                child: Text(t.adminSupportAllStatuses),
                               ),
                               ...AdminSupportTicketStatus.values
                                   .where(
@@ -119,7 +117,7 @@ class _AdminSupportTicketsScreenState
                                           AdminSupportTicketStatus?
                                         >(
                                           value: status,
-                                          child: Text(status.label),
+                                          child: Text(_statusLabel(t, status)),
                                         ),
                                   ),
                             ],
@@ -143,7 +141,7 @@ class _AdminSupportTicketsScreenState
                         return Card(
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Text('No support tickets found.'),
+                            child: Text(t.adminSupportNoTickets),
                           ),
                         );
                       }
@@ -155,6 +153,7 @@ class _AdminSupportTicketsScreenState
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: _TicketCard(
                                   ticket: ticket,
+                                  t: t,
                                   busy: _respondingTicketId == ticket.id,
                                   onRespond: () =>
                                       _openRespondDialog(context, ticket),
@@ -205,7 +204,7 @@ class _AdminSupportTicketsScreenState
 
     setState(() => _respondingTicketId = ticket.id);
     try {
-      await ref
+      final result = await ref
           .read(adminSupportControllerProvider)
           .respond(
             ticketId: ticket.id,
@@ -213,7 +212,19 @@ class _AdminSupportTicketsScreenState
             status: payload.status,
           );
       if (!context.mounted) return;
-      CamToast.show(context, message: 'Ticket updated successfully.');
+      final t = AppLocalizations.of(context);
+      if (result.queuedOffline) {
+        final queueRef = result.offlineQueueId.isEmpty
+            ? ticket.id
+            : result.offlineQueueId;
+        CamToast.show(
+          context,
+          message: t.offlineQueuedWithReference(queueRef),
+          type: CamToastType.info,
+        );
+      } else {
+        CamToast.show(context, message: t.adminSupportTicketUpdatedSuccess);
+      }
     } catch (error) {
       if (!context.mounted) return;
       CamToast.show(context, message: safeErrorMessage(context, error));
@@ -229,6 +240,7 @@ class _AdminSupportTicketsScreenState
     required AdminSupportTicket ticket,
     required AdminSupportTicketStatus initialStatus,
   }) async {
+    final t = AppLocalizations.of(context);
     final controller = TextEditingController(text: ticket.responseMessage);
     AdminSupportTicketStatus selectedStatus = initialStatus;
 
@@ -238,7 +250,7 @@ class _AdminSupportTicketsScreenState
         return StatefulBuilder(
           builder: (dialogContext, setDialogState) {
             return AlertDialog(
-              title: Text('Respond to ticket ${ticket.id}'),
+              title: Text(t.adminSupportRespondToTicket(ticket.id)),
               content: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: Column(
@@ -247,8 +259,8 @@ class _AdminSupportTicketsScreenState
                   children: [
                     DropdownButtonFormField<AdminSupportTicketStatus>(
                       initialValue: selectedStatus,
-                      decoration: const InputDecoration(
-                        labelText: 'New status',
+                      decoration: InputDecoration(
+                        labelText: t.adminSupportNewStatusLabel,
                         border: OutlineInputBorder(),
                       ),
                       items: AdminSupportTicketStatus.values
@@ -259,7 +271,7 @@ class _AdminSupportTicketsScreenState
                           .map(
                             (status) => DropdownMenuItem(
                               value: status,
-                              child: Text(status.label),
+                              child: Text(_statusLabel(t, status)),
                             ),
                           )
                           .toList(),
@@ -273,8 +285,8 @@ class _AdminSupportTicketsScreenState
                       controller: controller,
                       maxLines: 6,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Response message',
+                      decoration: InputDecoration(
+                        labelText: t.adminSupportResponseMessageLabel,
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -299,7 +311,7 @@ class _AdminSupportTicketsScreenState
                       ),
                     );
                   },
-                  child: const Text('Send response'),
+                  child: Text(t.adminSupportSendResponse),
                 ),
               ],
             );
@@ -316,11 +328,13 @@ class _AdminSupportTicketsScreenState
 class _TicketCard extends StatelessWidget {
   const _TicketCard({
     required this.ticket,
+    required this.t,
     required this.busy,
     required this.onRespond,
   });
 
   final AdminSupportTicket ticket;
+  final AppLocalizations t;
   final bool busy;
   final VoidCallback onRespond;
 
@@ -350,7 +364,7 @@ class _TicketCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                _StatusChip(status: ticket.status),
+                _StatusChip(status: ticket.status, t: t),
               ],
             ),
             const SizedBox(height: 6),
@@ -365,7 +379,7 @@ class _TicketCard extends StatelessWidget {
             if (ticket.registrationId.isNotEmpty) ...[
               const SizedBox(height: 4),
               Text(
-                'Registration ID: ${ticket.registrationId}',
+                t.adminSupportRegistrationIdValue(ticket.registrationId),
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -391,7 +405,7 @@ class _TicketCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Updated $date $time',
+                    t.adminSupportUpdatedAt(date, time),
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
@@ -405,7 +419,9 @@ class _TicketCard extends StatelessWidget {
                         )
                       : const Icon(Icons.mark_email_read_outlined),
                   label: Text(
-                    ticket.responseMessage.isEmpty ? 'Respond' : 'Update',
+                    ticket.responseMessage.isEmpty
+                        ? t.adminSupportRespondAction
+                        : t.adminSupportUpdateAction,
                   ),
                 ),
               ],
@@ -418,9 +434,10 @@ class _TicketCard extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
+  const _StatusChip({required this.status, required this.t});
 
   final AdminSupportTicketStatus status;
+  final AppLocalizations t;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +465,7 @@ class _StatusChip extends StatelessWidget {
     };
 
     return Chip(
-      label: Text(status.label),
+      label: Text(_statusLabel(t, status)),
       backgroundColor: bg,
       labelStyle: Theme.of(
         context,
@@ -464,4 +481,14 @@ class _SupportResponsePayload {
   final String message;
 
   const _SupportResponsePayload({required this.status, required this.message});
+}
+
+String _statusLabel(AppLocalizations t, AdminSupportTicketStatus status) {
+  return switch (status) {
+    AdminSupportTicketStatus.open => t.adminSupportStatusOpen,
+    AdminSupportTicketStatus.answered => t.adminSupportStatusAnswered,
+    AdminSupportTicketStatus.resolved => t.adminSupportStatusResolved,
+    AdminSupportTicketStatus.closed => t.adminSupportStatusClosed,
+    AdminSupportTicketStatus.unknown => t.adminSupportStatusUnknown,
+  };
 }

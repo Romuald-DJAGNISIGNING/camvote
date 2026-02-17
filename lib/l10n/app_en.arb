@@ -77,13 +77,13 @@
 
   "verifyStatusNotFound": "Not found",
   "verifyStatusPending": "Pending verification",
-  "verifyStatusRegisteredPreEligible": "Registered (18–19, not eligible to vote yet)",
+  "verifyStatusRegisteredPreEligible": "Registered (18-19, not eligible to vote yet)",
   "verifyStatusEligible": "Eligible to vote",
   "verifyStatusVoted": "Already voted (current election)",
   "verifyStatusSuspended": "Suspended / under review",
   "verifyStatusDeceased": "Removed (deceased)",
   "verifyStatusArchived": "Archived (retention)",
-  "verifyEligibleToastMessage": "Congratulations! You can now vote in eligible elections. 🎉",
+  "verifyEligibleToastMessage": "Congratulations! You can now vote in eligible elections.",
 
   "voterPortalTitle": "Voter Portal",
   "voterHome": "Home",
@@ -152,7 +152,7 @@
   "mapTapHint": "Tap a region to see the current leading candidate.",
   "mapLegendTitle": "Legend",
 
-  "loading": "Loading…",
+  "loading": "Loading...",
   "startupError": "Startup error",
   "error": "Error",
   "genericErrorLabel": "Something went wrong. Please try again.",
@@ -191,19 +191,19 @@
   "pickFromGallery": "Gallery",
   "captureWithCamera": "Camera",
   "runOcr": "Run OCR & Verify",
-  "ocrProcessing": "Processing…",
+  "ocrProcessing": "Processing...",
   "ocrExtractedTitle": "Extracted from document",
   "ocrValidationTitle": "Match result",
   "ocrVerifiedTitle": "Verified",
   "ocrRejectedTitle": "Rejected",
   "ocrSummaryVerified": "Verified",
-  "ocrSummaryVerifiedPendingNationality": "Verified • Nationality pending admin review",
+  "ocrSummaryVerifiedPendingNationality": "Verified - Nationality pending admin review",
   "ocrSummaryNationalityPending": "Nationality pending admin review",
   "ocrIssueNameMismatch": "Name mismatch",
   "ocrIssueDobMismatch": "Date of birth mismatch",
   "ocrIssuePobMismatch": "Place of birth mismatch",
   "ocrIssueForeignDocument": "Foreign document detected",
-  "ocrVerified": "Document verified ✅",
+  "ocrVerified": "Document verified...",
   "ocrRejected": "Verification rejected",
   "ocrFailedTitle": "OCR failed",
   "rawOcrText": "Raw OCR text",
@@ -224,6 +224,21 @@
       "role": {}
     }
   },
+  "adminTipReviewTitle": "Tip review",
+  "adminTipReviewSubtitle": "Confirm manual tips (TapTap Send, Remitly, Orange Money Max It QR) and track proof submissions.",
+  "adminTipNoTips": "No tips found.",
+  "adminTipFilterAll": "All",
+  "adminTipFilterSubmitted": "Submitted",
+  "adminTipFilterPending": "Pending",
+  "adminTipFilterSuccess": "Confirmed",
+  "adminTipFilterFailed": "Rejected",
+  "adminTipApproveTitle": "Confirm tip",
+  "adminTipRejectTitle": "Reject tip",
+  "adminTipDecisionNoteLabel": "Decision note",
+  "adminTipDecisionSuccess": "Tip status updated.",
+  "approve": "Approve",
+  "reject": "Reject",
+  "statusUnknown": "Unknown",
   "loginHeaderTitle": "Secure access for {role}",
   "@loginHeaderTitle": {
     "placeholders": {
@@ -232,6 +247,7 @@
   },
   "loginHeaderSubtitle": "Verify identity, continue securely, and protect every action.",
   "authInvalidCredentials": "Invalid email/ID or password.",
+  "invalidEmailAddress": "Enter a valid email address.",
   "authAccountNotFound": "No account was found for this user.",
   "authTooManyRequests": "Too many attempts. Please wait and try again.",
   "authNetworkError": "Network issue detected. Check your connection and retry.",
@@ -320,6 +336,58 @@
       "ticketId": {}
     }
   },
+  "helpSupportTicketQueued": "Ticket queued offline. Reference: {queueId}. It will auto-send when connection returns.",
+  "@helpSupportTicketQueued": {
+    "placeholders": {
+      "queueId": {}
+    }
+  },
+  "offlineQueuedWithReference": "Action queued offline. Reference: {queueId}. It will auto-sync when connection returns.",
+  "@offlineQueuedWithReference": {
+    "placeholders": {
+      "queueId": {}
+    }
+  },
+  "helpSupportOfflineQueueTitle": "Pending offline sync",
+  "helpSupportOfflineQueueBodyCount": "{count} support ticket(s) are queued offline and will auto-send when connection returns.",
+  "@helpSupportOfflineQueueBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerOfflineTitle": "You're offline",
+  "offlineBannerPendingTitle": "Sync pending",
+  "offlineBannerOfflineBody": "Some actions may be queued and will auto-sync when connection returns.",
+  "offlineBannerOfflineBodyCount": "{count} action(s) are queued and will auto-sync when connection returns.",
+  "@offlineBannerOfflineBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerPendingBodyCount": "{count} action(s) are ready to sync.",
+  "@offlineBannerPendingBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerSyncNow": "Sync now",
+  "offlineBannerSyncedCount": "Synced {count} item(s).",
+  "@offlineBannerSyncedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerHintAdmin": "Admin: keep working offline. CamVote will sync when internet returns (support replies, incidents, tip proofs/decisions, audits, notification reads).",
+  "offlineBannerHintObserver": "Observer: you can still report incidents and update your checklist offline. Evidence uploads and status updates will sync automatically.",
+  "offlineBannerHintVoter": "Voter: you can browse cached pages offline. Key submissions (registration, support tickets, tip proofs) queue and sync when you are back online.",
+  "offlineBannerHintPublic": "Public: cached info remains available. New updates load automatically when internet returns.",
+  "helpSupportAiTitle": "CamGuide assistant",
+  "helpSupportAiSubtitle": "Ask about registration, observer rules, vote security, incidents, or Cameroon election context.",
+  "helpSupportAiInputHint": "Ask CamGuide a question...",
+  "helpSupportAiSend": "Ask",
+  "helpSupportAiThinking": "CamGuide is thinking...",
+  "helpSupportAiSourcesLabel": "Sources",
+  "helpSupportAiSuggestionsLabel": "Suggested follow-ups",
   "helpSupportFaqTitle": "FAQs",
   "helpSupportFaqRegistration": "How do I register? Complete OCR + biometrics enrollment.",
   "helpSupportFaqLiveness": "Why liveness checks? To prevent automated or replay fraud.",
@@ -370,7 +438,7 @@
   "aboutBuilderTitle": "About the builder",
   "aboutBuilderSubtitle": "Meet the vision, mission, and roadmap behind CamVote.",
   "aboutProfileName": "DJAGNI SIGNING Romuald",
-  "aboutProfileTitle": "Computer Science Engineering Undergraduate • Civic-Tech Builder",
+  "aboutProfileTitle": "Computer Science Engineering Undergraduate - Civic-Tech Builder",
   "aboutProfileTagline": "Building trustworthy digital elections for Cameroon.",
   "aboutProfileVision": "A transparent, secure, and inclusive electoral system that restores trust by making every step verifiable, accessible, and audit-ready.",
   "aboutProfileMission": "Design systems that protect voter identity, prevent fraud, and publish results quickly without compromising integrity.",
@@ -445,7 +513,7 @@
   "aboutStatTotal": "Total",
   "aboutStatOpen": "Open",
   "aboutStatDone": "Done",
-  "aboutFooterBuiltBy": "© {year} CamVote • Built by {name}",
+  "aboutFooterBuiltBy": "(c) {year} CamVote - Built by {name}",
   "@aboutFooterBuiltBy": {
     "placeholders": {
       "name": {},
@@ -608,7 +676,7 @@
       "scope": {}
     }
   },
-  "alreadyVotedInElection": "✅ You already voted in this election.",
+  "alreadyVotedInElection": "... You already voted in this election.",
   "voteAction": "Vote",
   "deviceBlockedMessage": "This device is temporarily blocked.",
   "deviceBlockedUntil": "Until: {until}",
@@ -665,7 +733,7 @@
   "candidatesLabel": "Candidates",
   "voterHomeSubtitle": "Track your status, protect your vote, and stay informed.",
   "nextElectionTitle": "Next election",
-  "nextElectionCountdown": "{days} days • {time}",
+  "nextElectionCountdown": "{days} days - {time}",
   "@nextElectionCountdown": {
     "placeholders": {
       "days": {},
@@ -782,7 +850,7 @@
   "adminVoterManagementSubtitle": "Monitor registrations, verification, and flags.",
   "adminRunListCleaningTooltip": "Run electoral list cleaning",
   "adminListCleaningDone": "Cleaning done. Suspicious voters suspended.",
-  "voterSearchHint": "Search by name or voter ID…",
+  "voterSearchHint": "Search by name or voter ID...",
   "filterRegion": "Filter region",
   "filterStatus": "Filter status",
   "clearFilters": "Clear filters",
@@ -807,7 +875,7 @@
       "age": {}
     }
   },
-  "flagsLabel": "⚠ {signals}",
+  "flagsLabel": "Flags: {signals}",
   "@flagsLabel": {
     "placeholders": {
       "signals": {}
@@ -829,7 +897,7 @@
   },
   "statusPendingVerification": "Pending verification",
   "statusRegistered": "Registered",
-  "statusPreEligible": "Pre-eligible (18–19)",
+  "statusPreEligible": "Pre-eligible (18-19)",
   "statusEligible": "Eligible (20+)",
   "statusVoted": "Voted",
   "statusSuspended": "Suspended",
@@ -846,7 +914,7 @@
   "adminActionAuditLogs": "Audit Logs",
   "adminObserverManagementTitle": "Observer access",
   "adminObserverManagementSubtitle": "Grant or revoke read-only observer access.",
-  "adminObserverSearchHint": "Search observers by name, email, or UID…",
+  "adminObserverSearchHint": "Search observers by name, email, or UID...",
   "adminObserverAssignTitle": "Grant observer access",
   "adminObserverAssignSubtitle": "Enter a user email or UID. The user must have signed in at least once.",
   "adminObserverIdentifierLabel": "User email or UID",
@@ -896,7 +964,7 @@
     }
   },
   "fraudInsightBody": "Signals combine device anomalies, biometric duplicates, and behavioral mismatches. Review flagged voters in Voters.",
-  "fraudFlagsRateLabel": "Flags: {flags} • Rate: {rate}%",
+  "fraudFlagsRateLabel": "Flags: {flags} - Rate: {rate}%",
   "@fraudFlagsRateLabel": {
     "placeholders": {
       "flags": {},
@@ -905,7 +973,7 @@
   },
   "observerDashboardHeaderSubtitle": "Read-only oversight with transparent election data.",
   "observerReadOnlyTitle": "Read-only access",
-  "observerTotalsLabel": "Registered: {registered} • Voted: {voted} • Flags: {flags}",
+  "observerTotalsLabel": "Registered: {registered} - Voted: {voted} - Flags: {flags}",
   "@observerTotalsLabel": {
     "placeholders": {
       "registered": {},
@@ -1170,7 +1238,7 @@
   },
   "adminIncidentsTitle": "Incident oversight",
   "adminIncidentsSubtitle": "Monitor and resolve field incidents and reports.",
-  "incidentSubtitle": "{severity} • {location}",
+  "incidentSubtitle": "{severity} - {location}",
   "@incidentSubtitle": {
     "placeholders": {
       "severity": {},
@@ -1223,7 +1291,7 @@
   "centerStatusPending": "Pending",
   "centerContactLabel": "Contact",
   "centerNotesLabel": "Notes",
-  "resultsPublishSummary": "{votes} votes • {precincts} precincts reporting",
+  "resultsPublishSummary": "{votes} votes - {precincts} precincts reporting",
   "@resultsPublishSummary": {
     "placeholders": {
       "votes": {},
@@ -1245,7 +1313,7 @@
   "publicElectionCalendarSubtitle": "Upcoming election dates and milestones.",
   "publicCivicEducationTitle": "Civic education",
   "publicCivicEducationSubtitle": "Learn voting rights, duties, and procedures.",
-  "calendarEntrySubtitle": "{scope} • {location}\n{start} → {end}",
+  "calendarEntrySubtitle": "{scope} - {location}\n{start} -> {end}",
   "@calendarEntrySubtitle": {
     "placeholders": {
       "scope": {},
@@ -1282,7 +1350,7 @@
       "date": {}
     }
   },
-  "countdownEligibilityCelebrate": "You’re now eligible to vote!",
+  "countdownEligibilityCelebrate": "You're now eligible to vote!",
   "countdownSuspensionTitle": "Suspension ends",
   "countdownSuspensionBody": "Suspension lifts on {date}.",
   "@countdownSuspensionBody": {
@@ -1309,5 +1377,192 @@
   "webDownloadPlayStore": "Get it on Google Play",
   "webDownloadAppStore": "Download on the App Store",
   "webDownloadQrTitle": "Scan to download",
-  "webDownloadLearnMore": "Learn more about mobile features"
+  "webDownloadLearnMore": "Learn more about mobile features",
+  "supportCamVoteTitle": "Support CamVote",
+  "supportCamVoteSubtitle": "Send a tip via TapTap Send, Remitly, or Orange Money Max It",
+  "supportCamVoteContributeSubtitle": "Contribute via TapTap Send, Remitly, or Orange Money Max It",
+  "supportCamVoteHeaderTitle": "Support CamVote project",
+  "supportCamVoteHeaderSubtitle": "Send a tip via TapTap Send, Remitly, or Orange Money Max It. Tipping is open to everyone and keeps your details private.",
+  "supportCamVoteImpactTitle": "How your support is used",
+  "supportCamVoteImpactIntro": "Your contribution helps us keep CamVote secure, fast, and available for more citizens.",
+  "supportCamVoteImpactSecurity": "Security hardening for biometric, liveness, and anti-fraud systems.",
+  "supportCamVoteImpactReliability": "Better reliability, server uptime, and faster releases across web, Android, and iOS.",
+  "supportCamVoteImpactCommunity": "Civic education improvements and wider access for voters and observers.",
+  "supportCamVoteImpactTransparency": "Transparent operations with auditable updates and measurable public impact.",
+  "helpSupportLiveHelpDesk": "Live Help Desk",
+  "helpSupportLiveHelpDeskHint": "Your message will be sent to the Help Desk admin and you will receive updates in notifications.",
+  "helpSupportChatWhatsApp": "Chat on WhatsApp",
+  "helpSupportWhatsAppGreeting": "Hello CamVote, I am contacting support via WhatsApp.",
+  "helpSupportWhatsAppOpenFailed": "Unable to open WhatsApp right now.",
+  "helpSupportFaqObserverHowTo": "How to become an observer: contact the admin with an official mandate and documents proving observer status (state, party, civil society, NGO, or international body), with recognition by the State of Cameroon. In observer mode, you cannot vote.",
+  "tipChoosePaymentChannel": "Choose your payment channel",
+  "tipChannelElyonpay": "TapTap Send",
+  "tipChannelRemitly": "Remitly",
+  "tipChannelMaxItQr": "Orange Money Max It",
+  "tipAnonymousTitle": "Anonymous tip",
+  "tipAnonymousSubtitle": "Your name is hidden. A thank-you message is still delivered.",
+  "tipNameHiddenLabel": "Name (hidden)",
+  "tipAmountLabel": "Amount",
+  "tipAmountInvalid": "Enter a valid amount.",
+  "tipCurrencyLabel": "Currency",
+  "tipPersonalMessageLabel": "Personal message",
+  "tipPayWithElyonpay": "Open TapTap Send",
+  "tipPayWithRemitly": "Open Remitly",
+  "tipTapTapSendInstructionsTitle": "TapTap Send transfer",
+  "tipTapTapSendInstructionsBody": "Open TapTap Send, complete your transfer, then submit the reference so our team can confirm your tip.",
+  "tipRemitlyInstructionsTitle": "Remitly transfer",
+  "tipRemitlyInstructionsBody": "Open Remitly, sign in if prompted, complete your transfer, then submit the reference so our team can confirm your tip.",
+  "tipReferenceHint": "Transfer reference or transaction ID",
+  "tipProofNoteLabel": "Note for the admin (optional)",
+  "tipSubmitProof": "Submit payment reference",
+  "tipSubmittedBody": "Reference received. We will confirm shortly.",
+  "tipPaymentSubmitted": "Reference submitted",
+  "tipReferenceMissing": "Enter the payment reference first.",
+  "tipReceiptOptionalTitle": "Receipt screenshots (optional)",
+  "tipReceiptOptionalBody": "You can submit without screenshots. If you have a receipt, upload it to help us confirm faster.",
+  "tipReceiptUploadAction": "Upload receipt",
+  "tipReceiptLabel": "Receipt",
+  "tipReceiptUploadedCount": "{count} receipt(s) uploaded",
+  "@tipReceiptUploadedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "tipGenerateMaxItQr": "Show Max It QR",
+  "tipMsisdnLabel": "Mobile money number",
+  "tipMsisdnHint": "e.g. +2376XXXXXXXX",
+  "tipMsisdnInvalid": "Enter a valid phone number.",
+  "tipScanMaxItQr": "Open Max It and scan this QR to tip",
+  "tipPaymentTrackingTitle": "Payment tracking",
+  "tipReferenceLabel": "Reference",
+  "tipCheckStatus": "Check status",
+  "tipWaitingConfirmation": "Waiting for payment confirmation.",
+  "tipCheckingPayment": "Checking payment...",
+  "tipPreparingSecurePaymentTitle": "Preparing secure payment",
+  "tipPreparingSecurePaymentSubtitle": "Please wait while CamVote configures your tip flow.",
+  "tipAnonymousSupporterName": "Anonymous supporter",
+  "tipSupporterFallbackName": "Supporter",
+  "tipNotificationReceivedTitle": "Tip received",
+  "tipNotificationReceivedBody": "Thank you {name}! Your contribution was received.",
+  "@tipNotificationReceivedBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipNotificationReceivedBodyAmount": "Thank you {name}! We received your tip of {amount} {currency}.",
+  "@tipNotificationReceivedBodyAmount": {
+    "placeholders": {
+      "name": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "tipThankYouTitle": "Thank you {name}!",
+  "@tipThankYouTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipThankYouBody": "Your support keeps CamVote growing and improving for everyone.",
+  "tipThankYouBodyAmount": "Thank you {name}. Your tip of {amount} {currency} has been received successfully. Your support helps CamVote grow with transparency and impact.",
+  "@tipThankYouBodyAmount": {
+    "placeholders": {
+      "name": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "tipSelectedChannel": "Selected channel",
+  "tipProviderLabel": "Provider: {provider}",
+  "@tipProviderLabel": {
+    "placeholders": {
+      "provider": {}
+    }
+  },
+  "tipIdLabel": "Tip ID: {tipId}",
+  "@tipIdLabel": {
+    "placeholders": {
+      "tipId": {}
+    }
+  },
+  "tipAnonymousModeEnabled": "Anonymous mode enabled",
+  "tipDestinationOrangeMoneyCameroon": "Orange Money Cameroon destination",
+  "tipRecipientNameNotConfigured": "Recipient name not configured",
+  "tipRecipientNameLabel": "Recipient name: {name}",
+  "@tipRecipientNameLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipRecipientNumberLabel": "Recipient number: {number}",
+  "@tipRecipientNumberLabel": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "tipVerifyRecipientNameHint": "Verify this recipient name inside checkout. If the name does not match, cancel.",
+  "tipPhoneHiddenHint": "Phone number hidden for security: use TapTap Send, Remitly, or the Max It QR flow.",
+  "tipOpenPayment": "Open payment",
+  "tipOpenMaxIt": "Open Max It",
+  "tipPaymentConfirmed": "Payment confirmed",
+  "tipPaymentAwaitingConfirmation": "Awaiting confirmation",
+  "tipStatusSummary": "{amount} {currency} - {provider}",
+  "@tipStatusSummary": {
+    "placeholders": {
+      "amount": {},
+      "currency": {},
+      "provider": {}
+    }
+  },
+  "adminSupportTitle": "Admin Support",
+  "adminSupportSubtitle": "Review support tickets, respond to users, and track ticket status.",
+  "adminSupportSearchHint": "Search by name, email, registration ID, or message",
+  "adminSupportAllStatuses": "All statuses",
+  "adminSupportNoTickets": "No support tickets found.",
+  "adminSupportTicketUpdatedSuccess": "Ticket updated successfully.",
+  "adminSupportRespondToTicket": "Respond to ticket {ticketId}",
+  "@adminSupportRespondToTicket": {
+    "placeholders": {
+      "ticketId": {}
+    }
+  },
+  "adminSupportNewStatusLabel": "New status",
+  "adminSupportResponseMessageLabel": "Response message",
+  "adminSupportSendResponse": "Send response",
+  "adminSupportRegistrationIdValue": "Registration ID: {registrationId}",
+  "@adminSupportRegistrationIdValue": {
+    "placeholders": {
+      "registrationId": {}
+    }
+  },
+  "adminSupportUpdatedAt": "Updated {date} {time}",
+  "@adminSupportUpdatedAt": {
+    "placeholders": {
+      "date": {},
+      "time": {}
+    }
+  },
+  "adminSupportRespondAction": "Respond",
+  "adminSupportUpdateAction": "Update",
+  "adminSupportStatusOpen": "Open",
+  "adminSupportStatusAnswered": "Answered",
+  "adminSupportStatusResolved": "Resolved",
+  "adminSupportStatusClosed": "Closed",
+  "adminSupportStatusUnknown": "Unknown",
+  "voteImpactAddedLive": "Your vote was secured and added live.",
+  "voteImpactRecorded": "Your vote was recorded successfully.",
+  "voteImpactPreviousTotal": "Previous total",
+  "voteImpactYourContribution": "Your contribution",
+  "voteImpactNewLiveTotal": "New live total",
+  "adminDemographicsTitle": "Registered voter age distribution",
+  "adminDemographicsTotalEligible": "Total eligible voters on list: {total}",
+  "@adminDemographicsTotalEligible": {
+    "placeholders": {
+      "total": {}
+    }
+  },
+  "adminDemographicsYouth": "Youth",
+  "adminDemographicsAdult": "Adult",
+  "adminDemographicsSenior": "Senior"
 }
+

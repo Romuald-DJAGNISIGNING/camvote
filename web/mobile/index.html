@@ -16,6 +16,8 @@
 <body>
   <div class="background">
     <img class="pattern" src="media/cam_pattern.png" alt="" />
+    <img class="logo-watermark" src="media/app_logo.png" alt="" />
+    <div class="mesh"></div>
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
@@ -907,7 +909,10 @@
             <div class="qr-card qr-card--smart" id="qrSmartCard">
               <div class="qr-aura" aria-hidden="true"></div>
               <div class="qr-scanline" aria-hidden="true"></div>
-              <img id="smartQr" alt="CamVote download QR" />
+              <img id="smartQr" class="qr-code-img" alt="CamVote download QR" />
+              <div class="qr-logo" aria-hidden="true">
+                <img src="media/app_icon.png" alt="" />
+              </div>
               <div class="qr-burst" id="qrBurst" aria-hidden="true"></div>
               <span data-i18n="qrHint">Opens the right store for your device</span>
             </div>

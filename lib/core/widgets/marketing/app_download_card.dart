@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
 import '../../config/app_config.dart';
 import '../../motion/cam_motion.dart';
+import '../../utils/external_links.dart';
 import '../../utils/mobile_links.dart';
+import '../qr/branded_qr_code.dart';
 import '../../network/platform_utils.dart'
     if (dart.library.io) '../../network/platform_utils_io.dart';
 
@@ -500,24 +500,18 @@ class _QrTileState extends State<_QrTile> with SingleTickerProviderStateMixin {
           ),
         );
       },
-      child: QrImageView(
+      child: BrandedQrCode(
         data: widget.url,
         size: 120,
-        backgroundColor: Colors.white,
+        logoScale: 0.16,
+        animatedFrame: true,
       ),
     );
   }
 }
 
 Future<void> _openExternal(BuildContext context, String url) async {
-  if (url.trim().isEmpty) return;
-  final uri = Uri.parse(url);
-  final resolved = uri.hasScheme ? uri : Uri.base.resolve(url);
-  if (isWebPlatform) {
-    openWebRedirect(resolved.toString());
-    return;
-  }
-  final ok = await launchUrl(resolved, mode: LaunchMode.externalApplication);
+  final ok = await openExternalLink(context, url, showError: false);
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).openLinkFailed)),

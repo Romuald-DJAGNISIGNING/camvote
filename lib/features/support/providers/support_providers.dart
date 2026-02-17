@@ -1,11 +1,27 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/admin_support_ticket.dart';
+import '../data/camguide_assistant.dart';
 import '../data/support_repository.dart';
 import '../models/support_ticket.dart';
 
 final supportRepositoryProvider = Provider<SupportRepository>((ref) {
   return SupportRepository();
+});
+
+final camGuideAssistantProvider = Provider<CamGuideAssistant>((ref) {
+  return CamGuideAssistant();
+});
+
+final pendingOfflineSupportTicketsProvider = StreamProvider<int>((ref) async* {
+  final repo = ref.watch(supportRepositoryProvider);
+  yield await repo.pendingOfflineTicketCount();
+  while (true) {
+    await Future<void>.delayed(const Duration(seconds: 6));
+    yield await repo.pendingOfflineTicketCount();
+  }
 });
 
 final supportTicketProvider =
@@ -23,7 +39,7 @@ class SupportTicketController extends AsyncNotifier<SupportTicketResult?> {
       final repo = ref.read(supportRepositoryProvider);
       return repo.submitTicket(ticket);
     });
-
+    ref.invalidate(pendingOfflineSupportTicketsProvider);
     return state.value;
   }
 }

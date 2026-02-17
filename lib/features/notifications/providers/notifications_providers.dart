@@ -20,21 +20,39 @@ class ActiveAudienceController extends Notifier<CamAudience> {
   @override
   CamAudience build() {
     final role = ref.watch(currentRoleProvider);
-    return switch (role) {
-      AppRole.public => CamAudience.public,
-      AppRole.voter => CamAudience.voter,
-      AppRole.observer => CamAudience.observer,
-      AppRole.admin => CamAudience.admin,
-    };
+    return _defaultAudienceForRole(role, isWeb: kIsWeb);
   }
 
-  void setAudience(CamAudience audience) => state = audience;
+  void setAudience(CamAudience audience) {
+    final allowed = ref.read(allowedAudiencesProvider);
+    if (!allowed.contains(audience)) return;
+    state = audience;
+  }
 }
 
 final activeAudienceProvider =
     NotifierProvider<ActiveAudienceController, CamAudience>(
       ActiveAudienceController.new,
     );
+
+final allowedAudiencesProvider = Provider<Set<CamAudience>>((ref) {
+  final role = ref.watch(currentRoleProvider);
+  return _allowedAudiencesForRole(role, isWeb: kIsWeb);
+});
+
+final availableAudiencesProvider = Provider<List<CamAudience>>((ref) {
+  final allowed = ref.watch(allowedAudiencesProvider);
+  const order = <CamAudience>[
+    CamAudience.public,
+    CamAudience.voter,
+    CamAudience.observer,
+    CamAudience.admin,
+  ];
+  return [
+    for (final audience in order)
+      if (allowed.contains(audience)) audience,
+  ];
+});
 
 @immutable
 class NotificationsState {
@@ -66,16 +84,22 @@ class NotificationsController extends Notifier<NotificationsState> {
     _repo = ref.watch(notificationsRepositoryProvider);
     _workerClient = ref.watch(workerClientProvider);
     ref.onDispose(() => _pollTimer?.cancel());
-    unawaited(_bootstrap());
+    Future<void>.microtask(_bootstrap);
     _startPolling();
     return const NotificationsState(loading: true, items: []);
   }
 
   Future<void> _bootstrap() async {
     state = state.copyWith(loading: true);
-    await _refreshScopeIfNeeded(force: true);
-    state = state.copyWith(loading: false);
-    await syncFromServer();
+    try {
+      await _refreshScopeIfNeeded(force: true);
+    } catch (_) {
+      // Keep the app usable even if bootstrap fails on corrupted local state.
+    } finally {
+      state = state.copyWith(loading: false);
+    }
+    // Fetch server updates in background so empty states do not spin forever.
+    unawaited(syncFromServer());
   }
 
   void _startPolling() {
@@ -101,7 +125,12 @@ class NotificationsController extends Notifier<NotificationsState> {
     if (!force && nextScope == _scopeKey) return;
     _scopeKey = nextScope;
 
-    final cached = await _repo.loadAll(scopeKey: _scopeKey);
+    List<CamNotification> cached = const [];
+    try {
+      cached = await _repo.loadAll(scopeKey: _scopeKey);
+    } catch (_) {
+      cached = const [];
+    }
     _lastRemoteSyncAt = _maxCreatedAt(cached);
     state = NotificationsState(loading: false, items: cached);
   }
@@ -163,10 +192,12 @@ class NotificationsController extends Notifier<NotificationsState> {
         if (_lastRemoteSyncAt != null)
           'since': _lastRemoteSyncAt!.toUtc().toIso8601String(),
       };
-      final response = await _workerClient.get(
-        '/v1/notifications',
-        queryParameters: queryParameters.isEmpty ? null : queryParameters,
-      );
+      final response = await _workerClient
+          .get(
+            '/v1/notifications',
+            queryParameters: queryParameters.isEmpty ? null : queryParameters,
+          )
+          .timeout(const Duration(seconds: 8));
       final raw = response['notifications'];
       if (raw is! List || raw.isEmpty) return;
 
@@ -207,6 +238,8 @@ class NotificationsController extends Notifier<NotificationsState> {
       }
     } on WorkerException {
       // Keep local notifications available if server sync fails.
+    } catch (_) {
+      // Fail open for non-network parsing/runtime issues.
     } finally {
       _syncInFlight = false;
     }
@@ -234,7 +267,11 @@ class NotificationsController extends Notifier<NotificationsState> {
 
     final updated = [item, ...state.items];
     state = state.copyWith(items: updated);
-    await _repo.saveAll(updated, scopeKey: _scopeKey);
+    try {
+      await _repo.saveAll(updated, scopeKey: _scopeKey);
+    } catch (_) {
+      // Ignore local cache write failures.
+    }
     _lastRemoteSyncAt = _maxCreatedAt(updated);
 
     if (alsoPush) {
@@ -251,12 +288,18 @@ class NotificationsController extends Notifier<NotificationsState> {
         .map((n) => n.id == id ? n.copyWith(read: true) : n)
         .toList();
     state = state.copyWith(items: updated);
-    await _repo.saveAll(updated, scopeKey: _scopeKey);
+    try {
+      await _repo.saveAll(updated, scopeKey: _scopeKey);
+    } catch (_) {
+      // Ignore local cache write failures.
+    }
     if (_isAuthenticated()) {
       unawaited(
         _workerClient.post(
           '/v1/notifications/mark-read',
           data: {'notificationId': id},
+          allowOfflineQueue: true,
+          queueType: 'notification_mark_read',
         ),
       );
     }
@@ -265,21 +308,39 @@ class NotificationsController extends Notifier<NotificationsState> {
   Future<void> markAllRead() async {
     final updated = state.items.map((n) => n.copyWith(read: true)).toList();
     state = state.copyWith(items: updated);
-    await _repo.saveAll(updated, scopeKey: _scopeKey);
+    try {
+      await _repo.saveAll(updated, scopeKey: _scopeKey);
+    } catch (_) {
+      // Ignore local cache write failures.
+    }
     if (_isAuthenticated()) {
-      unawaited(_workerClient.post('/v1/notifications/mark-all-read'));
+      unawaited(
+        _workerClient.post(
+          '/v1/notifications/mark-all-read',
+          allowOfflineQueue: true,
+          queueType: 'notification_mark_all_read',
+        ),
+      );
     }
   }
 
   Future<void> remove(String id) async {
     final updated = state.items.where((n) => n.id != id).toList();
     state = state.copyWith(items: updated);
-    await _repo.saveAll(updated, scopeKey: _scopeKey);
+    try {
+      await _repo.saveAll(updated, scopeKey: _scopeKey);
+    } catch (_) {
+      // Ignore local cache write failures.
+    }
   }
 
   Future<void> clearAll() async {
     state = state.copyWith(items: const []);
-    await _repo.saveAll(const [], scopeKey: _scopeKey);
+    try {
+      await _repo.saveAll(const [], scopeKey: _scopeKey);
+    } catch (_) {
+      // Ignore local cache write failures.
+    }
   }
 }
 
@@ -290,13 +351,39 @@ final notificationsControllerProvider =
 
 final filteredNotificationsProvider = Provider<List<CamNotification>>((ref) {
   final state = ref.watch(notificationsControllerProvider);
-  final audience = ref.watch(activeAudienceProvider);
+  final selectedAudience = ref.watch(activeAudienceProvider);
+  final allowedAudiences = ref.watch(allowedAudiencesProvider);
+  final role = ref.watch(currentRoleProvider);
+  final fallbackAudience = _defaultAudienceForRole(role, isWeb: kIsWeb);
+  final audience = allowedAudiences.contains(selectedAudience)
+      ? selectedAudience
+      : fallbackAudience;
 
   bool allowed(CamNotification n) {
     if (n.audience == CamAudience.all) return true;
+    if (!allowedAudiences.contains(n.audience)) return false;
     if (n.audience == CamAudience.public) return true;
     return n.audience == audience;
   }
 
   return state.items.where(allowed).toList();
 });
+
+Set<CamAudience> _allowedAudiencesForRole(AppRole role, {required bool isWeb}) {
+  return switch (role) {
+    AppRole.admin => {CamAudience.admin},
+    AppRole.voter => {CamAudience.public, CamAudience.voter},
+    AppRole.observer => {CamAudience.public, CamAudience.observer},
+    AppRole.public =>
+      isWeb ? {CamAudience.public, CamAudience.observer} : {CamAudience.public},
+  };
+}
+
+CamAudience _defaultAudienceForRole(AppRole role, {required bool isWeb}) {
+  return switch (role) {
+    AppRole.admin => CamAudience.admin,
+    AppRole.voter => CamAudience.voter,
+    AppRole.observer => CamAudience.observer,
+    AppRole.public => isWeb ? CamAudience.observer : CamAudience.public,
+  };
+}

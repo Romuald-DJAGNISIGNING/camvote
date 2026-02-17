@@ -11,6 +11,7 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/widgets/sections/cam_section_header.dart';
 import '../../../core/widgets/marketing/app_download_card.dart';
 import '../../../core/theme/role_theme.dart';
+import '../../../core/offline/offline_status_providers.dart';
 import '../../public_portal/widgets/results_charts.dart';
 import '../../public_portal/widgets/results_region_map_card.dart';
 import '../../public_portal/providers/public_portal_providers.dart';
@@ -19,6 +20,7 @@ import '../../notifications/widgets/notification_app_bar.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../incidents/providers/incident_providers.dart';
 import '../providers/admin_providers.dart';
 
 class ObserverDashboardScreen extends ConsumerWidget {
@@ -32,6 +34,9 @@ class ObserverDashboardScreen extends ConsumerWidget {
     final isObserverAuthed =
         auth?.isAuthenticated == true && auth?.user?.role == AppRole.observer;
     final t = AppLocalizations.of(context);
+    final pendingIncidents =
+        ref.watch(pendingOfflineIncidentProvider).asData?.value ?? 0;
+    final offline = ref.watch(isOfflineProvider);
 
     return Scaffold(
       appBar: NotificationAppBar(
@@ -103,6 +108,27 @@ class ObserverDashboardScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      if (pendingIncidents > 0) ...[
+                        const SizedBox(height: 12),
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.cloud_upload_outlined),
+                            title: Text(t.helpSupportOfflineQueueTitle),
+                            subtitle: Text(
+                              offline
+                                  ? t.offlineBannerOfflineBodyCount(
+                                      pendingIncidents,
+                                    )
+                                  : t.offlineBannerPendingBodyCount(
+                                      pendingIncidents,
+                                    ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () =>
+                                context.go(RoutePaths.observerIncidentReport),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       CamSectionHeader(
                         title: t.observerToolsTitle,

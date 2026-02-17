@@ -50,15 +50,12 @@ class ApiToolsRepository implements ToolsRepository {
     final response = await _workerClient.get('/v1/tools/device-risks');
     final items = response['risks'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseDevice({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseDevice({'id': doc['id'], ...data});
+    }).toList();
   }
 
   @override
@@ -71,15 +68,12 @@ class ApiToolsRepository implements ToolsRepository {
     );
     final items = response['incidents'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseIncident({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseIncident({'id': doc['id'], ...data});
+    }).toList();
   }
 
   @override
@@ -87,20 +81,17 @@ class ApiToolsRepository implements ToolsRepository {
     final response = await _workerClient.get('/v1/tools/results-publishing');
     final items = response['results'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data = doc.cast<String, dynamic>();
-          return ResultsPublishStatus(
-            electionId: _asString(data['electionId']),
-            electionTitle: _asString(data['electionTitle']),
-            readyToPublish: _asBool(data['readyToPublish']),
-            totalVotes: _asInt(data['totalVotes']),
-            precinctsReporting: _asInt(data['precinctsReporting']),
-            lastPublishedAt: _parseDate(data['lastPublishedAt']),
-          );
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data = doc.cast<String, dynamic>();
+      return ResultsPublishStatus(
+        electionId: _asString(data['electionId']),
+        electionTitle: _asString(data['electionTitle']),
+        readyToPublish: _asBool(data['readyToPublish']),
+        totalVotes: _asInt(data['totalVotes']),
+        precinctsReporting: _asInt(data['precinctsReporting']),
+        lastPublishedAt: _parseDate(data['lastPublishedAt']),
+      );
+    }).toList();
   }
 
   @override
@@ -108,6 +99,8 @@ class ApiToolsRepository implements ToolsRepository {
     await _workerClient.post(
       '/v1/tools/results/publish',
       data: {'electionId': electionId},
+      allowOfflineQueue: true,
+      queueType: 'results_publish',
     );
   }
 
@@ -123,15 +116,12 @@ class ApiToolsRepository implements ToolsRepository {
     );
     final items = response['updates'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseTransparencyUpdate({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseTransparencyUpdate({'id': doc['id'], ...data});
+    }).toList();
   }
 
   @override
@@ -147,15 +137,12 @@ class ApiToolsRepository implements ToolsRepository {
     final items = response['items'];
     if (items is! List) return const [];
     final uid = _auth.currentUser?.uid;
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseChecklistItem({'id': doc['id'], ...data}, uid);
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseChecklistItem({'id': doc['id'], ...data}, uid);
+    }).toList();
   }
 
   @override
@@ -163,6 +150,8 @@ class ApiToolsRepository implements ToolsRepository {
     await _workerClient.post(
       '/v1/tools/observation-checklist/update',
       data: {'itemId': itemId, 'completed': completed},
+      allowOfflineQueue: true,
+      queueType: 'observer_checklist_update',
     );
   }
 
@@ -178,15 +167,12 @@ class ApiToolsRepository implements ToolsRepository {
     );
     final items = response['incidents'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseIncident({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseIncident({'id': doc['id'], ...data});
+    }).toList();
   }
 
   @override
@@ -201,15 +187,12 @@ class ApiToolsRepository implements ToolsRepository {
     );
     final items = response['calendar'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseCalendarEntry({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseCalendarEntry({'id': doc['id'], ...data});
+    }).toList();
   }
 
   @override
@@ -222,15 +205,12 @@ class ApiToolsRepository implements ToolsRepository {
     );
     final items = response['lessons'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return _parseLesson({'id': doc['id'], ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return _parseLesson({'id': doc['id'], ...data});
+    }).toList();
   }
 
   List<FraudSignal> _parseSignals(dynamic raw) {

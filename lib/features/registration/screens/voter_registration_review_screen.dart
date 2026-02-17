@@ -354,6 +354,8 @@ class _VoterRegistrationReviewScreenState
               'email': draft.email.trim(),
               'fullName': draft.fullName.trim(),
             },
+            allowOfflineQueue: true,
+            queueType: 'profile_upsert',
           );
         } else {
           await workerClient.post(
@@ -362,6 +364,8 @@ class _VoterRegistrationReviewScreenState
               'email': draft.email.trim(),
               'fullName': draft.fullName.trim(),
             },
+            allowOfflineQueue: true,
+            queueType: 'profile_upsert',
           );
         }
       } on WorkerException catch (e) {
@@ -462,7 +466,7 @@ class _VoterRegistrationReviewScreenState
         return;
       }
 
-      if (result.registrationId.isNotEmpty) {
+      if (!result.queuedOffline && result.registrationId.isNotEmpty) {
         await ref
             .read(deviceAccountPolicyProvider)
             .addAccountId(result.registrationId);
@@ -520,10 +524,10 @@ class _VoterRegistrationReviewScreenState
     if (mounted) {
       setState(() => _renewing = false);
     }
+    if (!context.mounted) return;
+    final t = AppLocalizations.of(context);
 
     if (renewalResult == null || renewalResult.status == 'error') {
-      if (!context.mounted) return;
-      final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -536,8 +540,20 @@ class _VoterRegistrationReviewScreenState
       return;
     }
 
-    if (!context.mounted) return;
-    final t = AppLocalizations.of(context);
+    if (renewalResult.queuedOffline) {
+      final queueId = renewalResult.offlineQueueId.isEmpty
+          ? t.unknown
+          : renewalResult.offlineQueueId;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${t.helpSupportOfflineQueueTitle}. ${t.trackingIdLabel}: $queueId',
+          ),
+        ),
+      );
+      return;
+    }
+
     await _showExistingAccountDialog(
       context,
       title: t.deletedAccountRenewedTitle,

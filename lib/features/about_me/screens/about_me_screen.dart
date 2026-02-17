@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
@@ -13,6 +14,7 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/branding/brand_logo.dart';
 import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/routing/route_paths.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../providers/about_me_providers.dart';
 import '../models/about_profile.dart';
@@ -151,6 +153,16 @@ class AboutMeScreen extends ConsumerWidget {
                     title: t.aboutWhyCamVoteTitle,
                     body: t.aboutWhyCamVoteBody,
                     icon: Icons.how_to_vote_outlined,
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.favorite_outline),
+                      title: Text(t.supportCamVoteTitle),
+                      subtitle: Text(t.supportCamVoteContributeSubtitle),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => context.push(RoutePaths.supportTip),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   const SizedBox(height: 10),

@@ -57,6 +57,7 @@ class RoutePaths {
   static const adminVotingCenters = '/admin/voting-centers';
   static const adminContentSeed = '/admin/content-seed';
   static const adminSupport = '/admin/support';
+  static const adminTips = '/admin/tips';
 
   // Common
   static const settings = '/settings';
@@ -64,4 +65,6 @@ class RoutePaths {
   static const about = '/about';
   static const notifications = '/notifications';
   static const helpSupport = '/support';
+  static const supportTip = '/support/tip';
+  static const camGuide = '/camguide';
 }

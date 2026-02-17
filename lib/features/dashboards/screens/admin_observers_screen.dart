@@ -313,9 +313,14 @@ class _AdminObserversScreenState extends ConsumerState<AdminObserversScreen> {
     final email = _createEmailController.text.trim();
     final username = _createUsernameController.text.trim();
     final password = _createPasswordController.text;
+    final emailValid = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email);
 
     if (fullName.isEmpty || email.isEmpty || password.length < 8) {
       CamToast.show(context, message: t.requiredField);
+      return;
+    }
+    if (!emailValid) {
+      CamToast.show(context, message: t.invalidEmailAddress);
       return;
     }
 
@@ -394,5 +399,3 @@ class _AdminObserversScreenState extends ConsumerState<AdminObserversScreen> {
     return '$date $time';
   }
 }
-
-

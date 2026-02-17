@@ -1,10 +1,8 @@
 {
   "@@locale": "fr",
-
   "appName": "CamVote",
   "slogan": "Votre vote. Votre voix. Votre avenir.",
   "cameroonName": "République du Cameroun",
-
   "chooseModeTitle": "Choisissez comment utiliser CamVote",
   "modePublicTitle": "Accès Public",
   "modePublicSubtitle": "Voir les résultats, infos électorales et vérifier une inscription sans connexion.",
@@ -14,37 +12,29 @@
   "modeObserverSubtitle": "Suivi en lecture seule : journaux d’audit, alertes fraude et outils de transparence.",
   "modeAdminTitle": "Administrateur",
   "modeAdminSubtitle": "Gérer élections, candidats, suivi, nettoyage, sanctions et conformité.",
-
   "settings": "Paramètres",
   "about": "À propos",
   "aboutSub": "Créateur, tableau Trello, forces & faiblesses.",
-
   "publicPortalTitle": "Portail Public",
   "publicPortalHeadline": "Informations publiques (sans connexion)",
-
   "publicResultsTitle": "Résultats & Statistiques",
   "publicResultsSub": "Tendances en direct, participation et résultats finaux.",
-
   "publicElectionsInfoTitle": "Types d’élections & Guides",
   "publicElectionsInfoSub": "Comprendre les types d’élections et les règles.",
-
   "verifyRegistrationTitle": "Vérifier l’inscription (confidentialité)",
   "verifyRegistrationSub": "Vérifier via numéro + date de naissance. Identité masquée.",
-
   "lastUpdated": "Dernière mise à jour",
   "turnout": "Participation",
   "totalRegistered": "Total inscrits",
   "totalVotesCast": "Votes exprimés",
   "absentee": "Abstention",
   "candidateResults": "Résultats des candidats",
-
   "electionsInfoHeadline": "Types d’élections et directives (public)",
   "guidelinesTitle": "Directives",
   "guidelineAgeRules": "Inscription : 18+. Vote : 20+. L’éligibilité est appliquée automatiquement.",
   "guidelineOnePersonOneVote": "Un citoyen, un vote : les tentatives en double sont bloquées et auditées.",
   "guidelineSecrecy": "Secret du vote : les reçus ne révèlent jamais le candidat choisi.",
   "guidelineFraudReporting": "Signalement fraude : comportements suspects signalés aux observateurs et admins.",
-
   "electionTypePresidential": "Élection présidentielle",
   "electionTypePresidentialBody": "Élection du Chef de l’État. Suivi en direct avec journaux d’audit et verrouillage après clôture.",
   "electionTypeLegislative": "Élection législative",
@@ -55,30 +45,22 @@
   "electionTypeRegionalBody": "Conseils régionaux. Statistiques de participation et taux de vote.",
   "electionTypeSenatorial": "Élection sénatoriale",
   "electionTypeSenatorialBody": "Élections du Sénat. Suivi et audit accessibles aux rôles autorisés.",
-
   "verifyPrivacyNote": "Note confidentialité : la vérification publique affiche uniquement une identité masquée et le statut.",
   "verifyFormRegNumber": "Numéro d’inscription",
   "verifyFormDob": "Date de naissance",
-  "fullName": "Nom complet",
-  "dateOfBirth": "Date de naissance",
-  "placeOfBirth": "Lieu de naissance",
-  "nationality": "Nationalité",
   "verifySubmit": "Vérifier",
   "requiredField": "Champ obligatoire",
   "authRequired": "Connexion requise pour continuer.",
   "invalidRegNumber": "Le numéro doit contenir au moins 4 caractères",
   "selectDob": "Veuillez choisir votre date de naissance",
   "tapToSelect": "Appuyez pour choisir",
-
   "verifyAttemptLimitBody": "Trop de tentatives. Veuillez patienter avant de réessayer.",
   "cooldown": "Délai",
-
   "verifyResultTitle": "Résultat de la vérification",
   "maskedName": "Nom masqué",
   "maskedRegNumber": "Numéro masqué",
   "status": "Statut",
   "cardExpiry": "Expiration de la carte",
-
   "verifyStatusNotFound": "Introuvable",
   "verifyStatusPending": "Vérification en attente",
   "verifyStatusRegisteredPreEligible": "Inscrit (18–19, pas encore éligible)",
@@ -88,27 +70,22 @@
   "verifyStatusDeceased": "Retiré (décès)",
   "verifyStatusArchived": "Archivé (rétention)",
   "verifyEligibleToastMessage": "Félicitations ! Vous pouvez maintenant voter aux élections éligibles. 🎉",
-
   "voterPortalTitle": "Espace Électeur",
   "voterHome": "Accueil",
   "voterElections": "Élections",
   "voterVote": "Voter",
   "voterResults": "Résultats",
   "voterProfile": "Profil",
-
   "adminDashboard": "Tableau Admin",
   "adminDashboardIntro": "Le tableau web admin inclut gestion des élections, suivi, nettoyage, sanctions, audit et revue fraude.",
   "observerDashboard": "Tableau Observateur",
   "observerDashboardIntro": "Le portail observateur (lecture seule) inclut suivi, journaux d’audit, alertes fraude et annuaire restreint.",
-
   "appearance": "Apparence",
   "language": "Langue",
   "system": "Système",
   "light": "Clair",
   "dark": "Sombre",
-
   "aboutIntro": "Cette section présentera le créateur, la vision du projet et un tableau de progression Trello (visible publiquement).",
-
   "regionAdamawa": "Adamaoua",
   "regionCentre": "Centre",
   "regionEast": "Est",
@@ -119,7 +96,6 @@
   "regionWest": "Ouest",
   "regionSouth": "Sud",
   "regionSouthWest": "Sud-Ouest",
-
   "notificationsTitle": "Notifications",
   "notificationsSubtitle": "Sécurité, élections et mises à jour du système.",
   "markAllRead": "Tout marquer comme lu",
@@ -141,21 +117,17 @@
   "notificationSecurityNoticeBody": "Plusieurs tentatives invalides détectées sur un appareil. La surveillance est active.",
   "notificationStatusUpdateTitle": "Mise à jour du statut",
   "notificationStatusUpdateBody": "Vous êtes inscrit (18-19). Vous deviendrez automatiquement éligible à 20 ans.",
-
   "summaryTab": "Résumé",
   "chartsTab": "Graphiques",
   "mapTab": "Carte",
-
   "chartBarTitle": "Votes par candidat (Barres)",
   "chartPieTitle": "Part des votes (Camembert)",
   "chartLineTitle": "Tendance de participation (Courbe)",
   "chartLineSubtitle": "Visualisation pilotée par l’API une fois les résultats publiés.",
   "votesLabel": "Votes",
-
   "mapTitle": "Carte des régions (vainqueur par région)",
   "mapTapHint": "Appuyez sur une région pour voir le candidat en tête.",
   "mapLegendTitle": "Légende",
-
   "loading": "Chargement…",
   "startupError": "Erreur de démarrage",
   "error": "Erreur",
@@ -180,18 +152,21 @@
   "unknown": "Inconnu",
   "cameroon": "Cameroun",
   "appSlogan": "Confiance. Transparence. Vérité.",
-
   "documentOcrTitle": "Vérification de document (OCR)",
   "documentOcrSubtitle": "Téléversez un document officiel. Nous le lirons et vérifierons vos informations.",
   "documentType": "Type de document",
   "documentTypeNationalId": "Carte nationale d'identité",
   "documentTypePassport": "Passeport",
   "documentTypeOther": "Autre document officiel",
+  "fullName": "Nom complet",
+  "dateOfBirth": "Date de naissance",
+  "placeOfBirth": "Lieu de naissance",
+  "nationality": "Nationalité",
+  "nationalityAdminReviewNote": "La nationalité sera vérifiée par un administrateur après examen du document.",
   "pickFromGallery": "Galerie",
   "captureWithCamera": "Caméra",
   "runOcr": "Lancer l'OCR et vérifier",
   "ocrProcessing": "Traitement…",
-  "nationalityAdminReviewNote": "La nationalité sera vérifiée par un administrateur après examen du document.",
   "ocrExtractedTitle": "Extrait du document",
   "ocrValidationTitle": "Résultat de la vérification",
   "ocrVerifiedTitle": "Vérifié",
@@ -215,15 +190,28 @@
   "foreignDocumentBody": "Ce document ne semble pas être un document officiel camerounais. L’inscription est réservée aux citoyens camerounais.",
   "underageRegistrationTitle": "Inscription non autorisée",
   "underageRegistrationBody": "Vous devez avoir au moins 18 ans pour vous inscrire. Veuillez utiliser le portail public pour les informations et les mises à jour.",
-
   "userLabel": "Utilisateur",
-
   "loginTitle": "Connexion {role}",
   "@loginTitle": {
     "placeholders": {
       "role": {}
     }
   },
+  "adminTipReviewTitle": "Revue des tips",
+  "adminTipReviewSubtitle": "Confirmez les tips manuels (TapTap Send, Remitly, QR Orange Money Max It) et suivez les preuves.",
+  "adminTipNoTips": "Aucun tip trouve.",
+  "adminTipFilterAll": "Tous",
+  "adminTipFilterSubmitted": "Soumis",
+  "adminTipFilterPending": "En attente",
+  "adminTipFilterSuccess": "Confirme",
+  "adminTipFilterFailed": "Rejete",
+  "adminTipApproveTitle": "Confirmer le tip",
+  "adminTipRejectTitle": "Rejeter le tip",
+  "adminTipDecisionNoteLabel": "Note de decision",
+  "adminTipDecisionSuccess": "Statut du tip mis a jour.",
+  "approve": "Approuver",
+  "reject": "Rejeter",
+  "statusUnknown": "Inconnu",
   "loginHeaderTitle": "Accès sécurisé pour {role}",
   "@loginHeaderTitle": {
     "placeholders": {
@@ -232,6 +220,7 @@
   },
   "loginHeaderSubtitle": "Vérifiez l'identité, continuez en sécurité, et protégez chaque action.",
   "authInvalidCredentials": "E-mail/ID ou mot de passe invalide.",
+  "invalidEmailAddress": "Saisissez une adresse e-mail valide.",
   "authAccountNotFound": "Aucun compte trouvé pour cet utilisateur.",
   "authTooManyRequests": "Trop de tentatives. Veuillez patienter puis réessayer.",
   "authNetworkError": "Problème réseau détecté. Vérifiez votre connexion puis réessayez.",
@@ -292,14 +281,12 @@
   "rolePortalSubtitle": "Sécurisé par biométrie et contrôles en direct.",
   "newVoterRegistrationTitle": "Nouvelle inscription électeur",
   "newVoterRegistrationSubtitle": "Démarrez votre inscription et vérification.",
-
   "accountSectionTitle": "Compte",
   "securitySectionTitle": "Sécurité",
   "supportSectionTitle": "Assistance",
   "onboardingSectionTitle": "Onboarding",
   "onboardingReplayTitle": "Revoir l'onboarding",
   "onboardingReplaySubtitle": "Rejouer l'introduction CamVote",
-
   "helpSupportTitle": "Aide & Assistance",
   "helpSupportSubtitle": "Réponse rapide pour vote, sécurité et fraude.",
   "helpSupportLoginSubtitle": "Aide pour accès ou sécurité",
@@ -320,6 +307,58 @@
       "ticketId": {}
     }
   },
+  "helpSupportTicketQueued": "Ticket mis en file hors ligne. Reference: {queueId}. Il sera envoye automatiquement au retour de la connexion.",
+  "@helpSupportTicketQueued": {
+    "placeholders": {
+      "queueId": {}
+    }
+  },
+  "offlineQueuedWithReference": "Action mise en file hors ligne. Reference: {queueId}. Elle sera synchronisee automatiquement au retour de la connexion.",
+  "@offlineQueuedWithReference": {
+    "placeholders": {
+      "queueId": {}
+    }
+  },
+  "helpSupportOfflineQueueTitle": "Synchronisation hors ligne en attente",
+  "helpSupportOfflineQueueBodyCount": "{count} ticket(s) support sont en file hors ligne et seront envoyes automatiquement au retour de la connexion.",
+  "@helpSupportOfflineQueueBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerOfflineTitle": "Hors connexion",
+  "offlineBannerPendingTitle": "Synchronisation en attente",
+  "offlineBannerOfflineBody": "Certaines actions peuvent etre mises en file et seront synchronisees automatiquement au retour de la connexion.",
+  "offlineBannerOfflineBodyCount": "{count} action(s) en file. Synchronisation automatique au retour de la connexion.",
+  "@offlineBannerOfflineBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerPendingBodyCount": "{count} action(s) pretes a etre synchronisees.",
+  "@offlineBannerPendingBodyCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerSyncNow": "Synchroniser",
+  "offlineBannerSyncedCount": "{count} element(s) synchronise(s).",
+  "@offlineBannerSyncedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "offlineBannerHintAdmin": "Admin: continuez hors ligne. CamVote synchronise au retour d internet (reponses support, incidents, preuves/decisions de tip, audit, lectures de notifications).",
+  "offlineBannerHintObserver": "Observateur: vous pouvez signaler des incidents et mettre a jour la checklist hors ligne. Les preuves et mises a jour se synchronisent automatiquement.",
+  "offlineBannerHintVoter": "Electeur: vous pouvez consulter les pages en cache hors ligne. Les actions (inscription, tickets, preuves de tip) se mettent en file et se synchronisent au retour d internet.",
+  "offlineBannerHintPublic": "Public: les infos en cache restent disponibles. Les mises a jour se chargent automatiquement au retour d internet.",
+  "helpSupportAiTitle": "Assistant CamGuide",
+  "helpSupportAiSubtitle": "Posez des questions sur l inscription, le mode observateur, la securite du vote, les incidents et le contexte electoral camerounais.",
+  "helpSupportAiInputHint": "Posez une question a CamGuide...",
+  "helpSupportAiSend": "Envoyer",
+  "helpSupportAiThinking": "CamGuide analyse votre question...",
+  "helpSupportAiSourcesLabel": "Sources",
+  "helpSupportAiSuggestionsLabel": "Suggestions",
   "helpSupportFaqTitle": "FAQ",
   "helpSupportFaqRegistration": "Comment s'inscrire ? Complétez OCR + biométrie.",
   "helpSupportFaqLiveness": "Pourquoi le liveness ? Pour éviter la fraude automatisée.",
@@ -330,7 +369,6 @@
   "supportCategoryFraud": "Signalement fraude",
   "supportCategoryTechnical": "Technique",
   "supportCategoryOther": "Autre",
-
   "roleGatewayWebHint": "Web : public, observateur, admin",
   "roleGatewayMobileHint": "Mobile : public et électeur",
   "roleGatewaySubtitle": "Choisissez le portail qui correspond à votre mission aujourd'hui.",
@@ -340,7 +378,6 @@
   "roleGatewayFeatureFraudSubtitle": "Signaux appareil + IA",
   "roleGatewayFeatureTransparencyTitle": "Résultats transparents",
   "roleGatewayFeatureTransparencySubtitle": "Tableaux publics en direct",
-
   "onboardingSkip": "Passer",
   "onboardingBack": "Retour",
   "onboardingNext": "Suivant",
@@ -360,13 +397,11 @@
   "onboardingSlide3Highlight1": "Signaux de risque IA",
   "onboardingSlide3Highlight2": "Contrôles d'intégrité",
   "onboardingSlide3Highlight3": "Pistes d'audit immuables",
-
   "chartBarLabel": "Barres",
   "chartPieLabel": "Camembert",
   "chartLineLabel": "Courbe",
   "winnerVotesLabel": "Votes du vainqueur",
   "totalVotesLabel": "Total des votes",
-
   "aboutBuilderTitle": "À propos du créateur",
   "aboutBuilderSubtitle": "Découvrez la vision, la mission et la feuille de route CamVote.",
   "aboutProfileName": "DJAGNI SIGNING Romuald",
@@ -1309,5 +1344,191 @@
   "webDownloadPlayStore": "Disponible sur Google Play",
   "webDownloadAppStore": "Télécharger sur l’App Store",
   "webDownloadQrTitle": "Scannez pour télécharger",
-  "webDownloadLearnMore": "En savoir plus sur les fonctionnalités mobiles"
+  "webDownloadLearnMore": "En savoir plus sur les fonctionnalités mobiles",
+  "supportCamVoteTitle": "Soutenir CamVote",
+  "supportCamVoteSubtitle": "Envoyer un tip via TapTap Send, Remitly ou Orange Money Max It",
+  "supportCamVoteContributeSubtitle": "Contribuer via TapTap Send, Remitly ou Orange Money Max It",
+  "supportCamVoteHeaderTitle": "Soutenir le projet CamVote",
+  "supportCamVoteHeaderSubtitle": "Envoyez un tip via TapTap Send, Remitly ou Orange Money Max It. Le paiement est ouvert a tous et protege votre confidentialite.",
+  "supportCamVoteImpactTitle": "Comment votre soutien est utilise",
+  "supportCamVoteImpactIntro": "Votre contribution aide a garder CamVote securise, rapide et disponible pour plus de citoyens.",
+  "supportCamVoteImpactSecurity": "Renforcement de la securite pour la biometrie, la vivacite et les controles anti-fraude.",
+  "supportCamVoteImpactReliability": "Meilleure fiabilite, meilleure disponibilite serveur et livraisons plus rapides sur web, Android et iOS.",
+  "supportCamVoteImpactCommunity": "Amelioration de l education civique et acces elargi pour electeurs et observateurs.",
+  "supportCamVoteImpactTransparency": "Operations transparentes avec mises a jour auditables et impact public mesurable.",
+  "helpSupportLiveHelpDesk": "Live Help Desk",
+  "helpSupportLiveHelpDeskHint": "Votre message sera envoye a l administrateur Help Desk et vous recevrez les mises a jour dans les notifications.",
+  "helpSupportChatWhatsApp": "Chat WhatsApp",
+  "helpSupportWhatsAppGreeting": "Bonjour CamVote, je contacte le support via WhatsApp.",
+  "helpSupportWhatsAppOpenFailed": "Impossible d ouvrir WhatsApp pour le moment.",
+  "helpSupportFaqObserverHowTo": "Comment devenir observateur: contactez l admin avec un mandat officiel et des documents qui prouvent votre statut (Etat, parti, societe civile, ONG ou organisme international), avec reconnaissance par l Etat du Cameroun. En mode observateur, vous ne pouvez pas voter.",
+  "tipChoosePaymentChannel": "Choisissez votre canal de paiement",
+  "tipChannelElyonpay": "TapTap Send",
+  "tipChannelRemitly": "Remitly",
+  "tipChannelMaxItQr": "Orange Money Max It",
+  "tipAnonymousTitle": "Tip anonyme",
+  "tipAnonymousSubtitle": "Votre nom est masque. Le message de remerciement reste disponible.",
+  "tipNameHiddenLabel": "Nom (masque)",
+  "tipAmountLabel": "Montant",
+  "tipAmountInvalid": "Entrez un montant valide.",
+  "tipCurrencyLabel": "Devise",
+  "tipPersonalMessageLabel": "Message personnalise",
+  "tipPayWithElyonpay": "Ouvrir TapTap Send",
+  "tipPayWithRemitly": "Ouvrir Remitly",
+  "tipTapTapSendInstructionsTitle": "Transfert TapTap Send",
+  "tipTapTapSendInstructionsBody": "Ouvrez TapTap Send, effectuez le transfert, puis soumettez la reference pour que notre equipe confirme votre tip.",
+  "tipRemitlyInstructionsTitle": "Transfert Remitly",
+  "tipRemitlyInstructionsBody": "Ouvrez Remitly, connectez-vous si demande, effectuez le transfert, puis soumettez la reference pour que notre equipe confirme votre tip.",
+  "tipReferenceHint": "Reference de transfert ou ID de transaction",
+  "tipProofNoteLabel": "Note pour l admin (facultatif)",
+  "tipSubmitProof": "Soumettre la reference de paiement",
+  "tipSubmittedBody": "Reference recue. Nous confirmerons bientot.",
+  "tipPaymentSubmitted": "Reference soumise",
+  "tipReferenceMissing": "Entrez d abord la reference de paiement.",
+  "tipReceiptOptionalTitle": "Captures de recu (facultatif)",
+  "tipReceiptOptionalBody": "Vous pouvez soumettre sans capture. Si vous avez un recu, ajoutez-le pour accelerer la confirmation.",
+  "tipReceiptUploadAction": "Ajouter un recu",
+  "tipReceiptLabel": "Recu",
+  "tipReceiptUploadedCount": "{count} recu(s) televerse(s)",
+  "@tipReceiptUploadedCount": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "tipGenerateMaxItQr": "Afficher le QR Max It",
+  "tipMsisdnLabel": "Numero mobile money",
+  "tipMsisdnHint": "ex. +2376XXXXXXXX",
+  "tipMsisdnInvalid": "Entrez un numero de telephone valide.",
+  "tipScanMaxItQr": "Ouvrez Max It et scannez ce QR pour envoyer un tip",
+  "tipPaymentTrackingTitle": "Suivi du paiement",
+  "tipReferenceLabel": "Reference",
+  "tipCheckStatus": "Verifier",
+  "tipWaitingConfirmation": "En attente de confirmation.",
+  "tipCheckingPayment": "Verification du paiement...",
+  "tipPreparingSecurePaymentTitle": "Preparation du paiement securise",
+  "tipPreparingSecurePaymentSubtitle": "Veuillez patienter pendant la configuration du flux de tip CamVote.",
+  "tipAnonymousSupporterName": "Supporter anonyme",
+  "tipSupporterFallbackName": "Supporter",
+  "tipNotificationReceivedTitle": "Tip recu",
+  "tipNotificationReceivedBody": "Merci {name} ! Votre contribution a ete recue.",
+  "@tipNotificationReceivedBody": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipNotificationReceivedBodyAmount": "Merci {name} ! Nous avons recu votre tip de {amount} {currency}.",
+  "@tipNotificationReceivedBodyAmount": {
+    "placeholders": {
+      "name": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "tipThankYouTitle": "Merci {name} !",
+  "@tipThankYouTitle": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipThankYouBody": "Votre soutien aide CamVote a evoluer et a s ameliorer pour tous.",
+  "tipThankYouBodyAmount": "Merci {name}. Votre tip de {amount} {currency} a bien ete recu. Votre soutien aide CamVote a grandir avec transparence et impact.",
+  "@tipThankYouBodyAmount": {
+    "placeholders": {
+      "name": {},
+      "amount": {},
+      "currency": {}
+    }
+  },
+  "tipSelectedChannel": "Canal selectionne",
+  "tipProviderLabel": "Fournisseur: {provider}",
+  "@tipProviderLabel": {
+    "placeholders": {
+      "provider": {}
+    }
+  },
+  "tipIdLabel": "ID du tip: {tipId}",
+  "@tipIdLabel": {
+    "placeholders": {
+      "tipId": {}
+    }
+  },
+  "tipAnonymousModeEnabled": "Mode anonyme actif",
+  "tipDestinationOrangeMoneyCameroon": "Destination Orange Money Cameroun",
+  "tipRecipientNameNotConfigured": "Nom du destinataire non configure",
+  "tipRecipientNameLabel": "Nom du destinataire: {name}",
+  "@tipRecipientNameLabel": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "tipRecipientNumberLabel": "Numero du destinataire: {number}",
+  "@tipRecipientNumberLabel": {
+    "placeholders": {
+      "number": {}
+    }
+  },
+  "tipVerifyRecipientNameHint": "Verifiez ce nom dans le paiement. Si ce nom ne correspond pas, annulez.",
+  "tipPhoneHiddenHint": "Numero masque pour securite: utilisez TapTap Send, Remitly ou le flux QR Max It.",
+  "tipOpenPayment": "Ouvrir le paiement",
+  "tipOpenMaxIt": "Ouvrir Max It",
+  "tipPaymentConfirmed": "Paiement confirme",
+  "tipPaymentAwaitingConfirmation": "En attente de confirmation",
+  "tipStatusSummary": "{amount} {currency} - {provider}",
+  "@tipStatusSummary": {
+    "placeholders": {
+      "amount": {},
+      "currency": {},
+      "provider": {}
+    }
+  },
+  "adminSupportTitle": "Support Admin",
+  "adminSupportSubtitle": "Examinez les tickets, repondez aux utilisateurs et suivez leur statut.",
+  "adminSupportSearchHint": "Rechercher par nom, email, ID d inscription ou message",
+  "adminSupportAllStatuses": "Tous les statuts",
+  "adminSupportNoTickets": "Aucun ticket de support trouve.",
+  "adminSupportTicketUpdatedSuccess": "Ticket mis a jour avec succes.",
+  "adminSupportRespondToTicket": "Repondre au ticket {ticketId}",
+  "@adminSupportRespondToTicket": {
+    "placeholders": {
+      "ticketId": {}
+    }
+  },
+  "adminSupportNewStatusLabel": "Nouveau statut",
+  "adminSupportResponseMessageLabel": "Message de reponse",
+  "adminSupportSendResponse": "Envoyer la reponse",
+  "adminSupportRegistrationIdValue": "ID d inscription: {registrationId}",
+  "@adminSupportRegistrationIdValue": {
+    "placeholders": {
+      "registrationId": {}
+    }
+  },
+  "adminSupportUpdatedAt": "Mis a jour {date} {time}",
+  "@adminSupportUpdatedAt": {
+    "placeholders": {
+      "date": {},
+      "time": {}
+    }
+  },
+  "adminSupportRespondAction": "Repondre",
+  "adminSupportUpdateAction": "Mettre a jour",
+  "adminSupportStatusOpen": "Ouvert",
+  "adminSupportStatusAnswered": "Repondu",
+  "adminSupportStatusResolved": "Resolu",
+  "adminSupportStatusClosed": "Ferme",
+  "adminSupportStatusUnknown": "Inconnu",
+  "voteImpactAddedLive": "Votre vote a ete securise et ajoute en direct.",
+  "voteImpactRecorded": "Votre vote a ete enregistre avec succes.",
+  "voteImpactPreviousTotal": "Total precedent",
+  "voteImpactYourContribution": "Votre contribution",
+  "voteImpactNewLiveTotal": "Nouveau total en direct",
+  "adminDemographicsTitle": "Distribution d age des electeurs inscrits",
+  "adminDemographicsTotalEligible": "Total d electeurs eligibles sur la liste: {total}",
+  "@adminDemographicsTotalEligible": {
+    "placeholders": {
+      "total": {}
+    }
+  },
+  "adminDemographicsYouth": "Jeunes",
+  "adminDemographicsAdult": "Adultes",
+  "adminDemographicsSenior": "Seniors"
 }

@@ -1,4 +1,5 @@
 import '../../../core/network/worker_client.dart';
+import '../../../core/offline/offline_sync_store.dart';
 
 import '../models/admin_support_ticket.dart';
 import '../models/support_ticket.dart';
@@ -19,12 +20,24 @@ class SupportRepository {
         'category': ticket.category.apiValue,
         'message': ticket.message,
       },
+      allowOfflineQueue: true,
+      queueType: 'support_ticket',
     );
+    final queued = response['queued'] == true;
+    final queueId = response['offlineQueueId']?.toString() ?? '';
     return SupportTicketResult(
       ticketId: response['ticketId']?.toString() ?? '',
-      status: response['status']?.toString() ?? 'received',
+      status:
+          response['status']?.toString() ??
+          (queued ? 'queued_offline' : 'received'),
       message: response['message']?.toString() ?? '',
+      queuedOffline: queued,
+      offlineQueueId: queueId,
     );
+  }
+
+  Future<int> pendingOfflineTicketCount() {
+    return OfflineSyncStore.pendingCount(queueType: 'support_ticket');
   }
 
   Future<List<AdminSupportTicket>> fetchAdminTickets({
@@ -76,11 +89,19 @@ class SupportRepository {
         'responseMessage': normalizedMessage,
         'status': status.apiValue,
       },
+      allowOfflineQueue: true,
+      queueType: 'support_ticket_response',
     );
+    final queued = response['queued'] == true;
+    final queueId = response['offlineQueueId']?.toString() ?? '';
 
     return AdminSupportRespondResult(
       ticketId: (response['ticketId']?.toString() ?? normalizedTicketId).trim(),
-      status: adminSupportTicketStatusFromApi(response['status']?.toString()),
+      status: queued
+          ? status
+          : adminSupportTicketStatusFromApi(response['status']?.toString()),
+      queuedOffline: queued,
+      offlineQueueId: queueId,
     );
   }
 }

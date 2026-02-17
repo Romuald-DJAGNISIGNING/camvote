@@ -43,7 +43,6 @@
   <link rel="shortcut icon" href="favicon.png?v=20260211">
 
   <title>CamVote</title>
-  <link rel="manifest" href="manifest.json">
   
   
   <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
@@ -204,6 +203,27 @@
       color: #ffffff;
     }
   </style>
+  <script>
+    (function () {
+      // Keep web usage explicit: no auto-install prompt unless user chooses
+      // download actions from inside the app.
+      window.addEventListener('beforeinstallprompt', function (event) {
+        event.preventDefault();
+      });
+
+      // Remove stale service workers so old cached assets cannot keep ghost
+      // overlays or outdated UI state after deployments.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            for (var i = 0; i < regs.length; i++) {
+              regs[i].unregister();
+            }
+          }).catch(function () {});
+        });
+      }
+    })();
+  </script>
   <script id="splash-screen-script">
     (function () {
       var timerId = null;

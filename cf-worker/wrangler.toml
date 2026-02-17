@@ -17,4 +17,20 @@ preview_bucket_name = "camvote-backup-preview"
 ALLOWED_ORIGINS = "*"
 # Optional public board id for Trello dashboard proxy.
 TRELLO_BOARD_ID = "6958e93f42229fbf46c11df3"
+# Tip/support public config (non-secret)
+TAPTAP_SEND_URL = "https://www.taptapsend.com/"
+# Optional deep-link base for TapTap app launch on mobile.
+TAPTAP_SEND_DEEP_LINK = "taptapsend://send"
+# Remitly fallback links for tip flow.
+REMITLY_SEND_URL = "https://www.remitly.com/"
+REMITLY_SEND_DEEP_LINK = "remitly://send"
+TIP_ORANGE_MONEY_NAME = "ROMUALD DJAGNI SIGNING"
+TIP_ORANGE_MONEY_NUMBER_PUBLIC = "false"
+# Optional: public link/deep-link used by Orange Money Max It QR checkout cards.
+MAXIT_TIP_QR_URL = ""
+MAXIT_TIP_DEEP_LINK = ""
+# Required for support response email delivery via MailChannels.
+# Use a verified sender address/domain.
+SUPPORT_EMAIL_FROM = "camvoteappassist@gmail.com"
+SUPPORT_EMAIL_REPLY_TO = "camvoteappassist@gmail.com"
 

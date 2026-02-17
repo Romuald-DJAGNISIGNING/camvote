@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -23,6 +24,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _controller = PageController();
   int _index = 0;
+  bool _isFinishing = false;
 
   @override
   void dispose() {
@@ -187,14 +189,116 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  Future<void> _finish() async {
+  void _finish() {
+    if (_isFinishing) return;
+    _isFinishing = true;
+    ref.read(onboardingSessionBypassProvider.notifier).enable();
+
+    final target = _resolveExitTarget();
     try {
-      await ref.read(appSettingsProvider.notifier).setOnboardingSeen(true);
+      if (!mounted) return;
+      context.go(target);
     } catch (_) {
-      // Fail open: still continue to the target route.
+      _isFinishing = false;
+      return;
     }
-    if (!mounted) return;
-    context.go(kIsWeb ? RoutePaths.webPortal : RoutePaths.gateway);
+
+    // Persist asynchronously after navigation; never block onboarding exit.
+    unawaited(
+      ref.read(appSettingsProvider.notifier).setOnboardingSeen(true).catchError(
+        (error, stackTrace) {
+          // Ignore storage failures; session bypass already avoids loops.
+        },
+      ),
+    );
+
+    // Safety reset so user is never locked out if router stalls.
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 900), () {
+        if (!mounted) return;
+        final current = _matchedLocation();
+        if (current == RoutePaths.onboarding) {
+          _isFinishing = false;
+        }
+      }),
+    );
+  }
+
+  String _matchedLocation() {
+    try {
+      return GoRouterState.of(context).matchedLocation;
+    } catch (_) {
+      return RoutePaths.onboarding;
+    }
+  }
+
+  String _resolveExitTarget() {
+    if (!kIsWeb) return RoutePaths.gateway;
+
+    String? from;
+    try {
+      from = GoRouterState.of(context).uri.queryParameters['from'];
+    } catch (_) {
+      from = null;
+    }
+    from ??= _queryFromFragment('from');
+    final sanitizedFrom = _sanitizeFromTarget(from);
+    if (sanitizedFrom != null) return sanitizedFrom;
+
+    final entry = _resolvePortalEntry();
+    return entry == 'admin' ? RoutePaths.adminPortal : RoutePaths.webPortal;
+  }
+
+  String? _sanitizeFromTarget(String? raw) {
+    if (raw == null || raw.trim().isEmpty) return null;
+    final trimmed = raw.trim();
+    final parsed = Uri.tryParse(trimmed);
+    if (parsed == null) return null;
+    if (!trimmed.startsWith('/')) return null;
+    if (parsed.path == RoutePaths.onboarding) return null;
+    return parsed.toString();
+  }
+
+  String? _queryFromFragment(String key) {
+    final fragment = Uri.base.fragment;
+    if (fragment.isEmpty) return null;
+    final normalized = fragment.startsWith('/') ? fragment : '/$fragment';
+    final parsed = Uri.tryParse(normalized);
+    return parsed?.queryParameters[key];
+  }
+
+  String? _resolvePortalEntry() {
+    if (!kIsWeb) return null;
+
+    String? queryEntry;
+    try {
+      queryEntry = GoRouterState.of(context).uri.queryParameters['entry'];
+    } catch (_) {
+      queryEntry = null;
+    }
+    queryEntry ??= Uri.base.queryParameters['entry'];
+    if (queryEntry == 'admin' || queryEntry == 'general') {
+      return queryEntry;
+    }
+
+    final fragment = Uri.base.fragment;
+    if (fragment.isNotEmpty) {
+      final normalized = fragment.startsWith('/') ? fragment : '/$fragment';
+      final parsed = Uri.tryParse(normalized);
+      final fragmentEntry = parsed?.queryParameters['entry'];
+      if (fragmentEntry == 'admin' || fragmentEntry == 'general') {
+        return fragmentEntry;
+      }
+      final fragmentPath = parsed?.path.toLowerCase() ?? '';
+      if (fragmentPath.contains('/backoffice')) return 'admin';
+      if (fragmentPath.contains('/portal')) return 'general';
+    }
+
+    final basePath = Uri.base.path.toLowerCase();
+    if (basePath.contains('/backoffice')) return 'admin';
+    if (basePath.contains('/portal')) return 'general';
+
+    return 'general';
   }
 
   List<_OnboardingSlide> _buildSlides(AppLocalizations t) {

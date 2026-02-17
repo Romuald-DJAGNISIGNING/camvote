@@ -59,11 +59,15 @@ class SupportTicketResult {
   final String ticketId;
   final String status;
   final String message;
+  final bool queuedOffline;
+  final String offlineQueueId;
 
   const SupportTicketResult({
     required this.ticketId,
     required this.status,
     required this.message,
+    this.queuedOffline = false,
+    this.offlineQueueId = '',
   });
 
   factory SupportTicketResult.fromJson(Map<String, dynamic> json) {
@@ -71,6 +75,8 @@ class SupportTicketResult {
       ticketId: (json['ticket_id'] as String?) ?? '',
       status: (json['status'] as String?) ?? 'received',
       message: (json['message'] as String?) ?? '',
+      queuedOffline: json['queued'] == true,
+      offlineQueueId: (json['offlineQueueId'] as String?) ?? '',
     );
   }
 }

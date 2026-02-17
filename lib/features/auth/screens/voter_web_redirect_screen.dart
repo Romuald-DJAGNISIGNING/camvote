@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
 import '../../../core/branding/brand_backdrop.dart';
@@ -13,6 +12,7 @@ import '../../../core/layout/responsive.dart';
 import '../../../core/network/platform_utils.dart'
     if (dart.library.io) '../../../core/network/platform_utils_io.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../../core/utils/external_links.dart';
 import '../../../core/utils/mobile_links.dart';
 import '../../../core/widgets/marketing/app_download_card.dart';
 
@@ -66,14 +66,7 @@ class _VoterWebRedirectScreenState
   }
 
   Future<void> _openUrl(String url) async {
-    if (url.trim().isEmpty) return;
-    final uri = Uri.parse(url);
-    final resolved = uri.hasScheme ? uri : Uri.base.resolve(url);
-    if (isWebPlatform) {
-      openWebRedirect(resolved.toString());
-      return;
-    }
-    await launchUrl(resolved, mode: LaunchMode.externalApplication);
+    await openExternalLink(context, url);
   }
 
   String _normalizeStaticWebUrl(String url) {

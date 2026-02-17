@@ -631,6 +631,52 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get adminTipReviewTitle => 'Revue des tips';
+
+  @override
+  String get adminTipReviewSubtitle =>
+      'Confirmez les tips manuels (TapTap Send, Remitly, QR Orange Money Max It) et suivez les preuves.';
+
+  @override
+  String get adminTipNoTips => 'Aucun tip trouve.';
+
+  @override
+  String get adminTipFilterAll => 'Tous';
+
+  @override
+  String get adminTipFilterSubmitted => 'Soumis';
+
+  @override
+  String get adminTipFilterPending => 'En attente';
+
+  @override
+  String get adminTipFilterSuccess => 'Confirme';
+
+  @override
+  String get adminTipFilterFailed => 'Rejete';
+
+  @override
+  String get adminTipApproveTitle => 'Confirmer le tip';
+
+  @override
+  String get adminTipRejectTitle => 'Rejeter le tip';
+
+  @override
+  String get adminTipDecisionNoteLabel => 'Note de decision';
+
+  @override
+  String get adminTipDecisionSuccess => 'Statut du tip mis a jour.';
+
+  @override
+  String get approve => 'Approuver';
+
+  @override
+  String get reject => 'Rejeter';
+
+  @override
+  String get statusUnknown => 'Inconnu';
+
+  @override
   String loginHeaderTitle(Object role) {
     return 'Accès sécurisé pour $role';
   }
@@ -641,6 +687,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get authInvalidCredentials => 'E-mail/ID ou mot de passe invalide.';
+
+  @override
+  String get invalidEmailAddress => 'Saisissez une adresse e-mail valide.';
 
   @override
   String get authAccountNotFound => 'Aucun compte trouvé pour cet utilisateur.';
@@ -868,6 +917,91 @@ class AppLocalizationsFr extends AppLocalizations {
   String helpSupportTicketReceived(Object ticketId) {
     return 'Ticket reçu. Référence : $ticketId';
   }
+
+  @override
+  String helpSupportTicketQueued(Object queueId) {
+    return 'Ticket mis en file hors ligne. Reference: $queueId. Il sera envoye automatiquement au retour de la connexion.';
+  }
+
+  @override
+  String offlineQueuedWithReference(Object queueId) {
+    return 'Action mise en file hors ligne. Reference: $queueId. Elle sera synchronisee automatiquement au retour de la connexion.';
+  }
+
+  @override
+  String get helpSupportOfflineQueueTitle =>
+      'Synchronisation hors ligne en attente';
+
+  @override
+  String helpSupportOfflineQueueBodyCount(Object count) {
+    return '$count ticket(s) support sont en file hors ligne et seront envoyes automatiquement au retour de la connexion.';
+  }
+
+  @override
+  String get offlineBannerOfflineTitle => 'Hors connexion';
+
+  @override
+  String get offlineBannerPendingTitle => 'Synchronisation en attente';
+
+  @override
+  String get offlineBannerOfflineBody =>
+      'Certaines actions peuvent etre mises en file et seront synchronisees automatiquement au retour de la connexion.';
+
+  @override
+  String offlineBannerOfflineBodyCount(Object count) {
+    return '$count action(s) en file. Synchronisation automatique au retour de la connexion.';
+  }
+
+  @override
+  String offlineBannerPendingBodyCount(Object count) {
+    return '$count action(s) pretes a etre synchronisees.';
+  }
+
+  @override
+  String get offlineBannerSyncNow => 'Synchroniser';
+
+  @override
+  String offlineBannerSyncedCount(Object count) {
+    return '$count element(s) synchronise(s).';
+  }
+
+  @override
+  String get offlineBannerHintAdmin =>
+      'Admin: continuez hors ligne. CamVote synchronise au retour d internet (reponses support, incidents, preuves/decisions de tip, audit, lectures de notifications).';
+
+  @override
+  String get offlineBannerHintObserver =>
+      'Observateur: vous pouvez signaler des incidents et mettre a jour la checklist hors ligne. Les preuves et mises a jour se synchronisent automatiquement.';
+
+  @override
+  String get offlineBannerHintVoter =>
+      'Electeur: vous pouvez consulter les pages en cache hors ligne. Les actions (inscription, tickets, preuves de tip) se mettent en file et se synchronisent au retour d internet.';
+
+  @override
+  String get offlineBannerHintPublic =>
+      'Public: les infos en cache restent disponibles. Les mises a jour se chargent automatiquement au retour d internet.';
+
+  @override
+  String get helpSupportAiTitle => 'Assistant CamGuide';
+
+  @override
+  String get helpSupportAiSubtitle =>
+      'Posez des questions sur l inscription, le mode observateur, la securite du vote, les incidents et le contexte electoral camerounais.';
+
+  @override
+  String get helpSupportAiInputHint => 'Posez une question a CamGuide...';
+
+  @override
+  String get helpSupportAiSend => 'Envoyer';
+
+  @override
+  String get helpSupportAiThinking => 'CamGuide analyse votre question...';
+
+  @override
+  String get helpSupportAiSourcesLabel => 'Sources';
+
+  @override
+  String get helpSupportAiSuggestionsLabel => 'Suggestions';
 
   @override
   String get helpSupportFaqTitle => 'FAQ';
@@ -3212,4 +3346,392 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get webDownloadLearnMore =>
       'En savoir plus sur les fonctionnalités mobiles';
+
+  @override
+  String get supportCamVoteTitle => 'Soutenir CamVote';
+
+  @override
+  String get supportCamVoteSubtitle =>
+      'Envoyer un tip via TapTap Send, Remitly ou Orange Money Max It';
+
+  @override
+  String get supportCamVoteContributeSubtitle =>
+      'Contribuer via TapTap Send, Remitly ou Orange Money Max It';
+
+  @override
+  String get supportCamVoteHeaderTitle => 'Soutenir le projet CamVote';
+
+  @override
+  String get supportCamVoteHeaderSubtitle =>
+      'Envoyez un tip via TapTap Send, Remitly ou Orange Money Max It. Le paiement est ouvert a tous et protege votre confidentialite.';
+
+  @override
+  String get supportCamVoteImpactTitle => 'Comment votre soutien est utilise';
+
+  @override
+  String get supportCamVoteImpactIntro =>
+      'Votre contribution aide a garder CamVote securise, rapide et disponible pour plus de citoyens.';
+
+  @override
+  String get supportCamVoteImpactSecurity =>
+      'Renforcement de la securite pour la biometrie, la vivacite et les controles anti-fraude.';
+
+  @override
+  String get supportCamVoteImpactReliability =>
+      'Meilleure fiabilite, meilleure disponibilite serveur et livraisons plus rapides sur web, Android et iOS.';
+
+  @override
+  String get supportCamVoteImpactCommunity =>
+      'Amelioration de l education civique et acces elargi pour electeurs et observateurs.';
+
+  @override
+  String get supportCamVoteImpactTransparency =>
+      'Operations transparentes avec mises a jour auditables et impact public mesurable.';
+
+  @override
+  String get helpSupportLiveHelpDesk => 'Live Help Desk';
+
+  @override
+  String get helpSupportLiveHelpDeskHint =>
+      'Votre message sera envoye a l administrateur Help Desk et vous recevrez les mises a jour dans les notifications.';
+
+  @override
+  String get helpSupportChatWhatsApp => 'Chat WhatsApp';
+
+  @override
+  String get helpSupportWhatsAppGreeting =>
+      'Bonjour CamVote, je contacte le support via WhatsApp.';
+
+  @override
+  String get helpSupportWhatsAppOpenFailed =>
+      'Impossible d ouvrir WhatsApp pour le moment.';
+
+  @override
+  String get helpSupportFaqObserverHowTo =>
+      'Comment devenir observateur: contactez l admin avec un mandat officiel et des documents qui prouvent votre statut (Etat, parti, societe civile, ONG ou organisme international), avec reconnaissance par l Etat du Cameroun. En mode observateur, vous ne pouvez pas voter.';
+
+  @override
+  String get tipChoosePaymentChannel => 'Choisissez votre canal de paiement';
+
+  @override
+  String get tipChannelElyonpay => 'TapTap Send';
+
+  @override
+  String get tipChannelRemitly => 'Remitly';
+
+  @override
+  String get tipChannelMaxItQr => 'Orange Money Max It';
+
+  @override
+  String get tipAnonymousTitle => 'Tip anonyme';
+
+  @override
+  String get tipAnonymousSubtitle =>
+      'Votre nom est masque. Le message de remerciement reste disponible.';
+
+  @override
+  String get tipNameHiddenLabel => 'Nom (masque)';
+
+  @override
+  String get tipAmountLabel => 'Montant';
+
+  @override
+  String get tipAmountInvalid => 'Entrez un montant valide.';
+
+  @override
+  String get tipCurrencyLabel => 'Devise';
+
+  @override
+  String get tipPersonalMessageLabel => 'Message personnalise';
+
+  @override
+  String get tipPayWithElyonpay => 'Ouvrir TapTap Send';
+
+  @override
+  String get tipPayWithRemitly => 'Ouvrir Remitly';
+
+  @override
+  String get tipTapTapSendInstructionsTitle => 'Transfert TapTap Send';
+
+  @override
+  String get tipTapTapSendInstructionsBody =>
+      'Ouvrez TapTap Send, effectuez le transfert, puis soumettez la reference pour que notre equipe confirme votre tip.';
+
+  @override
+  String get tipRemitlyInstructionsTitle => 'Transfert Remitly';
+
+  @override
+  String get tipRemitlyInstructionsBody =>
+      'Ouvrez Remitly, connectez-vous si demande, effectuez le transfert, puis soumettez la reference pour que notre equipe confirme votre tip.';
+
+  @override
+  String get tipReferenceHint => 'Reference de transfert ou ID de transaction';
+
+  @override
+  String get tipProofNoteLabel => 'Note pour l admin (facultatif)';
+
+  @override
+  String get tipSubmitProof => 'Soumettre la reference de paiement';
+
+  @override
+  String get tipSubmittedBody => 'Reference recue. Nous confirmerons bientot.';
+
+  @override
+  String get tipPaymentSubmitted => 'Reference soumise';
+
+  @override
+  String get tipReferenceMissing => 'Entrez d abord la reference de paiement.';
+
+  @override
+  String get tipReceiptOptionalTitle => 'Captures de recu (facultatif)';
+
+  @override
+  String get tipReceiptOptionalBody =>
+      'Vous pouvez soumettre sans capture. Si vous avez un recu, ajoutez-le pour accelerer la confirmation.';
+
+  @override
+  String get tipReceiptUploadAction => 'Ajouter un recu';
+
+  @override
+  String get tipReceiptLabel => 'Recu';
+
+  @override
+  String tipReceiptUploadedCount(Object count) {
+    return '$count recu(s) televerse(s)';
+  }
+
+  @override
+  String get tipGenerateMaxItQr => 'Afficher le QR Max It';
+
+  @override
+  String get tipMsisdnLabel => 'Numero mobile money';
+
+  @override
+  String get tipMsisdnHint => 'ex. +2376XXXXXXXX';
+
+  @override
+  String get tipMsisdnInvalid => 'Entrez un numero de telephone valide.';
+
+  @override
+  String get tipScanMaxItQr =>
+      'Ouvrez Max It et scannez ce QR pour envoyer un tip';
+
+  @override
+  String get tipPaymentTrackingTitle => 'Suivi du paiement';
+
+  @override
+  String get tipReferenceLabel => 'Reference';
+
+  @override
+  String get tipCheckStatus => 'Verifier';
+
+  @override
+  String get tipWaitingConfirmation => 'En attente de confirmation.';
+
+  @override
+  String get tipCheckingPayment => 'Verification du paiement...';
+
+  @override
+  String get tipPreparingSecurePaymentTitle =>
+      'Preparation du paiement securise';
+
+  @override
+  String get tipPreparingSecurePaymentSubtitle =>
+      'Veuillez patienter pendant la configuration du flux de tip CamVote.';
+
+  @override
+  String get tipAnonymousSupporterName => 'Supporter anonyme';
+
+  @override
+  String get tipSupporterFallbackName => 'Supporter';
+
+  @override
+  String get tipNotificationReceivedTitle => 'Tip recu';
+
+  @override
+  String tipNotificationReceivedBody(Object name) {
+    return 'Merci $name ! Votre contribution a ete recue.';
+  }
+
+  @override
+  String tipNotificationReceivedBodyAmount(
+    Object name,
+    Object amount,
+    Object currency,
+  ) {
+    return 'Merci $name ! Nous avons recu votre tip de $amount $currency.';
+  }
+
+  @override
+  String tipThankYouTitle(Object name) {
+    return 'Merci $name !';
+  }
+
+  @override
+  String get tipThankYouBody =>
+      'Votre soutien aide CamVote a evoluer et a s ameliorer pour tous.';
+
+  @override
+  String tipThankYouBodyAmount(Object name, Object amount, Object currency) {
+    return 'Merci $name. Votre tip de $amount $currency a bien ete recu. Votre soutien aide CamVote a grandir avec transparence et impact.';
+  }
+
+  @override
+  String get tipSelectedChannel => 'Canal selectionne';
+
+  @override
+  String tipProviderLabel(Object provider) {
+    return 'Fournisseur: $provider';
+  }
+
+  @override
+  String tipIdLabel(Object tipId) {
+    return 'ID du tip: $tipId';
+  }
+
+  @override
+  String get tipAnonymousModeEnabled => 'Mode anonyme actif';
+
+  @override
+  String get tipDestinationOrangeMoneyCameroon =>
+      'Destination Orange Money Cameroun';
+
+  @override
+  String get tipRecipientNameNotConfigured =>
+      'Nom du destinataire non configure';
+
+  @override
+  String tipRecipientNameLabel(Object name) {
+    return 'Nom du destinataire: $name';
+  }
+
+  @override
+  String tipRecipientNumberLabel(Object number) {
+    return 'Numero du destinataire: $number';
+  }
+
+  @override
+  String get tipVerifyRecipientNameHint =>
+      'Verifiez ce nom dans le paiement. Si ce nom ne correspond pas, annulez.';
+
+  @override
+  String get tipPhoneHiddenHint =>
+      'Numero masque pour securite: utilisez TapTap Send, Remitly ou le flux QR Max It.';
+
+  @override
+  String get tipOpenPayment => 'Ouvrir le paiement';
+
+  @override
+  String get tipOpenMaxIt => 'Ouvrir Max It';
+
+  @override
+  String get tipPaymentConfirmed => 'Paiement confirme';
+
+  @override
+  String get tipPaymentAwaitingConfirmation => 'En attente de confirmation';
+
+  @override
+  String tipStatusSummary(Object amount, Object currency, Object provider) {
+    return '$amount $currency - $provider';
+  }
+
+  @override
+  String get adminSupportTitle => 'Support Admin';
+
+  @override
+  String get adminSupportSubtitle =>
+      'Examinez les tickets, repondez aux utilisateurs et suivez leur statut.';
+
+  @override
+  String get adminSupportSearchHint =>
+      'Rechercher par nom, email, ID d inscription ou message';
+
+  @override
+  String get adminSupportAllStatuses => 'Tous les statuts';
+
+  @override
+  String get adminSupportNoTickets => 'Aucun ticket de support trouve.';
+
+  @override
+  String get adminSupportTicketUpdatedSuccess =>
+      'Ticket mis a jour avec succes.';
+
+  @override
+  String adminSupportRespondToTicket(Object ticketId) {
+    return 'Repondre au ticket $ticketId';
+  }
+
+  @override
+  String get adminSupportNewStatusLabel => 'Nouveau statut';
+
+  @override
+  String get adminSupportResponseMessageLabel => 'Message de reponse';
+
+  @override
+  String get adminSupportSendResponse => 'Envoyer la reponse';
+
+  @override
+  String adminSupportRegistrationIdValue(Object registrationId) {
+    return 'ID d inscription: $registrationId';
+  }
+
+  @override
+  String adminSupportUpdatedAt(Object date, Object time) {
+    return 'Mis a jour $date $time';
+  }
+
+  @override
+  String get adminSupportRespondAction => 'Repondre';
+
+  @override
+  String get adminSupportUpdateAction => 'Mettre a jour';
+
+  @override
+  String get adminSupportStatusOpen => 'Ouvert';
+
+  @override
+  String get adminSupportStatusAnswered => 'Repondu';
+
+  @override
+  String get adminSupportStatusResolved => 'Resolu';
+
+  @override
+  String get adminSupportStatusClosed => 'Ferme';
+
+  @override
+  String get adminSupportStatusUnknown => 'Inconnu';
+
+  @override
+  String get voteImpactAddedLive =>
+      'Votre vote a ete securise et ajoute en direct.';
+
+  @override
+  String get voteImpactRecorded => 'Votre vote a ete enregistre avec succes.';
+
+  @override
+  String get voteImpactPreviousTotal => 'Total precedent';
+
+  @override
+  String get voteImpactYourContribution => 'Votre contribution';
+
+  @override
+  String get voteImpactNewLiveTotal => 'Nouveau total en direct';
+
+  @override
+  String get adminDemographicsTitle =>
+      'Distribution d age des electeurs inscrits';
+
+  @override
+  String adminDemographicsTotalEligible(Object total) {
+    return 'Total d electeurs eligibles sur la liste: $total';
+  }
+
+  @override
+  String get adminDemographicsYouth => 'Jeunes';
+
+  @override
+  String get adminDemographicsAdult => 'Adultes';
+
+  @override
+  String get adminDemographicsSenior => 'Seniors';
 }

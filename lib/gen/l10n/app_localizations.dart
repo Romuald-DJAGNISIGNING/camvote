@@ -479,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @verifyStatusRegisteredPreEligible.
   ///
   /// In en, this message translates to:
-  /// **'Registered (18–19, not eligible to vote yet)'**
+  /// **'Registered (18-19, not eligible to vote yet)'**
   String get verifyStatusRegisteredPreEligible;
 
   /// No description provided for @verifyStatusEligible.
@@ -515,7 +515,7 @@ abstract class AppLocalizations {
   /// No description provided for @verifyEligibleToastMessage.
   ///
   /// In en, this message translates to:
-  /// **'Congratulations! You can now vote in eligible elections. 🎉'**
+  /// **'Congratulations! You can now vote in eligible elections.'**
   String get verifyEligibleToastMessage;
 
   /// No description provided for @voterPortalTitle.
@@ -869,7 +869,7 @@ abstract class AppLocalizations {
   /// No description provided for @loading.
   ///
   /// In en, this message translates to:
-  /// **'Loading…'**
+  /// **'Loading...'**
   String get loading;
 
   /// No description provided for @startupError.
@@ -1097,7 +1097,7 @@ abstract class AppLocalizations {
   /// No description provided for @ocrProcessing.
   ///
   /// In en, this message translates to:
-  /// **'Processing…'**
+  /// **'Processing...'**
   String get ocrProcessing;
 
   /// No description provided for @ocrExtractedTitle.
@@ -1133,7 +1133,7 @@ abstract class AppLocalizations {
   /// No description provided for @ocrSummaryVerifiedPendingNationality.
   ///
   /// In en, this message translates to:
-  /// **'Verified • Nationality pending admin review'**
+  /// **'Verified - Nationality pending admin review'**
   String get ocrSummaryVerifiedPendingNationality;
 
   /// No description provided for @ocrSummaryNationalityPending.
@@ -1169,7 +1169,7 @@ abstract class AppLocalizations {
   /// No description provided for @ocrVerified.
   ///
   /// In en, this message translates to:
-  /// **'Document verified ✅'**
+  /// **'Document verified...'**
   String get ocrVerified;
 
   /// No description provided for @ocrRejected.
@@ -1250,6 +1250,96 @@ abstract class AppLocalizations {
   /// **'{role} sign in'**
   String loginTitle(Object role);
 
+  /// No description provided for @adminTipReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip review'**
+  String get adminTipReviewTitle;
+
+  /// No description provided for @adminTipReviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm manual tips (TapTap Send, Remitly, Orange Money Max It QR) and track proof submissions.'**
+  String get adminTipReviewSubtitle;
+
+  /// No description provided for @adminTipNoTips.
+  ///
+  /// In en, this message translates to:
+  /// **'No tips found.'**
+  String get adminTipNoTips;
+
+  /// No description provided for @adminTipFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get adminTipFilterAll;
+
+  /// No description provided for @adminTipFilterSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitted'**
+  String get adminTipFilterSubmitted;
+
+  /// No description provided for @adminTipFilterPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get adminTipFilterPending;
+
+  /// No description provided for @adminTipFilterSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get adminTipFilterSuccess;
+
+  /// No description provided for @adminTipFilterFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get adminTipFilterFailed;
+
+  /// No description provided for @adminTipApproveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm tip'**
+  String get adminTipApproveTitle;
+
+  /// No description provided for @adminTipRejectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject tip'**
+  String get adminTipRejectTitle;
+
+  /// No description provided for @adminTipDecisionNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision note'**
+  String get adminTipDecisionNoteLabel;
+
+  /// No description provided for @adminTipDecisionSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip status updated.'**
+  String get adminTipDecisionSuccess;
+
+  /// No description provided for @approve.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get approve;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @statusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get statusUnknown;
+
   /// No description provided for @loginHeaderTitle.
   ///
   /// In en, this message translates to:
@@ -1267,6 +1357,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Invalid email/ID or password.'**
   String get authInvalidCredentials;
+
+  /// No description provided for @invalidEmailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address.'**
+  String get invalidEmailAddress;
 
   /// No description provided for @authAccountNotFound.
   ///
@@ -1664,6 +1760,138 @@ abstract class AppLocalizations {
   /// **'Ticket received. Reference: {ticketId}'**
   String helpSupportTicketReceived(Object ticketId);
 
+  /// No description provided for @helpSupportTicketQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket queued offline. Reference: {queueId}. It will auto-send when connection returns.'**
+  String helpSupportTicketQueued(Object queueId);
+
+  /// No description provided for @offlineQueuedWithReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Action queued offline. Reference: {queueId}. It will auto-sync when connection returns.'**
+  String offlineQueuedWithReference(Object queueId);
+
+  /// No description provided for @helpSupportOfflineQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending offline sync'**
+  String get helpSupportOfflineQueueTitle;
+
+  /// No description provided for @helpSupportOfflineQueueBodyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} support ticket(s) are queued offline and will auto-send when connection returns.'**
+  String helpSupportOfflineQueueBodyCount(Object count);
+
+  /// No description provided for @offlineBannerOfflineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline'**
+  String get offlineBannerOfflineTitle;
+
+  /// No description provided for @offlineBannerPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync pending'**
+  String get offlineBannerPendingTitle;
+
+  /// No description provided for @offlineBannerOfflineBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Some actions may be queued and will auto-sync when connection returns.'**
+  String get offlineBannerOfflineBody;
+
+  /// No description provided for @offlineBannerOfflineBodyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} action(s) are queued and will auto-sync when connection returns.'**
+  String offlineBannerOfflineBodyCount(Object count);
+
+  /// No description provided for @offlineBannerPendingBodyCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} action(s) are ready to sync.'**
+  String offlineBannerPendingBodyCount(Object count);
+
+  /// No description provided for @offlineBannerSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get offlineBannerSyncNow;
+
+  /// No description provided for @offlineBannerSyncedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {count} item(s).'**
+  String offlineBannerSyncedCount(Object count);
+
+  /// No description provided for @offlineBannerHintAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin: keep working offline. CamVote will sync when internet returns (support replies, incidents, tip proofs/decisions, audits, notification reads).'**
+  String get offlineBannerHintAdmin;
+
+  /// No description provided for @offlineBannerHintObserver.
+  ///
+  /// In en, this message translates to:
+  /// **'Observer: you can still report incidents and update your checklist offline. Evidence uploads and status updates will sync automatically.'**
+  String get offlineBannerHintObserver;
+
+  /// No description provided for @offlineBannerHintVoter.
+  ///
+  /// In en, this message translates to:
+  /// **'Voter: you can browse cached pages offline. Key submissions (registration, support tickets, tip proofs) queue and sync when you are back online.'**
+  String get offlineBannerHintVoter;
+
+  /// No description provided for @offlineBannerHintPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Public: cached info remains available. New updates load automatically when internet returns.'**
+  String get offlineBannerHintPublic;
+
+  /// No description provided for @helpSupportAiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'CamGuide assistant'**
+  String get helpSupportAiTitle;
+
+  /// No description provided for @helpSupportAiSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about registration, observer rules, vote security, incidents, or Cameroon election context.'**
+  String get helpSupportAiSubtitle;
+
+  /// No description provided for @helpSupportAiInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask CamGuide a question...'**
+  String get helpSupportAiInputHint;
+
+  /// No description provided for @helpSupportAiSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get helpSupportAiSend;
+
+  /// No description provided for @helpSupportAiThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'CamGuide is thinking...'**
+  String get helpSupportAiThinking;
+
+  /// No description provided for @helpSupportAiSourcesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources'**
+  String get helpSupportAiSourcesLabel;
+
+  /// No description provided for @helpSupportAiSuggestionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested follow-ups'**
+  String get helpSupportAiSuggestionsLabel;
+
   /// No description provided for @helpSupportFaqTitle.
   ///
   /// In en, this message translates to:
@@ -1943,7 +2171,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutProfileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Computer Science Engineering Undergraduate • Civic-Tech Builder'**
+  /// **'Computer Science Engineering Undergraduate - Civic-Tech Builder'**
   String get aboutProfileTitle;
 
   /// No description provided for @aboutProfileTagline.
@@ -2333,7 +2561,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutFooterBuiltBy.
   ///
   /// In en, this message translates to:
-  /// **'© {year} CamVote • Built by {name}'**
+  /// **'(c) {year} CamVote - Built by {name}'**
   String aboutFooterBuiltBy(Object name, Object year);
 
   /// No description provided for @copiedMessage.
@@ -3053,7 +3281,7 @@ abstract class AppLocalizations {
   /// No description provided for @alreadyVotedInElection.
   ///
   /// In en, this message translates to:
-  /// **'✅ You already voted in this election.'**
+  /// **'... You already voted in this election.'**
   String get alreadyVotedInElection;
 
   /// No description provided for @voteAction.
@@ -3299,7 +3527,7 @@ abstract class AppLocalizations {
   /// No description provided for @nextElectionCountdown.
   ///
   /// In en, this message translates to:
-  /// **'{days} days • {time}'**
+  /// **'{days} days - {time}'**
   String nextElectionCountdown(Object days, Object time);
 
   /// No description provided for @nextElectionCountdownLabelDays.
@@ -3845,7 +4073,7 @@ abstract class AppLocalizations {
   /// No description provided for @voterSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search by name or voter ID…'**
+  /// **'Search by name or voter ID...'**
   String get voterSearchHint;
 
   /// No description provided for @filterRegion.
@@ -3905,7 +4133,7 @@ abstract class AppLocalizations {
   /// No description provided for @flagsLabel.
   ///
   /// In en, this message translates to:
-  /// **'⚠ {signals}'**
+  /// **'Flags: {signals}'**
   String flagsLabel(Object signals);
 
   /// No description provided for @voterHasVotedLabel.
@@ -3977,7 +4205,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusPreEligible.
   ///
   /// In en, this message translates to:
-  /// **'Pre-eligible (18–19)'**
+  /// **'Pre-eligible (18-19)'**
   String get statusPreEligible;
 
   /// No description provided for @statusEligible.
@@ -4079,7 +4307,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminObserverSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search observers by name, email, or UID…'**
+  /// **'Search observers by name, email, or UID...'**
   String get adminObserverSearchHint;
 
   /// No description provided for @adminObserverAssignTitle.
@@ -4259,7 +4487,7 @@ abstract class AppLocalizations {
   /// No description provided for @fraudFlagsRateLabel.
   ///
   /// In en, this message translates to:
-  /// **'Flags: {flags} • Rate: {rate}%'**
+  /// **'Flags: {flags} - Rate: {rate}%'**
   String fraudFlagsRateLabel(Object flags, Object rate);
 
   /// No description provided for @observerDashboardHeaderSubtitle.
@@ -4277,7 +4505,7 @@ abstract class AppLocalizations {
   /// No description provided for @observerTotalsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Registered: {registered} • Voted: {voted} • Flags: {flags}'**
+  /// **'Registered: {registered} - Voted: {voted} - Flags: {flags}'**
   String observerTotalsLabel(Object registered, Object voted, Object flags);
 
   /// No description provided for @observerOpenAuditLogs.
@@ -5285,7 +5513,7 @@ abstract class AppLocalizations {
   /// No description provided for @incidentSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'{severity} • {location}'**
+  /// **'{severity} - {location}'**
   String incidentSubtitle(Object severity, Object location);
 
   /// No description provided for @filterLabel.
@@ -5507,7 +5735,7 @@ abstract class AppLocalizations {
   /// No description provided for @resultsPublishSummary.
   ///
   /// In en, this message translates to:
-  /// **'{votes} votes • {precincts} precincts reporting'**
+  /// **'{votes} votes - {precincts} precincts reporting'**
   String resultsPublishSummary(Object votes, Object precincts);
 
   /// No description provided for @publishResultsAction.
@@ -5603,7 +5831,7 @@ abstract class AppLocalizations {
   /// No description provided for @calendarEntrySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'{scope} • {location}\n{start} → {end}'**
+  /// **'{scope} - {location}\n{start} -> {end}'**
   String calendarEntrySubtitle(
     Object scope,
     Object location,
@@ -5722,7 +5950,7 @@ abstract class AppLocalizations {
   /// No description provided for @countdownEligibilityCelebrate.
   ///
   /// In en, this message translates to:
-  /// **'You’re now eligible to vote!'**
+  /// **'You\'re now eligible to vote!'**
   String get countdownEligibilityCelebrate;
 
   /// No description provided for @countdownSuspensionTitle.
@@ -5856,6 +6084,664 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Learn more about mobile features'**
   String get webDownloadLearnMore;
+
+  /// No description provided for @supportCamVoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support CamVote'**
+  String get supportCamVoteTitle;
+
+  /// No description provided for @supportCamVoteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a tip via TapTap Send, Remitly, or Orange Money Max It'**
+  String get supportCamVoteSubtitle;
+
+  /// No description provided for @supportCamVoteContributeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contribute via TapTap Send, Remitly, or Orange Money Max It'**
+  String get supportCamVoteContributeSubtitle;
+
+  /// No description provided for @supportCamVoteHeaderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Support CamVote project'**
+  String get supportCamVoteHeaderTitle;
+
+  /// No description provided for @supportCamVoteHeaderSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a tip via TapTap Send, Remitly, or Orange Money Max It. Tipping is open to everyone and keeps your details private.'**
+  String get supportCamVoteHeaderSubtitle;
+
+  /// No description provided for @supportCamVoteImpactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How your support is used'**
+  String get supportCamVoteImpactTitle;
+
+  /// No description provided for @supportCamVoteImpactIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contribution helps us keep CamVote secure, fast, and available for more citizens.'**
+  String get supportCamVoteImpactIntro;
+
+  /// No description provided for @supportCamVoteImpactSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Security hardening for biometric, liveness, and anti-fraud systems.'**
+  String get supportCamVoteImpactSecurity;
+
+  /// No description provided for @supportCamVoteImpactReliability.
+  ///
+  /// In en, this message translates to:
+  /// **'Better reliability, server uptime, and faster releases across web, Android, and iOS.'**
+  String get supportCamVoteImpactReliability;
+
+  /// No description provided for @supportCamVoteImpactCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'Civic education improvements and wider access for voters and observers.'**
+  String get supportCamVoteImpactCommunity;
+
+  /// No description provided for @supportCamVoteImpactTransparency.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent operations with auditable updates and measurable public impact.'**
+  String get supportCamVoteImpactTransparency;
+
+  /// No description provided for @helpSupportLiveHelpDesk.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Help Desk'**
+  String get helpSupportLiveHelpDesk;
+
+  /// No description provided for @helpSupportLiveHelpDeskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your message will be sent to the Help Desk admin and you will receive updates in notifications.'**
+  String get helpSupportLiveHelpDeskHint;
+
+  /// No description provided for @helpSupportChatWhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat on WhatsApp'**
+  String get helpSupportChatWhatsApp;
+
+  /// No description provided for @helpSupportWhatsAppGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hello CamVote, I am contacting support via WhatsApp.'**
+  String get helpSupportWhatsAppGreeting;
+
+  /// No description provided for @helpSupportWhatsAppOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open WhatsApp right now.'**
+  String get helpSupportWhatsAppOpenFailed;
+
+  /// No description provided for @helpSupportFaqObserverHowTo.
+  ///
+  /// In en, this message translates to:
+  /// **'How to become an observer: contact the admin with an official mandate and documents proving observer status (state, party, civil society, NGO, or international body), with recognition by the State of Cameroon. In observer mode, you cannot vote.'**
+  String get helpSupportFaqObserverHowTo;
+
+  /// No description provided for @tipChoosePaymentChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your payment channel'**
+  String get tipChoosePaymentChannel;
+
+  /// No description provided for @tipChannelElyonpay.
+  ///
+  /// In en, this message translates to:
+  /// **'TapTap Send'**
+  String get tipChannelElyonpay;
+
+  /// No description provided for @tipChannelRemitly.
+  ///
+  /// In en, this message translates to:
+  /// **'Remitly'**
+  String get tipChannelRemitly;
+
+  /// No description provided for @tipChannelMaxItQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange Money Max It'**
+  String get tipChannelMaxItQr;
+
+  /// No description provided for @tipAnonymousTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous tip'**
+  String get tipAnonymousTitle;
+
+  /// No description provided for @tipAnonymousSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name is hidden. A thank-you message is still delivered.'**
+  String get tipAnonymousSubtitle;
+
+  /// No description provided for @tipNameHiddenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (hidden)'**
+  String get tipNameHiddenLabel;
+
+  /// No description provided for @tipAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get tipAmountLabel;
+
+  /// No description provided for @tipAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid amount.'**
+  String get tipAmountInvalid;
+
+  /// No description provided for @tipCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get tipCurrencyLabel;
+
+  /// No description provided for @tipPersonalMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal message'**
+  String get tipPersonalMessageLabel;
+
+  /// No description provided for @tipPayWithElyonpay.
+  ///
+  /// In en, this message translates to:
+  /// **'Open TapTap Send'**
+  String get tipPayWithElyonpay;
+
+  /// No description provided for @tipPayWithRemitly.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Remitly'**
+  String get tipPayWithRemitly;
+
+  /// No description provided for @tipTapTapSendInstructionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'TapTap Send transfer'**
+  String get tipTapTapSendInstructionsTitle;
+
+  /// No description provided for @tipTapTapSendInstructionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open TapTap Send, complete your transfer, then submit the reference so our team can confirm your tip.'**
+  String get tipTapTapSendInstructionsBody;
+
+  /// No description provided for @tipRemitlyInstructionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remitly transfer'**
+  String get tipRemitlyInstructionsTitle;
+
+  /// No description provided for @tipRemitlyInstructionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Remitly, sign in if prompted, complete your transfer, then submit the reference so our team can confirm your tip.'**
+  String get tipRemitlyInstructionsBody;
+
+  /// No description provided for @tipReferenceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Transfer reference or transaction ID'**
+  String get tipReferenceHint;
+
+  /// No description provided for @tipProofNoteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the admin (optional)'**
+  String get tipProofNoteLabel;
+
+  /// No description provided for @tipSubmitProof.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit payment reference'**
+  String get tipSubmitProof;
+
+  /// No description provided for @tipSubmittedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference received. We will confirm shortly.'**
+  String get tipSubmittedBody;
+
+  /// No description provided for @tipPaymentSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference submitted'**
+  String get tipPaymentSubmitted;
+
+  /// No description provided for @tipReferenceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the payment reference first.'**
+  String get tipReferenceMissing;
+
+  /// No description provided for @tipReceiptOptionalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt screenshots (optional)'**
+  String get tipReceiptOptionalTitle;
+
+  /// No description provided for @tipReceiptOptionalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You can submit without screenshots. If you have a receipt, upload it to help us confirm faster.'**
+  String get tipReceiptOptionalBody;
+
+  /// No description provided for @tipReceiptUploadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload receipt'**
+  String get tipReceiptUploadAction;
+
+  /// No description provided for @tipReceiptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get tipReceiptLabel;
+
+  /// No description provided for @tipReceiptUploadedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} receipt(s) uploaded'**
+  String tipReceiptUploadedCount(Object count);
+
+  /// No description provided for @tipGenerateMaxItQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Max It QR'**
+  String get tipGenerateMaxItQr;
+
+  /// No description provided for @tipMsisdnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile money number'**
+  String get tipMsisdnLabel;
+
+  /// No description provided for @tipMsisdnHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. +2376XXXXXXXX'**
+  String get tipMsisdnHint;
+
+  /// No description provided for @tipMsisdnInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid phone number.'**
+  String get tipMsisdnInvalid;
+
+  /// No description provided for @tipScanMaxItQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Max It and scan this QR to tip'**
+  String get tipScanMaxItQr;
+
+  /// No description provided for @tipPaymentTrackingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment tracking'**
+  String get tipPaymentTrackingTitle;
+
+  /// No description provided for @tipReferenceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reference'**
+  String get tipReferenceLabel;
+
+  /// No description provided for @tipCheckStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Check status'**
+  String get tipCheckStatus;
+
+  /// No description provided for @tipWaitingConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for payment confirmation.'**
+  String get tipWaitingConfirmation;
+
+  /// No description provided for @tipCheckingPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking payment...'**
+  String get tipCheckingPayment;
+
+  /// No description provided for @tipPreparingSecurePaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing secure payment'**
+  String get tipPreparingSecurePaymentTitle;
+
+  /// No description provided for @tipPreparingSecurePaymentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait while CamVote configures your tip flow.'**
+  String get tipPreparingSecurePaymentSubtitle;
+
+  /// No description provided for @tipAnonymousSupporterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous supporter'**
+  String get tipAnonymousSupporterName;
+
+  /// No description provided for @tipSupporterFallbackName.
+  ///
+  /// In en, this message translates to:
+  /// **'Supporter'**
+  String get tipSupporterFallbackName;
+
+  /// No description provided for @tipNotificationReceivedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip received'**
+  String get tipNotificationReceivedTitle;
+
+  /// No description provided for @tipNotificationReceivedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you {name}! Your contribution was received.'**
+  String tipNotificationReceivedBody(Object name);
+
+  /// No description provided for @tipNotificationReceivedBodyAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you {name}! We received your tip of {amount} {currency}.'**
+  String tipNotificationReceivedBodyAmount(
+    Object name,
+    Object amount,
+    Object currency,
+  );
+
+  /// No description provided for @tipThankYouTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you {name}!'**
+  String tipThankYouTitle(Object name);
+
+  /// No description provided for @tipThankYouBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your support keeps CamVote growing and improving for everyone.'**
+  String get tipThankYouBody;
+
+  /// No description provided for @tipThankYouBodyAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you {name}. Your tip of {amount} {currency} has been received successfully. Your support helps CamVote grow with transparency and impact.'**
+  String tipThankYouBodyAmount(Object name, Object amount, Object currency);
+
+  /// No description provided for @tipSelectedChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected channel'**
+  String get tipSelectedChannel;
+
+  /// No description provided for @tipProviderLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Provider: {provider}'**
+  String tipProviderLabel(Object provider);
+
+  /// No description provided for @tipIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip ID: {tipId}'**
+  String tipIdLabel(Object tipId);
+
+  /// No description provided for @tipAnonymousModeEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Anonymous mode enabled'**
+  String get tipAnonymousModeEnabled;
+
+  /// No description provided for @tipDestinationOrangeMoneyCameroon.
+  ///
+  /// In en, this message translates to:
+  /// **'Orange Money Cameroon destination'**
+  String get tipDestinationOrangeMoneyCameroon;
+
+  /// No description provided for @tipRecipientNameNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient name not configured'**
+  String get tipRecipientNameNotConfigured;
+
+  /// No description provided for @tipRecipientNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient name: {name}'**
+  String tipRecipientNameLabel(Object name);
+
+  /// No description provided for @tipRecipientNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Recipient number: {number}'**
+  String tipRecipientNumberLabel(Object number);
+
+  /// No description provided for @tipVerifyRecipientNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify this recipient name inside checkout. If the name does not match, cancel.'**
+  String get tipVerifyRecipientNameHint;
+
+  /// No description provided for @tipPhoneHiddenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone number hidden for security: use TapTap Send, Remitly, or the Max It QR flow.'**
+  String get tipPhoneHiddenHint;
+
+  /// No description provided for @tipOpenPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Open payment'**
+  String get tipOpenPayment;
+
+  /// No description provided for @tipOpenMaxIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Max It'**
+  String get tipOpenMaxIt;
+
+  /// No description provided for @tipPaymentConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed'**
+  String get tipPaymentConfirmed;
+
+  /// No description provided for @tipPaymentAwaitingConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Awaiting confirmation'**
+  String get tipPaymentAwaitingConfirmation;
+
+  /// No description provided for @tipStatusSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} {currency} - {provider}'**
+  String tipStatusSummary(Object amount, Object currency, Object provider);
+
+  /// No description provided for @adminSupportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Support'**
+  String get adminSupportTitle;
+
+  /// No description provided for @adminSupportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review support tickets, respond to users, and track ticket status.'**
+  String get adminSupportSubtitle;
+
+  /// No description provided for @adminSupportSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name, email, registration ID, or message'**
+  String get adminSupportSearchHint;
+
+  /// No description provided for @adminSupportAllStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All statuses'**
+  String get adminSupportAllStatuses;
+
+  /// No description provided for @adminSupportNoTickets.
+  ///
+  /// In en, this message translates to:
+  /// **'No support tickets found.'**
+  String get adminSupportNoTickets;
+
+  /// No description provided for @adminSupportTicketUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Ticket updated successfully.'**
+  String get adminSupportTicketUpdatedSuccess;
+
+  /// No description provided for @adminSupportRespondToTicket.
+  ///
+  /// In en, this message translates to:
+  /// **'Respond to ticket {ticketId}'**
+  String adminSupportRespondToTicket(Object ticketId);
+
+  /// No description provided for @adminSupportNewStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New status'**
+  String get adminSupportNewStatusLabel;
+
+  /// No description provided for @adminSupportResponseMessageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Response message'**
+  String get adminSupportResponseMessageLabel;
+
+  /// No description provided for @adminSupportSendResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Send response'**
+  String get adminSupportSendResponse;
+
+  /// No description provided for @adminSupportRegistrationIdValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration ID: {registrationId}'**
+  String adminSupportRegistrationIdValue(Object registrationId);
+
+  /// No description provided for @adminSupportUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {date} {time}'**
+  String adminSupportUpdatedAt(Object date, Object time);
+
+  /// No description provided for @adminSupportRespondAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Respond'**
+  String get adminSupportRespondAction;
+
+  /// No description provided for @adminSupportUpdateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get adminSupportUpdateAction;
+
+  /// No description provided for @adminSupportStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get adminSupportStatusOpen;
+
+  /// No description provided for @adminSupportStatusAnswered.
+  ///
+  /// In en, this message translates to:
+  /// **'Answered'**
+  String get adminSupportStatusAnswered;
+
+  /// No description provided for @adminSupportStatusResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get adminSupportStatusResolved;
+
+  /// No description provided for @adminSupportStatusClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get adminSupportStatusClosed;
+
+  /// No description provided for @adminSupportStatusUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get adminSupportStatusUnknown;
+
+  /// No description provided for @voteImpactAddedLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vote was secured and added live.'**
+  String get voteImpactAddedLive;
+
+  /// No description provided for @voteImpactRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your vote was recorded successfully.'**
+  String get voteImpactRecorded;
+
+  /// No description provided for @voteImpactPreviousTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous total'**
+  String get voteImpactPreviousTotal;
+
+  /// No description provided for @voteImpactYourContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Your contribution'**
+  String get voteImpactYourContribution;
+
+  /// No description provided for @voteImpactNewLiveTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'New live total'**
+  String get voteImpactNewLiveTotal;
+
+  /// No description provided for @adminDemographicsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Registered voter age distribution'**
+  String get adminDemographicsTitle;
+
+  /// No description provided for @adminDemographicsTotalEligible.
+  ///
+  /// In en, this message translates to:
+  /// **'Total eligible voters on list: {total}'**
+  String adminDemographicsTotalEligible(Object total);
+
+  /// No description provided for @adminDemographicsYouth.
+  ///
+  /// In en, this message translates to:
+  /// **'Youth'**
+  String get adminDemographicsYouth;
+
+  /// No description provided for @adminDemographicsAdult.
+  ///
+  /// In en, this message translates to:
+  /// **'Adult'**
+  String get adminDemographicsAdult;
+
+  /// No description provided for @adminDemographicsSenior.
+  ///
+  /// In en, this message translates to:
+  /// **'Senior'**
+  String get adminDemographicsSenior;
 }
 
 class _AppLocalizationsDelegate

@@ -3,12 +3,13 @@
 `storage.rules` remains the canonical access model. The Worker now enforces those rules in front of Cloudflare R2 and adds redundancy.
 
 ## Access model (mirrors `storage.rules`)
-- `public/**` — read: anyone; write: admins only.
-- `registration_docs/{uid}/**` — read/write: owner `uid` or admins.
-- `incident_attachments/{uid}/**` — read/write: owner `uid` or admins.
+- `public/**` - read: anyone; write: admins only.
+- `registration_docs/{uid}/**` - read/write: owner `uid` or admins.
+- `incident_attachments/{uid}/**` - read/write: owner `uid` or admins.
+- `tip_receipts/{uid}/**` - read/write: owner `uid` or admins.
 
 ## How it is enforced
-- `POST /v1/storage/upload` takes `{ path, contentBase64, contentType }`, checks the caller’s Firebase ID token and role, writes to `R2_PRIMARY`, and best-effort replicates to `R2_BACKUP` if present.
+- `POST /v1/storage/upload` takes `{ path, contentBase64, contentType }`, checks the caller's Firebase ID token and role, writes to `R2_PRIMARY`, and best-effort replicates to `R2_BACKUP` if present.
 - `GET /v1/storage/file` streams the object. Authorization options:
   - Admins or the owning `uid` via `Authorization: Bearer <idToken>`.
   - Long-lived signed URL (`uid`, `exp`, `sig`) generated at upload time.

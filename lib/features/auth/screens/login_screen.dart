@@ -70,10 +70,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
-        title: Text(t.loginTitle(roleLabel)),
-      ),
+      appBar: kIsWeb
+          ? null
+          : AppBar(
+              leading: const AppBackButton(),
+              title: Text(t.loginTitle(roleLabel)),
+            ),
       body: Stack(
         children: [
           BrandBackdrop(

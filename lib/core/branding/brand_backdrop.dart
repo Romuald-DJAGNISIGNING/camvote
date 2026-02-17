@@ -15,9 +15,27 @@ class BrandBackdrop extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
     final surfaceWashAlpha = kIsWeb ? 0 : (isDark ? 70 : 36);
-    final gradient = isDark
-        ? BrandPalette.darkHeroGradient
-        : BrandPalette.heroGradient;
+    final gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? [
+              Color.alphaBlend(cs.primary.withAlpha(34), cs.surface),
+              Color.alphaBlend(cs.secondary.withAlpha(42), cs.surface),
+              Color.alphaBlend(cs.tertiary.withAlpha(48), cs.surface),
+            ]
+          : [
+              Color.alphaBlend(
+                cs.tertiary.withAlpha(78),
+                cs.surface.withAlpha(252),
+              ),
+              Color.alphaBlend(
+                cs.secondary.withAlpha(76),
+                cs.surface.withAlpha(252),
+              ),
+              Color.alphaBlend(cs.primary.withAlpha(80), cs.surface),
+            ],
+    );
 
     return Stack(
       children: [

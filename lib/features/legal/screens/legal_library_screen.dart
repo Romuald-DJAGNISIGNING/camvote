@@ -2,13 +2,13 @@ import 'package:camvote/core/errors/error_message.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/routing/route_paths.dart';
+import '../../../core/utils/external_links.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
@@ -19,8 +19,7 @@ class LegalLibraryScreen extends ConsumerWidget {
   const LegalLibraryScreen({super.key});
 
   Future<void> _openUrl(BuildContext context, String url) async {
-    final uri = Uri.parse(url);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final ok = await openExternalLink(context, url, showError: false);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).openLinkFailed)),
@@ -62,12 +61,8 @@ class LegalLibraryScreen extends ConsumerWidget {
         child: ResponsiveContent(
           child: docsAsync.when(
             loading: () => const Center(child: CamElectionLoader()),
-            error: (e, _) => _buildContent(
-              context,
-              t,
-              docs: _fallbackDocs(t),
-              error: e,
-            ),
+            error: (e, _) =>
+                _buildContent(context, t, docs: _fallbackDocs(t), error: e),
             data: (docs) {
               final resolved = docs.isEmpty ? _fallbackDocs(t) : docs;
               return _buildContent(
@@ -179,5 +174,3 @@ class LegalLibraryScreen extends ConsumerWidget {
     );
   }
 }
-
-

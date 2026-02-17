@@ -4,6 +4,7 @@ import '../models/admin_models.dart';
 
 abstract class AdminRepository {
   Future<AdminStats> fetchAdminStats();
+  Future<VoterDemographics> fetchVoterDemographics();
   Future<List<Election>> fetchElections();
   Future<Election> createElection({
     required String title,
@@ -74,15 +75,28 @@ class ApiAdminRepository implements AdminRepository {
     try {
       final response = await _workerClient.get('/v1/admin/stats');
       return AdminStats(
-        totalRegistered: _asInt(response['totalRegistered']),
+        totalRegistered: _firstNonZero([
+          response['totalRegisteredVoters'],
+          response['totalRegistered'],
+        ]),
         totalVoted: _asInt(response['totalVoted']),
         suspiciousFlags: _asInt(response['suspiciousFlags']),
         activeElections: _asInt(response['activeElections']),
+        adminCount: _asInt(response['adminCount']),
+        observerCount: _asInt(response['observerCount']),
       );
     } catch (_) {
-      final usersSnap = await _firestore
+      final verifiedUsersSnap = await _firestore
           .collection('users')
           .where('verified', isEqualTo: true)
+          .get();
+      final adminUsersSnap = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'admin')
+          .get();
+      final observerUsersSnap = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'observer')
           .get();
       final votesSnap = await _firestore.collection('votes').get();
       final deviceFlagsSnap = await _firestore
@@ -96,13 +110,76 @@ class ApiAdminRepository implements AdminRepository {
         final endAt = _parseDate(data['endAt'] ?? data['closesAt']);
         return endAt == null || endAt.isAfter(now);
       }).length;
+      final verifiedVoters = verifiedUsersSnap.docs.where((doc) {
+        final role = _asString(doc.data()['role']).toLowerCase();
+        return role.isEmpty || role == 'voter';
+      }).length;
 
       return AdminStats(
-        totalRegistered: usersSnap.size,
+        totalRegistered: verifiedVoters,
         totalVoted: votesSnap.size,
         suspiciousFlags: deviceFlagsSnap.size,
         activeElections: active,
+        adminCount: adminUsersSnap.size,
+        observerCount: observerUsersSnap.size,
       );
+    }
+  }
+
+  @override
+  Future<VoterDemographics> fetchVoterDemographics() async {
+    try {
+      final response = await _workerClient.get(
+        '/v1/admin/analytics/voter-demographics',
+      );
+      final rawBands = response['bands'];
+      final bands = <AgeBandDistribution>[];
+      if (rawBands is List) {
+        for (final raw in rawBands) {
+          if (raw is! Map) continue;
+          final map = raw.cast<String, dynamic>();
+          bands.add(
+            AgeBandDistribution(
+              key: _asString(map['key']),
+              label: _asString(map['label']),
+              count: _asInt(map['count']),
+              percent: _asDouble(map['percent']),
+            ),
+          );
+        }
+      }
+      final derived = (response['derived'] is Map)
+          ? (response['derived'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+      final youthRaw = (derived['youth'] is Map)
+          ? (derived['youth'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+      final adultRaw = (derived['adult'] is Map)
+          ? (derived['adult'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+      final seniorRaw = (derived['senior'] is Map)
+          ? (derived['senior'] as Map).cast<String, dynamic>()
+          : const <String, dynamic>{};
+
+      return VoterDemographics(
+        total: _asInt(response['total']),
+        bands: bands,
+        youth: DerivedAgeDistribution(
+          count: _asInt(youthRaw['count']),
+          percent: _asDouble(youthRaw['percent']),
+        ),
+        adult: DerivedAgeDistribution(
+          count: _asInt(adultRaw['count']),
+          percent: _asDouble(adultRaw['percent']),
+        ),
+        senior: DerivedAgeDistribution(
+          count: _asInt(seniorRaw['count']),
+          percent: _asDouble(seniorRaw['percent']),
+        ),
+      );
+    } catch (_) {
+      final voters = await fetchVoters();
+      return _computeDemographicsFromVoters(voters);
     }
   }
 
@@ -304,6 +381,8 @@ class ApiAdminRepository implements AdminRepository {
         if (reason != null && reason.isNotEmpty) 'reason': reason,
         if (voterId != null && voterId.isNotEmpty) 'voterId': voterId,
       },
+      allowOfflineQueue: true,
+      queueType: 'admin_registration_decide',
     );
   }
 
@@ -325,12 +404,9 @@ class ApiAdminRepository implements AdminRepository {
       if (items is! List) return const [];
       final voters = items
           .whereType<Map<String, dynamic>>()
-          .map(
-            (v) => _parseVoter(
-              (v['data'] as Map?)?.cast<String, dynamic>() ??
-                  const <String, dynamic>{},
-            ),
-          )
+          .map(_extractVoterData)
+          .where(_isVoterRoleData)
+          .map(_parseVoter)
           .toList();
       if (query.trim().isEmpty) return voters;
       final needle = query.trim().toLowerCase();
@@ -354,7 +430,7 @@ class ApiAdminRepository implements AdminRepository {
       }
       final snap = await queryRef.get();
       final raw = snap.docs.map((d) => {'id': d.id, ...d.data()}).toList();
-      final voters = raw.map(_parseVoter).toList();
+      final voters = raw.where(_isVoterRoleData).map(_parseVoter).toList();
       if (query.trim().isEmpty) return voters;
       final needle = query.trim().toLowerCase();
       return voters
@@ -410,7 +486,22 @@ class ApiAdminRepository implements AdminRepository {
       final response = await _workerClient.post(
         '/v1/admin/observers/assign',
         data: {'identifier': identifier.trim(), 'role': role},
+        allowOfflineQueue: true,
+        queueType: 'admin_observer_assign',
       );
+      final queued = response['queued'] == true;
+      if (queued) {
+        return ObserverAdminRecord(
+          uid: identifier.trim(),
+          fullName: '',
+          email: identifier.trim().contains('@') ? identifier.trim() : '',
+          role: role,
+          status: role == 'observer' ? 'observer' : 'public',
+          mustChangePassword: false,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
       final user = response['user'];
       if (user is Map<String, dynamic>) {
         return _parseObserver(user);
@@ -474,7 +565,22 @@ class ApiAdminRepository implements AdminRepository {
         'password': temporaryPassword,
         if (username.trim().isNotEmpty) 'username': username.trim(),
       },
+      allowOfflineQueue: true,
+      queueType: 'admin_observer_create',
     );
+    final queued = response['queued'] == true;
+    if (queued) {
+      return ObserverAdminRecord(
+        uid: '',
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        role: 'observer',
+        status: 'pending',
+        mustChangePassword: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
     final user =
         (response['user'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
@@ -486,6 +592,8 @@ class ApiAdminRepository implements AdminRepository {
     await _workerClient.post(
       '/v1/admin/observers/delete',
       data: {'identifier': identifier.trim()},
+      allowOfflineQueue: true,
+      queueType: 'admin_observer_delete',
     );
   }
 
@@ -589,6 +697,11 @@ class ApiAdminRepository implements AdminRepository {
     return _parseElection({...data, 'id': id, 'candidates': candidates});
   }
 
+  Map<String, dynamic> _extractVoterData(Map<String, dynamic> payload) {
+    return (payload['data'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
+  }
+
   Candidate _parseCandidate(Map<String, dynamic> data) {
     return Candidate(
       id: _asString(data['id']),
@@ -642,6 +755,12 @@ class ApiAdminRepository implements AdminRepository {
       deviceFlagged: _asBool(data['deviceFlagged']),
       biometricDuplicateFlag: _asBool(data['biometricDuplicateFlag']),
     );
+  }
+
+  bool _isVoterRoleData(Map<String, dynamic> data) {
+    final role = _asString(data['role']).toLowerCase();
+    // Legacy records may not have role set; treat them as voter-compatible.
+    return role.isEmpty || role == 'voter';
   }
 
   AuditEvent _parseAudit(Map<String, dynamic> data) {
@@ -790,6 +909,17 @@ class ApiAdminRepository implements AdminRepository {
 
   String _asString(dynamic value) => value?.toString().trim() ?? '';
 
+  int _firstNonZero(List<dynamic> values) {
+    for (final value in values) {
+      final parsed = _asInt(value);
+      if (parsed > 0) return parsed;
+    }
+    for (final value in values) {
+      if (value != null) return _asInt(value);
+    }
+    return 0;
+  }
+
   int _asInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -798,6 +928,13 @@ class ApiAdminRepository implements AdminRepository {
       return int.tryParse(raw.substring(2), radix: 16) ?? 0;
     }
     return int.tryParse(raw) ?? 0;
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   bool _asBool(dynamic value) {
@@ -821,5 +958,92 @@ class ApiAdminRepository implements AdminRepository {
       age -= 1;
     }
     return age;
+  }
+
+  VoterDemographics _computeDemographicsFromVoters(
+    List<VoterAdminRecord> voters,
+  ) {
+    final bands = <AgeBandDistribution>[
+      const AgeBandDistribution(
+        key: '18_24',
+        label: '18-24',
+        count: 0,
+        percent: 0,
+      ),
+      const AgeBandDistribution(
+        key: '25_34',
+        label: '25-34',
+        count: 0,
+        percent: 0,
+      ),
+      const AgeBandDistribution(
+        key: '35_44',
+        label: '35-44',
+        count: 0,
+        percent: 0,
+      ),
+      const AgeBandDistribution(
+        key: '45_59',
+        label: '45-59',
+        count: 0,
+        percent: 0,
+      ),
+      const AgeBandDistribution(
+        key: '60_plus',
+        label: '60+',
+        count: 0,
+        percent: 0,
+      ),
+    ];
+
+    int total = 0;
+    final counts = List<int>.filled(bands.length, 0);
+    for (final voter in voters) {
+      if (!voter.verified || voter.age < 18) continue;
+      total += 1;
+      if (voter.age <= 24) {
+        counts[0] += 1;
+      } else if (voter.age <= 34) {
+        counts[1] += 1;
+      } else if (voter.age <= 44) {
+        counts[2] += 1;
+      } else if (voter.age <= 59) {
+        counts[3] += 1;
+      } else {
+        counts[4] += 1;
+      }
+    }
+
+    double pct(int count) => total == 0 ? 0 : ((count / total) * 100);
+    final resolvedBands = <AgeBandDistribution>[
+      for (var i = 0; i < bands.length; i++)
+        AgeBandDistribution(
+          key: bands[i].key,
+          label: bands[i].label,
+          count: counts[i],
+          percent: pct(counts[i]),
+        ),
+    ];
+
+    final youthCount = counts[0] + counts[1];
+    final adultCount = counts[2] + counts[3];
+    final seniorCount = counts[4];
+
+    return VoterDemographics(
+      total: total,
+      bands: resolvedBands,
+      youth: DerivedAgeDistribution(
+        count: youthCount,
+        percent: pct(youthCount),
+      ),
+      adult: DerivedAgeDistribution(
+        count: adultCount,
+        percent: pct(adultCount),
+      ),
+      senior: DerivedAgeDistribution(
+        count: seniorCount,
+        percent: pct(seniorCount),
+      ),
+    );
   }
 }

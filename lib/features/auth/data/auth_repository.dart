@@ -129,6 +129,8 @@ class AuthRepository {
         'mustChangePassword': false,
         'passwordChangedAt': DateTime.now().toIso8601String(),
       },
+      allowOfflineQueue: true,
+      queueType: 'user_profile_upsert',
     );
   }
 
@@ -174,6 +176,8 @@ class AuthRepository {
           'email': firebaseUser.email ?? '',
           'fullName': firebaseUser.displayName ?? '',
         },
+        allowOfflineQueue: true,
+        queueType: 'user_bootstrap',
       );
     } catch (_) {
       // Best-effort; Firestore fetch below will surface issues if any.

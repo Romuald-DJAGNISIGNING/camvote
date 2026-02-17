@@ -14,6 +14,7 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/widgets/navigation/app_back_button.dart';
+import '../../../core/widgets/qr/branded_qr_code.dart';
 import '../domain/vote_receipt.dart';
 
 class VoterReceiptScreen extends StatelessWidget {
@@ -123,6 +124,26 @@ class VoterReceiptScreen extends StatelessWidget {
                             child: SelectableText(
                               token,
                               style: theme.textTheme.bodyLarge,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface.withAlpha(245),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant
+                                      .withAlpha(90),
+                                ),
+                              ),
+                              child: BrandedQrCode(
+                                data: 'CAMVOTE_RECEIPT|$token',
+                                size: 148,
+                                logoScale: 0.16,
+                                animatedFrame: true,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 12),

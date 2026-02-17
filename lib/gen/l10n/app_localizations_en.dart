@@ -218,7 +218,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifyStatusRegisteredPreEligible =>
-      'Registered (18–19, not eligible to vote yet)';
+      'Registered (18-19, not eligible to vote yet)';
 
   @override
   String get verifyStatusEligible => 'Eligible to vote';
@@ -237,7 +237,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verifyEligibleToastMessage =>
-      'Congratulations! You can now vote in eligible elections. 🎉';
+      'Congratulations! You can now vote in eligible elections.';
 
   @override
   String get voterPortalTitle => 'Voter Portal';
@@ -424,7 +424,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mapLegendTitle => 'Legend';
 
   @override
-  String get loading => 'Loading…';
+  String get loading => 'Loading...';
 
   @override
   String get startupError => 'Startup error';
@@ -541,7 +541,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runOcr => 'Run OCR & Verify';
 
   @override
-  String get ocrProcessing => 'Processing…';
+  String get ocrProcessing => 'Processing...';
 
   @override
   String get ocrExtractedTitle => 'Extracted from document';
@@ -560,7 +560,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ocrSummaryVerifiedPendingNationality =>
-      'Verified • Nationality pending admin review';
+      'Verified - Nationality pending admin review';
 
   @override
   String get ocrSummaryNationalityPending => 'Nationality pending admin review';
@@ -578,7 +578,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ocrIssueForeignDocument => 'Foreign document detected';
 
   @override
-  String get ocrVerified => 'Document verified ✅';
+  String get ocrVerified => 'Document verified...';
 
   @override
   String get ocrRejected => 'Verification rejected';
@@ -625,6 +625,52 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get adminTipReviewTitle => 'Tip review';
+
+  @override
+  String get adminTipReviewSubtitle =>
+      'Confirm manual tips (TapTap Send, Remitly, Orange Money Max It QR) and track proof submissions.';
+
+  @override
+  String get adminTipNoTips => 'No tips found.';
+
+  @override
+  String get adminTipFilterAll => 'All';
+
+  @override
+  String get adminTipFilterSubmitted => 'Submitted';
+
+  @override
+  String get adminTipFilterPending => 'Pending';
+
+  @override
+  String get adminTipFilterSuccess => 'Confirmed';
+
+  @override
+  String get adminTipFilterFailed => 'Rejected';
+
+  @override
+  String get adminTipApproveTitle => 'Confirm tip';
+
+  @override
+  String get adminTipRejectTitle => 'Reject tip';
+
+  @override
+  String get adminTipDecisionNoteLabel => 'Decision note';
+
+  @override
+  String get adminTipDecisionSuccess => 'Tip status updated.';
+
+  @override
+  String get approve => 'Approve';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get statusUnknown => 'Unknown';
+
+  @override
   String loginHeaderTitle(Object role) {
     return 'Secure access for $role';
   }
@@ -635,6 +681,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authInvalidCredentials => 'Invalid email/ID or password.';
+
+  @override
+  String get invalidEmailAddress => 'Enter a valid email address.';
 
   @override
   String get authAccountNotFound => 'No account was found for this user.';
@@ -860,6 +909,90 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String helpSupportTicketQueued(Object queueId) {
+    return 'Ticket queued offline. Reference: $queueId. It will auto-send when connection returns.';
+  }
+
+  @override
+  String offlineQueuedWithReference(Object queueId) {
+    return 'Action queued offline. Reference: $queueId. It will auto-sync when connection returns.';
+  }
+
+  @override
+  String get helpSupportOfflineQueueTitle => 'Pending offline sync';
+
+  @override
+  String helpSupportOfflineQueueBodyCount(Object count) {
+    return '$count support ticket(s) are queued offline and will auto-send when connection returns.';
+  }
+
+  @override
+  String get offlineBannerOfflineTitle => 'You\'re offline';
+
+  @override
+  String get offlineBannerPendingTitle => 'Sync pending';
+
+  @override
+  String get offlineBannerOfflineBody =>
+      'Some actions may be queued and will auto-sync when connection returns.';
+
+  @override
+  String offlineBannerOfflineBodyCount(Object count) {
+    return '$count action(s) are queued and will auto-sync when connection returns.';
+  }
+
+  @override
+  String offlineBannerPendingBodyCount(Object count) {
+    return '$count action(s) are ready to sync.';
+  }
+
+  @override
+  String get offlineBannerSyncNow => 'Sync now';
+
+  @override
+  String offlineBannerSyncedCount(Object count) {
+    return 'Synced $count item(s).';
+  }
+
+  @override
+  String get offlineBannerHintAdmin =>
+      'Admin: keep working offline. CamVote will sync when internet returns (support replies, incidents, tip proofs/decisions, audits, notification reads).';
+
+  @override
+  String get offlineBannerHintObserver =>
+      'Observer: you can still report incidents and update your checklist offline. Evidence uploads and status updates will sync automatically.';
+
+  @override
+  String get offlineBannerHintVoter =>
+      'Voter: you can browse cached pages offline. Key submissions (registration, support tickets, tip proofs) queue and sync when you are back online.';
+
+  @override
+  String get offlineBannerHintPublic =>
+      'Public: cached info remains available. New updates load automatically when internet returns.';
+
+  @override
+  String get helpSupportAiTitle => 'CamGuide assistant';
+
+  @override
+  String get helpSupportAiSubtitle =>
+      'Ask about registration, observer rules, vote security, incidents, or Cameroon election context.';
+
+  @override
+  String get helpSupportAiInputHint => 'Ask CamGuide a question...';
+
+  @override
+  String get helpSupportAiSend => 'Ask';
+
+  @override
+  String get helpSupportAiThinking => 'CamGuide is thinking...';
+
+  @override
+  String get helpSupportAiSourcesLabel => 'Sources';
+
+  @override
+  String get helpSupportAiSuggestionsLabel => 'Suggested follow-ups';
+
+  @override
   String get helpSupportFaqTitle => 'FAQs';
 
   @override
@@ -1007,7 +1140,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutProfileTitle =>
-      'Computer Science Engineering Undergraduate • Civic-Tech Builder';
+      'Computer Science Engineering Undergraduate - Civic-Tech Builder';
 
   @override
   String get aboutProfileTagline =>
@@ -1216,7 +1349,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String aboutFooterBuiltBy(Object name, Object year) {
-    return '© $year CamVote • Built by $name';
+    return '(c) $year CamVote - Built by $name';
   }
 
   @override
@@ -1612,7 +1745,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get alreadyVotedInElection => '✅ You already voted in this election.';
+  String get alreadyVotedInElection =>
+      '... You already voted in this election.';
 
   @override
   String get voteAction => 'Vote';
@@ -1752,7 +1886,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String nextElectionCountdown(Object days, Object time) {
-    return '$days days • $time';
+    return '$days days - $time';
   }
 
   @override
@@ -2061,7 +2195,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cleaning done. Suspicious voters suspended.';
 
   @override
-  String get voterSearchHint => 'Search by name or voter ID…';
+  String get voterSearchHint => 'Search by name or voter ID...';
 
   @override
   String get filterRegion => 'Filter region';
@@ -2098,7 +2232,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String flagsLabel(Object signals) {
-    return '⚠ $signals';
+    return 'Flags: $signals';
   }
 
   @override
@@ -2137,7 +2271,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusRegistered => 'Registered';
 
   @override
-  String get statusPreEligible => 'Pre-eligible (18–19)';
+  String get statusPreEligible => 'Pre-eligible (18-19)';
 
   @override
   String get statusEligible => 'Eligible (20+)';
@@ -2191,7 +2325,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adminObserverSearchHint =>
-      'Search observers by name, email, or UID…';
+      'Search observers by name, email, or UID...';
 
   @override
   String get adminObserverAssignTitle => 'Grant observer access';
@@ -2295,7 +2429,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String fraudFlagsRateLabel(Object flags, Object rate) {
-    return 'Flags: $flags • Rate: $rate%';
+    return 'Flags: $flags - Rate: $rate%';
   }
 
   @override
@@ -2307,7 +2441,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String observerTotalsLabel(Object registered, Object voted, Object flags) {
-    return 'Registered: $registered • Voted: $voted • Flags: $flags';
+    return 'Registered: $registered - Voted: $voted - Flags: $flags';
   }
 
   @override
@@ -2860,7 +2994,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String incidentSubtitle(Object severity, Object location) {
-    return '$severity • $location';
+    return '$severity - $location';
   }
 
   @override
@@ -2980,7 +3114,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String resultsPublishSummary(Object votes, Object precincts) {
-    return '$votes votes • $precincts precincts reporting';
+    return '$votes votes - $precincts precincts reporting';
   }
 
   @override
@@ -3041,7 +3175,7 @@ class AppLocalizationsEn extends AppLocalizations {
     Object start,
     Object end,
   ) {
-    return '$scope • $location\n$start → $end';
+    return '$scope - $location\n$start -> $end';
   }
 
   @override
@@ -3107,7 +3241,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get countdownEligibilityCelebrate => 'You’re now eligible to vote!';
+  String get countdownEligibilityCelebrate => 'You\'re now eligible to vote!';
 
   @override
   String get countdownSuspensionTitle => 'Suspension ends';
@@ -3179,4 +3313,386 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get webDownloadLearnMore => 'Learn more about mobile features';
+
+  @override
+  String get supportCamVoteTitle => 'Support CamVote';
+
+  @override
+  String get supportCamVoteSubtitle =>
+      'Send a tip via TapTap Send, Remitly, or Orange Money Max It';
+
+  @override
+  String get supportCamVoteContributeSubtitle =>
+      'Contribute via TapTap Send, Remitly, or Orange Money Max It';
+
+  @override
+  String get supportCamVoteHeaderTitle => 'Support CamVote project';
+
+  @override
+  String get supportCamVoteHeaderSubtitle =>
+      'Send a tip via TapTap Send, Remitly, or Orange Money Max It. Tipping is open to everyone and keeps your details private.';
+
+  @override
+  String get supportCamVoteImpactTitle => 'How your support is used';
+
+  @override
+  String get supportCamVoteImpactIntro =>
+      'Your contribution helps us keep CamVote secure, fast, and available for more citizens.';
+
+  @override
+  String get supportCamVoteImpactSecurity =>
+      'Security hardening for biometric, liveness, and anti-fraud systems.';
+
+  @override
+  String get supportCamVoteImpactReliability =>
+      'Better reliability, server uptime, and faster releases across web, Android, and iOS.';
+
+  @override
+  String get supportCamVoteImpactCommunity =>
+      'Civic education improvements and wider access for voters and observers.';
+
+  @override
+  String get supportCamVoteImpactTransparency =>
+      'Transparent operations with auditable updates and measurable public impact.';
+
+  @override
+  String get helpSupportLiveHelpDesk => 'Live Help Desk';
+
+  @override
+  String get helpSupportLiveHelpDeskHint =>
+      'Your message will be sent to the Help Desk admin and you will receive updates in notifications.';
+
+  @override
+  String get helpSupportChatWhatsApp => 'Chat on WhatsApp';
+
+  @override
+  String get helpSupportWhatsAppGreeting =>
+      'Hello CamVote, I am contacting support via WhatsApp.';
+
+  @override
+  String get helpSupportWhatsAppOpenFailed =>
+      'Unable to open WhatsApp right now.';
+
+  @override
+  String get helpSupportFaqObserverHowTo =>
+      'How to become an observer: contact the admin with an official mandate and documents proving observer status (state, party, civil society, NGO, or international body), with recognition by the State of Cameroon. In observer mode, you cannot vote.';
+
+  @override
+  String get tipChoosePaymentChannel => 'Choose your payment channel';
+
+  @override
+  String get tipChannelElyonpay => 'TapTap Send';
+
+  @override
+  String get tipChannelRemitly => 'Remitly';
+
+  @override
+  String get tipChannelMaxItQr => 'Orange Money Max It';
+
+  @override
+  String get tipAnonymousTitle => 'Anonymous tip';
+
+  @override
+  String get tipAnonymousSubtitle =>
+      'Your name is hidden. A thank-you message is still delivered.';
+
+  @override
+  String get tipNameHiddenLabel => 'Name (hidden)';
+
+  @override
+  String get tipAmountLabel => 'Amount';
+
+  @override
+  String get tipAmountInvalid => 'Enter a valid amount.';
+
+  @override
+  String get tipCurrencyLabel => 'Currency';
+
+  @override
+  String get tipPersonalMessageLabel => 'Personal message';
+
+  @override
+  String get tipPayWithElyonpay => 'Open TapTap Send';
+
+  @override
+  String get tipPayWithRemitly => 'Open Remitly';
+
+  @override
+  String get tipTapTapSendInstructionsTitle => 'TapTap Send transfer';
+
+  @override
+  String get tipTapTapSendInstructionsBody =>
+      'Open TapTap Send, complete your transfer, then submit the reference so our team can confirm your tip.';
+
+  @override
+  String get tipRemitlyInstructionsTitle => 'Remitly transfer';
+
+  @override
+  String get tipRemitlyInstructionsBody =>
+      'Open Remitly, sign in if prompted, complete your transfer, then submit the reference so our team can confirm your tip.';
+
+  @override
+  String get tipReferenceHint => 'Transfer reference or transaction ID';
+
+  @override
+  String get tipProofNoteLabel => 'Note for the admin (optional)';
+
+  @override
+  String get tipSubmitProof => 'Submit payment reference';
+
+  @override
+  String get tipSubmittedBody => 'Reference received. We will confirm shortly.';
+
+  @override
+  String get tipPaymentSubmitted => 'Reference submitted';
+
+  @override
+  String get tipReferenceMissing => 'Enter the payment reference first.';
+
+  @override
+  String get tipReceiptOptionalTitle => 'Receipt screenshots (optional)';
+
+  @override
+  String get tipReceiptOptionalBody =>
+      'You can submit without screenshots. If you have a receipt, upload it to help us confirm faster.';
+
+  @override
+  String get tipReceiptUploadAction => 'Upload receipt';
+
+  @override
+  String get tipReceiptLabel => 'Receipt';
+
+  @override
+  String tipReceiptUploadedCount(Object count) {
+    return '$count receipt(s) uploaded';
+  }
+
+  @override
+  String get tipGenerateMaxItQr => 'Show Max It QR';
+
+  @override
+  String get tipMsisdnLabel => 'Mobile money number';
+
+  @override
+  String get tipMsisdnHint => 'e.g. +2376XXXXXXXX';
+
+  @override
+  String get tipMsisdnInvalid => 'Enter a valid phone number.';
+
+  @override
+  String get tipScanMaxItQr => 'Open Max It and scan this QR to tip';
+
+  @override
+  String get tipPaymentTrackingTitle => 'Payment tracking';
+
+  @override
+  String get tipReferenceLabel => 'Reference';
+
+  @override
+  String get tipCheckStatus => 'Check status';
+
+  @override
+  String get tipWaitingConfirmation => 'Waiting for payment confirmation.';
+
+  @override
+  String get tipCheckingPayment => 'Checking payment...';
+
+  @override
+  String get tipPreparingSecurePaymentTitle => 'Preparing secure payment';
+
+  @override
+  String get tipPreparingSecurePaymentSubtitle =>
+      'Please wait while CamVote configures your tip flow.';
+
+  @override
+  String get tipAnonymousSupporterName => 'Anonymous supporter';
+
+  @override
+  String get tipSupporterFallbackName => 'Supporter';
+
+  @override
+  String get tipNotificationReceivedTitle => 'Tip received';
+
+  @override
+  String tipNotificationReceivedBody(Object name) {
+    return 'Thank you $name! Your contribution was received.';
+  }
+
+  @override
+  String tipNotificationReceivedBodyAmount(
+    Object name,
+    Object amount,
+    Object currency,
+  ) {
+    return 'Thank you $name! We received your tip of $amount $currency.';
+  }
+
+  @override
+  String tipThankYouTitle(Object name) {
+    return 'Thank you $name!';
+  }
+
+  @override
+  String get tipThankYouBody =>
+      'Your support keeps CamVote growing and improving for everyone.';
+
+  @override
+  String tipThankYouBodyAmount(Object name, Object amount, Object currency) {
+    return 'Thank you $name. Your tip of $amount $currency has been received successfully. Your support helps CamVote grow with transparency and impact.';
+  }
+
+  @override
+  String get tipSelectedChannel => 'Selected channel';
+
+  @override
+  String tipProviderLabel(Object provider) {
+    return 'Provider: $provider';
+  }
+
+  @override
+  String tipIdLabel(Object tipId) {
+    return 'Tip ID: $tipId';
+  }
+
+  @override
+  String get tipAnonymousModeEnabled => 'Anonymous mode enabled';
+
+  @override
+  String get tipDestinationOrangeMoneyCameroon =>
+      'Orange Money Cameroon destination';
+
+  @override
+  String get tipRecipientNameNotConfigured => 'Recipient name not configured';
+
+  @override
+  String tipRecipientNameLabel(Object name) {
+    return 'Recipient name: $name';
+  }
+
+  @override
+  String tipRecipientNumberLabel(Object number) {
+    return 'Recipient number: $number';
+  }
+
+  @override
+  String get tipVerifyRecipientNameHint =>
+      'Verify this recipient name inside checkout. If the name does not match, cancel.';
+
+  @override
+  String get tipPhoneHiddenHint =>
+      'Phone number hidden for security: use TapTap Send, Remitly, or the Max It QR flow.';
+
+  @override
+  String get tipOpenPayment => 'Open payment';
+
+  @override
+  String get tipOpenMaxIt => 'Open Max It';
+
+  @override
+  String get tipPaymentConfirmed => 'Payment confirmed';
+
+  @override
+  String get tipPaymentAwaitingConfirmation => 'Awaiting confirmation';
+
+  @override
+  String tipStatusSummary(Object amount, Object currency, Object provider) {
+    return '$amount $currency - $provider';
+  }
+
+  @override
+  String get adminSupportTitle => 'Admin Support';
+
+  @override
+  String get adminSupportSubtitle =>
+      'Review support tickets, respond to users, and track ticket status.';
+
+  @override
+  String get adminSupportSearchHint =>
+      'Search by name, email, registration ID, or message';
+
+  @override
+  String get adminSupportAllStatuses => 'All statuses';
+
+  @override
+  String get adminSupportNoTickets => 'No support tickets found.';
+
+  @override
+  String get adminSupportTicketUpdatedSuccess => 'Ticket updated successfully.';
+
+  @override
+  String adminSupportRespondToTicket(Object ticketId) {
+    return 'Respond to ticket $ticketId';
+  }
+
+  @override
+  String get adminSupportNewStatusLabel => 'New status';
+
+  @override
+  String get adminSupportResponseMessageLabel => 'Response message';
+
+  @override
+  String get adminSupportSendResponse => 'Send response';
+
+  @override
+  String adminSupportRegistrationIdValue(Object registrationId) {
+    return 'Registration ID: $registrationId';
+  }
+
+  @override
+  String adminSupportUpdatedAt(Object date, Object time) {
+    return 'Updated $date $time';
+  }
+
+  @override
+  String get adminSupportRespondAction => 'Respond';
+
+  @override
+  String get adminSupportUpdateAction => 'Update';
+
+  @override
+  String get adminSupportStatusOpen => 'Open';
+
+  @override
+  String get adminSupportStatusAnswered => 'Answered';
+
+  @override
+  String get adminSupportStatusResolved => 'Resolved';
+
+  @override
+  String get adminSupportStatusClosed => 'Closed';
+
+  @override
+  String get adminSupportStatusUnknown => 'Unknown';
+
+  @override
+  String get voteImpactAddedLive => 'Your vote was secured and added live.';
+
+  @override
+  String get voteImpactRecorded => 'Your vote was recorded successfully.';
+
+  @override
+  String get voteImpactPreviousTotal => 'Previous total';
+
+  @override
+  String get voteImpactYourContribution => 'Your contribution';
+
+  @override
+  String get voteImpactNewLiveTotal => 'New live total';
+
+  @override
+  String get adminDemographicsTitle => 'Registered voter age distribution';
+
+  @override
+  String adminDemographicsTotalEligible(Object total) {
+    return 'Total eligible voters on list: $total';
+  }
+
+  @override
+  String get adminDemographicsYouth => 'Youth';
+
+  @override
+  String get adminDemographicsAdult => 'Adult';
+
+  @override
+  String get adminDemographicsSenior => 'Senior';
 }

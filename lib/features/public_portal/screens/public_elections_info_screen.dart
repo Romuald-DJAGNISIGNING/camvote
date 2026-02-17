@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 
 import 'package:camvote/gen/l10n/app_localizations.dart';
@@ -10,6 +9,7 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/utils/external_links.dart';
 import '../../../core/widgets/sections/cam_section_header.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../models/public_models.dart';
@@ -46,9 +46,7 @@ class _InfoView extends StatelessWidget {
   final Object? error;
 
   Future<void> _openSource(BuildContext context, String url) async {
-    if (url.trim().isEmpty) return;
-    final uri = Uri.parse(url);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final ok = await openExternalLink(context, url, showError: false);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).openLinkFailed)),
@@ -279,5 +277,3 @@ class _Bullet extends StatelessWidget {
     );
   }
 }
-
-

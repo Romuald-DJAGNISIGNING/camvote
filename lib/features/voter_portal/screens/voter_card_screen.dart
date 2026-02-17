@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../../../shared/biometrics/biometric_gate.dart';
@@ -10,6 +9,7 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/widgets/qr/branded_qr_code.dart';
 import '../../registration/providers/registration_providers.dart';
 import '../../registration/models/registration_draft.dart';
 
@@ -166,10 +166,11 @@ class _CardDetails extends StatelessWidget {
           _Row(label: t.nationality, value: draft.nationality),
         const SizedBox(height: 16),
         Center(
-          child: QrImageView(
+          child: BrandedQrCode(
             data:
                 'CAMVOTE|${draft.fullName}|${draft.dateOfBirth}|${draft.regionCode}',
             size: 160,
+            animatedFrame: true,
           ),
         ),
         const SizedBox(height: 12),

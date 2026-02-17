@@ -19,6 +19,11 @@ final adminStatsProvider = FutureProvider<AdminStats>((ref) async {
   return repo.fetchAdminStats();
 });
 
+final voterDemographicsProvider = FutureProvider<VoterDemographics>((ref) async {
+  final repo = ref.read(adminRepositoryProvider);
+  return repo.fetchVoterDemographics();
+});
+
 class ElectionsController extends AsyncNotifier<List<Election>> {
   @override
   Future<List<Election>> build() async {

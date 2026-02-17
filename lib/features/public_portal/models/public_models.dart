@@ -61,6 +61,60 @@ class PublicResultsState {
   int get totalCandidateVotes => candidates.fold(0, (sum, c) => sum + c.votes);
 }
 
+class PublicAgeBandDistribution {
+  const PublicAgeBandDistribution({
+    required this.key,
+    required this.label,
+    required this.count,
+    required this.percent,
+  });
+
+  final String key;
+  final String label;
+  final int count;
+  final double percent;
+}
+
+class PublicDerivedAgeDistribution {
+  const PublicDerivedAgeDistribution({
+    required this.count,
+    required this.percent,
+  });
+
+  final int count;
+  final double percent;
+}
+
+class PublicElectoralStats {
+  const PublicElectoralStats({
+    required this.totalRegistered,
+    required this.totalVoted,
+    required this.totalDeceased,
+    required this.bands,
+    required this.youth,
+    required this.adult,
+    required this.senior,
+  });
+
+  final int totalRegistered;
+  final int totalVoted;
+  final int totalDeceased;
+  final List<PublicAgeBandDistribution> bands;
+  final PublicDerivedAgeDistribution youth;
+  final PublicDerivedAgeDistribution adult;
+  final PublicDerivedAgeDistribution senior;
+
+  static const empty = PublicElectoralStats(
+    totalRegistered: 0,
+    totalVoted: 0,
+    totalDeceased: 0,
+    bands: <PublicAgeBandDistribution>[],
+    youth: PublicDerivedAgeDistribution(count: 0, percent: 0),
+    adult: PublicDerivedAgeDistribution(count: 0, percent: 0),
+    senior: PublicDerivedAgeDistribution(count: 0, percent: 0),
+  );
+}
+
 enum PublicVoterLookupStatus {
   notFound,
   pendingVerification,

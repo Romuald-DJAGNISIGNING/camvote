@@ -269,16 +269,73 @@ class AdminStats {
   final int totalVoted;
   final int suspiciousFlags;
   final int activeElections;
+  final int adminCount;
+  final int observerCount;
 
   const AdminStats({
     required this.totalRegistered,
     required this.totalVoted,
     required this.suspiciousFlags,
     required this.activeElections,
+    this.adminCount = 0,
+    this.observerCount = 0,
   });
 
   double turnoutRate() {
     if (totalRegistered == 0) return 0;
     return (totalVoted / totalRegistered) * 100;
   }
+
+  int get staffTotal => adminCount + observerCount;
+}
+
+@immutable
+class AgeBandDistribution {
+  const AgeBandDistribution({
+    required this.key,
+    required this.label,
+    required this.count,
+    required this.percent,
+  });
+
+  final String key;
+  final String label;
+  final int count;
+  final double percent;
+}
+
+@immutable
+class DerivedAgeDistribution {
+  const DerivedAgeDistribution({
+    required this.count,
+    required this.percent,
+  });
+
+  final int count;
+  final double percent;
+}
+
+@immutable
+class VoterDemographics {
+  const VoterDemographics({
+    required this.total,
+    required this.bands,
+    required this.youth,
+    required this.adult,
+    required this.senior,
+  });
+
+  final int total;
+  final List<AgeBandDistribution> bands;
+  final DerivedAgeDistribution youth;
+  final DerivedAgeDistribution adult;
+  final DerivedAgeDistribution senior;
+
+  static const empty = VoterDemographics(
+    total: 0,
+    bands: <AgeBandDistribution>[],
+    youth: DerivedAgeDistribution(count: 0, percent: 0),
+    adult: DerivedAgeDistribution(count: 0, percent: 0),
+    senior: DerivedAgeDistribution(count: 0, percent: 0),
+  );
 }

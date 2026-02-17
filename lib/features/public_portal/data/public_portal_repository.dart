@@ -15,7 +15,8 @@ class PublicPortalRepository {
       authRequired: false,
     );
     final data =
-        (response['data'] as Map<String, dynamic>?) ?? const <String, dynamic>{};
+        (response['data'] as Map<String, dynamic>?) ??
+        const <String, dynamic>{};
 
     final candidates = _parseCandidates(data['candidates']);
     final regions = _parseRegionalWinners(data['regions'], candidates);
@@ -33,16 +34,83 @@ class PublicPortalRepository {
     );
   }
 
+  Future<PublicElectoralStats> fetchElectoralStats() async {
+    try {
+      final response = await _workerClient.get(
+        '/v1/public/electoral-stats',
+        authRequired: false,
+      );
+
+      final rawBands = response['bands'];
+      final bands = <PublicAgeBandDistribution>[];
+      if (rawBands is List) {
+        for (final raw in rawBands.whereType<Map<String, dynamic>>()) {
+          bands.add(
+            PublicAgeBandDistribution(
+              key: _asString(raw['key']),
+              label: _asString(raw['label']),
+              count: _asInt(raw['count']),
+              percent: _asDouble(raw['percent']),
+            ),
+          );
+        }
+      }
+
+      final derived = response['derived'] is Map<String, dynamic>
+          ? response['derived'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final youth = derived['youth'] is Map<String, dynamic>
+          ? derived['youth'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final adult = derived['adult'] is Map<String, dynamic>
+          ? derived['adult'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final senior = derived['senior'] is Map<String, dynamic>
+          ? derived['senior'] as Map<String, dynamic>
+          : const <String, dynamic>{};
+
+      return PublicElectoralStats(
+        totalRegistered: _firstNonZero([
+          response['totalRegistered'],
+          response['total'],
+        ]),
+        totalVoted: _asInt(response['totalVoted']),
+        totalDeceased: _asInt(response['totalDeceased']),
+        bands: bands,
+        youth: PublicDerivedAgeDistribution(
+          count: _asInt(youth['count']),
+          percent: _asDouble(youth['percent']),
+        ),
+        adult: PublicDerivedAgeDistribution(
+          count: _asInt(adult['count']),
+          percent: _asDouble(adult['percent']),
+        ),
+        senior: PublicDerivedAgeDistribution(
+          count: _asInt(senior['count']),
+          percent: _asDouble(senior['percent']),
+        ),
+      );
+    } catch (_) {
+      final fallbackResults = await fetchResults();
+      return PublicElectoralStats(
+        totalRegistered: fallbackResults.totalRegistered,
+        totalVoted: fallbackResults.totalVotesCast,
+        totalDeceased: 0,
+        bands: const <PublicAgeBandDistribution>[],
+        youth: const PublicDerivedAgeDistribution(count: 0, percent: 0),
+        adult: const PublicDerivedAgeDistribution(count: 0, percent: 0),
+        senior: const PublicDerivedAgeDistribution(count: 0, percent: 0),
+      );
+    }
+  }
+
   Future<PublicVoterLookupResult> lookupVoter({
     required String regNumber,
     required DateTime dob,
   }) async {
     final response = await _workerClient.post(
       '/v1/public/voter-lookup',
-      data: {
-        'regNumber': regNumber,
-        'dob': dob.toIso8601String(),
-      },
+      data: {'regNumber': regNumber, 'dob': dob.toIso8601String()},
       authRequired: false,
     );
     final statusRaw = _asString(response['status']);
@@ -54,10 +122,9 @@ class PublicPortalRepository {
     return PublicVoterLookupResult(
       status: status,
       maskedName: _asString(response['maskedName']),
-      maskedRegNumber:
-          _asString(response['maskedRegNumber']).isNotEmpty
-              ? _asString(response['maskedRegNumber'])
-              : _maskReg(regNumber),
+      maskedRegNumber: _asString(response['maskedRegNumber']).isNotEmpty
+          ? _asString(response['maskedRegNumber'])
+          : _maskReg(regNumber),
       cardExpiry: _parseDate(response['cardExpiry']),
     );
   }
@@ -209,6 +276,14 @@ class PublicPortalRepository {
       return value.toLowerCase() == 'true';
     }
     return false;
+  }
+
+  int _firstNonZero(List<dynamic> values) {
+    for (final value in values) {
+      final parsed = _asInt(value);
+      if (parsed > 0) return parsed;
+    }
+    return 0;
   }
 
   DateTime? _parseDate(dynamic value) {

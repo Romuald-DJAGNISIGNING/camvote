@@ -20,6 +20,7 @@ import '../../public_portal/utils/candidate_metric.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../models/admin_models.dart';
 import '../providers/admin_providers.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
@@ -28,6 +29,7 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(adminStatsProvider);
+    final demographics = ref.watch(voterDemographicsProvider);
     final results = ref.watch(publicResultsProvider);
     final auth = ref.watch(authControllerProvider).asData?.value;
     final isAdminAuthed =
@@ -134,6 +136,19 @@ class AdminDashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       CamSectionHeader(
+                        title: '${t.modeAdminTitle} & ${t.modeObserverTitle}',
+                        icon: Icons.badge_outlined,
+                      ),
+                      const SizedBox(height: 6),
+                      _staffPanel(
+                        context,
+                        adminCount: s.adminCount,
+                        observerCount: s.observerCount,
+                        onManageObservers: () =>
+                            context.go(RoutePaths.adminObservers),
+                      ),
+                      const SizedBox(height: 12),
+                      CamSectionHeader(
                         title: t.adminToolsTitle,
                         icon: Icons.widgets_outlined,
                       ),
@@ -227,6 +242,12 @@ class AdminDashboardScreen extends ConsumerWidget {
                           ),
                           _action(
                             context,
+                            icon: Icons.volunteer_activism_outlined,
+                            label: t.supportCamVoteTitle,
+                            onTap: () => context.go(RoutePaths.adminTips),
+                          ),
+                          _action(
+                            context,
                             icon: Icons.menu_book_outlined,
                             label: t.legalHubTitle,
                             onTap: () => context.go(RoutePaths.legalLibrary),
@@ -238,6 +259,29 @@ class AdminDashboardScreen extends ConsumerWidget {
                         child: _FraudInsightPanel(
                           suspiciousFlags: s.suspiciousFlags,
                           totalRegistered: s.totalRegistered,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      CamSectionHeader(
+                        title: t.adminDemographicsTitle,
+                        icon: Icons.groups_2_outlined,
+                      ),
+                      const SizedBox(height: 6),
+                      demographics.when(
+                        data: (value) => _demographicsCard(context, value),
+                        loading: () => const Card(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(
+                              child: CamElectionLoader(size: 40, strokeWidth: 4),
+                            ),
+                          ),
+                        ),
+                        error: (e, _) => Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(safeErrorMessage(context, e)),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -429,6 +473,202 @@ class AdminDashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _staffPanel(
+    BuildContext context, {
+    required int adminCount,
+    required int observerCount,
+    required VoidCallback onManageObservers,
+  }) {
+    final t = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final staffTotal = adminCount + observerCount;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                _staffMetric(
+                  context,
+                  label: t.modeAdminTitle,
+                  value: adminCount,
+                  icon: Icons.admin_panel_settings_outlined,
+                  color: cs.primary,
+                ),
+                _staffMetric(
+                  context,
+                  label: t.modeObserverTitle,
+                  value: observerCount,
+                  icon: Icons.visibility_outlined,
+                  color: cs.secondary,
+                ),
+                _staffMetric(
+                  context,
+                  label: '${t.modeAdminTitle} + ${t.modeObserverTitle}',
+                  value: staffTotal,
+                  icon: Icons.groups_2_outlined,
+                  color: cs.tertiary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onManageObservers,
+              icon: const Icon(Icons.manage_accounts_outlined),
+              label: Text(t.adminObserverManagementTitle),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _staffMetric(
+    BuildContext context, {
+    required String label,
+    required int value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 140),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withAlpha(90)),
+        color: color.withAlpha(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                '$value',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _demographicsCard(BuildContext context, VoterDemographics value) {
+    final t = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final youth = value.youth;
+    final adult = value.adult;
+    final senior = value.senior;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t.adminDemographicsTitle,
+              style: Theme.of(
+                context,
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              t.adminDemographicsTotalEligible(value.total),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            ...value.bands.map((band) {
+              final pct = band.percent.clamp(0, 100) / 100;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(band.label)),
+                        Text('${band.count} (${band.percent.toStringAsFixed(1)}%)'),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    LinearProgressIndicator(
+                      value: pct,
+                      minHeight: 7,
+                      borderRadius: BorderRadius.circular(999),
+                      color: cs.primary,
+                      backgroundColor: cs.primaryContainer.withAlpha(80),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const Divider(),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                _pill(
+                  context,
+                  label: t.adminDemographicsYouth,
+                  value:
+                      '${youth.count} (${youth.percent.toStringAsFixed(1)}%)',
+                ),
+                _pill(
+                  context,
+                  label: t.adminDemographicsAdult,
+                  value:
+                      '${adult.count} (${adult.percent.toStringAsFixed(1)}%)',
+                ),
+                _pill(
+                  context,
+                  label: t.adminDemographicsSenior,
+                  value:
+                      '${senior.count} (${senior.percent.toStringAsFixed(1)}%)',
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pill(BuildContext context, {required String label, required String value}) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest.withAlpha(120),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: cs.outlineVariant.withAlpha(80)),
+      ),
+      child: Text(
+        '$label: $value',
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }

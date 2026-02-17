@@ -25,14 +25,6 @@ extension AdminSupportTicketStatusX on AdminSupportTicketStatus {
     AdminSupportTicketStatus.closed => 'closed',
     AdminSupportTicketStatus.unknown => 'unknown',
   };
-
-  String get label => switch (this) {
-    AdminSupportTicketStatus.open => 'Open',
-    AdminSupportTicketStatus.answered => 'Answered',
-    AdminSupportTicketStatus.resolved => 'Resolved',
-    AdminSupportTicketStatus.closed => 'Closed',
-    AdminSupportTicketStatus.unknown => 'Unknown',
-  };
 }
 
 @immutable
@@ -111,9 +103,13 @@ class AdminSupportTicket {
 class AdminSupportRespondResult {
   final String ticketId;
   final AdminSupportTicketStatus status;
+  final bool queuedOffline;
+  final String offlineQueueId;
 
   const AdminSupportRespondResult({
     required this.ticketId,
     required this.status,
+    this.queuedOffline = false,
+    this.offlineQueueId = '',
   });
 }

@@ -20,6 +20,9 @@ class VoterRegistrationSubmittedScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final statusLabel = _statusLabel(t, result.status);
+    final queueId = result.offlineQueueId.isEmpty
+        ? (result.registrationId.isEmpty ? t.unknown : result.registrationId)
+        : result.offlineQueueId;
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
@@ -49,6 +52,11 @@ class VoterRegistrationSubmittedScreen extends ConsumerWidget {
                       ),
                       if (result.message.isNotEmpty)
                         _Row(label: t.messageLabel, value: result.message),
+                      if (result.queuedOffline)
+                        _Row(
+                          label: t.helpSupportOfflineQueueTitle,
+                          value: '${t.trackingIdLabel}: $queueId',
+                        ),
                     ],
                   ),
                 ),
@@ -83,6 +91,7 @@ class VoterRegistrationSubmittedScreen extends ConsumerWidget {
   String _statusLabel(AppLocalizations t, String status) {
     final normalized = status.trim().toLowerCase();
     return switch (normalized) {
+      'queued_offline' => t.helpSupportOfflineQueueTitle,
       'pending' => t.registrationStatusPending,
       'approved' => t.registrationStatusApproved,
       'rejected' => t.registrationStatusRejected,

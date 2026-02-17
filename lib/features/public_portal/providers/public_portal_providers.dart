@@ -16,6 +16,12 @@ final publicResultsProvider = FutureProvider.autoDispose<PublicResultsState>((
   return repo.fetchResults();
 });
 
+final publicElectoralStatsProvider =
+    FutureProvider.autoDispose<PublicElectoralStats>((ref) async {
+      final repo = ref.watch(publicPortalRepositoryProvider);
+      return repo.fetchElectoralStats();
+    });
+
 final publicElectionsInfoProvider =
     FutureProvider.autoDispose<PublicElectionsInfoState?>((ref) async {
       final repo = ref.watch(publicPortalRepositoryProvider);

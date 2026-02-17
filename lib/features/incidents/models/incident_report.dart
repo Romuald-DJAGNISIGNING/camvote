@@ -80,18 +80,35 @@ class IncidentReportResult {
   final String reportId;
   final String status;
   final String message;
+  final bool queuedOffline;
+  final String offlineQueueId;
 
   const IncidentReportResult({
     required this.reportId,
     required this.status,
     required this.message,
+    this.queuedOffline = false,
+    this.offlineQueueId = '',
   });
 
   factory IncidentReportResult.fromJson(Map<String, dynamic> json) {
+    final queued = json['queued'] == true;
+    final queueId =
+        (json['offlineQueueId'] as String?) ??
+        (json['offline_queue_id'] as String?) ??
+        '';
+    final reportId =
+        (json['report_id'] as String?) ??
+        (json['reportId'] as String?) ??
+        (queued ? queueId : '');
     return IncidentReportResult(
-      reportId: (json['report_id'] as String?) ?? '',
-      status: (json['status'] as String?) ?? '',
+      reportId: reportId,
+      status:
+          (json['status'] as String?) ??
+          (queued ? 'queued_offline' : 'submitted'),
       message: (json['message'] as String?) ?? '',
+      queuedOffline: queued,
+      offlineQueueId: queueId,
     );
   }
 }

@@ -54,6 +54,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           final webSignInSubtitle = fromAdminPortal
               ? t.modeAdminSubtitle
               : t.modeObserverSubtitle;
+          final onboardingReplayPath = kIsWeb
+              ? Uri(
+                  path: RoutePaths.onboarding,
+                  queryParameters: {
+                    'revisit': '1',
+                    'entry': fromAdminPortal ? 'admin' : 'general',
+                    'from': fromAdminPortal
+                        ? RoutePaths.adminPortal
+                        : RoutePaths.webPortal,
+                  },
+                ).toString()
+              : RoutePaths.onboarding;
 
           return BrandBackdrop(
             child: ResponsiveContent(
@@ -279,11 +291,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _SectionCard(
                         title: t.supportSectionTitle,
                         child: Card(
-                          child: ListTile(
-                            leading: const Icon(Icons.support_agent_outlined),
-                            title: Text(t.helpSupportTitle),
-                            subtitle: Text(t.helpSupportSettingsSubtitle),
-                            onTap: () => context.push(RoutePaths.helpSupport),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const Icon(
+                                  Icons.support_agent_outlined,
+                                ),
+                                title: Text(t.helpSupportTitle),
+                                subtitle: Text(t.helpSupportSettingsSubtitle),
+                                onTap: () =>
+                                    context.push(RoutePaths.helpSupport),
+                              ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.auto_awesome_rounded),
+                                title: Text(t.helpSupportAiTitle),
+                                subtitle: Text(t.helpSupportAiSubtitle),
+                                onTap: () => context.push(
+                                  Uri(
+                                    path: RoutePaths.camGuide,
+                                    queryParameters: {
+                                      'entry': fromAdminPortal
+                                          ? 'admin'
+                                          : 'general',
+                                    },
+                                  ).toString(),
+                                ),
+                              ),
+                              const Divider(height: 1),
+                              ListTile(
+                                leading: const Icon(Icons.favorite_outline),
+                                title: Text(t.supportCamVoteTitle),
+                                subtitle: Text(t.supportCamVoteSubtitle),
+                                onTap: () =>
+                                    context.push(RoutePaths.supportTip),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -294,7 +337,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             leading: const Icon(Icons.auto_awesome),
                             title: Text(t.onboardingReplayTitle),
                             subtitle: Text(t.onboardingReplaySubtitle),
-                            onTap: () => context.push(RoutePaths.onboarding),
+                            onTap: () => context.push(onboardingReplayPath),
                           ),
                         ),
                       ),

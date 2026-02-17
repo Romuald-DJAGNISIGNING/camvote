@@ -7,6 +7,19 @@ export interface Env {
   TRELLO_KEY?: string;
   TRELLO_TOKEN?: string;
   TRELLO_BOARD_ID?: string;
+  TAPTAP_SEND_URL?: string;
+  TAPTAP_SEND_DEEP_LINK?: string;
+  REMITLY_SEND_URL?: string;
+  REMITLY_SEND_DEEP_LINK?: string;
+  // Orange Money Max It (QR)
+  MAXIT_TIP_QR_URL?: string;
+  MAXIT_TIP_DEEP_LINK?: string;
+  TIP_QR_WEBHOOK_SECRET?: string;
+  TIP_ORANGE_MONEY_NUMBER?: string;
+  TIP_ORANGE_MONEY_NAME?: string;
+  TIP_ORANGE_MONEY_NUMBER_PUBLIC?: string;
+  SUPPORT_EMAIL_FROM?: string;
+  SUPPORT_EMAIL_REPLY_TO?: string;
   R2_PRIMARY: R2Bucket;
   R2_BACKUP?: R2Bucket;
   STORAGE_SIGNING_SECRET: string;
@@ -28,7 +41,7 @@ type FirestoreDoc = {
   updateTime?: string;
 };
 
-type StorageCategory = 'public' | 'registration_docs' | 'incident_attachments';
+type StorageCategory = 'public' | 'registration_docs' | 'incident_attachments' | 'tip_receipts';
 type StoragePath = { key: string; category: StorageCategory; ownerUid?: string };
 
 const TOKEN_SCOPE = 'https://www.googleapis.com/auth/datastore';
@@ -66,12 +79,19 @@ export default {
         return await handleStorageFile(request, env, corsHeaders);
       }
 
+      const tipStatusMatch = url.pathname.match(/^\/v1\/payments\/tips\/([^/]+)\/status$/);
+      if (request.method === 'GET' && tipStatusMatch) {
+        return await handleTipStatus(request, env, corsHeaders, tipStatusMatch[1]);
+      }
+
       if (request.method === 'GET') {
         switch (url.pathname) {
           case '/v1/auth/resolve-identifier':
             return await handleAuthResolveIdentifier(request, env, corsHeaders);
           case '/v1/public/results':
             return await handlePublicResults(request, env, corsHeaders);
+          case '/v1/public/electoral-stats':
+            return await handlePublicElectoralStats(request, env, corsHeaders);
           case '/v1/public/elections-info':
             return await handlePublicElectionsInfo(request, env, corsHeaders);
           case '/v1/public/about-profile':
@@ -82,6 +102,8 @@ export default {
             return await handleLegalDocuments(request, env, corsHeaders);
           case '/v1/centers':
             return await handleCentersList(request, env, corsHeaders);
+          case '/v1/admin/tips':
+            return await handleAdminTipList(request, env, corsHeaders);
           case '/v1/voter/elections':
             return await handleVoterElections(request, env, corsHeaders);
           case '/v1/user/profile':
@@ -120,6 +142,8 @@ export default {
             return await handleAdminContentList(request, env, corsHeaders);
           case '/v1/admin/support/tickets':
             return await handleAdminSupportTickets(request, env, corsHeaders);
+          case '/v1/admin/analytics/voter-demographics':
+            return await handleAdminVoterDemographics(request, env, corsHeaders);
           default:
             break;
         }
@@ -133,12 +157,19 @@ export default {
         throw new HttpError(405, 'Method not allowed');
       }
 
+      const tipNotifyMatch = url.pathname.match(/^\/v1\/payments\/tips\/([^/]+)\/notify$/);
+      if (tipNotifyMatch) {
+        return await handleTipNotify(request, env, corsHeaders, tipNotifyMatch[1]);
+      }
+
       switch (url.pathname) {
         case '/v1/device/register':
           return await handleDeviceRegister(request, env, corsHeaders);
         case '/v1/vote/nonce':
+        case '/v1/votes/nonce':
           return await handleVoteNonce(request, env, corsHeaders);
         case '/v1/vote/cast':
+        case '/v1/votes/cast':
           return await handleVoteCast(request, env, corsHeaders);
         case '/v1/registration/submit':
           return await handleRegistrationSubmit(request, env, corsHeaders);
@@ -191,6 +222,7 @@ export default {
         case '/v1/tools/observation-checklist/update':
           return await handleToolsObservationChecklistUpdate(request, env, corsHeaders);
         case '/v1/support/ticket':
+        case '/v1/support/tickets':
           return await handleSupportTicket(request, env, corsHeaders);
         case '/v1/notifications/mark-read':
           return await handleNotificationMarkRead(request, env, corsHeaders);
@@ -198,6 +230,19 @@ export default {
           return await handleNotificationMarkAllRead(request, env, corsHeaders);
         case '/v1/admin/support/tickets/respond':
           return await handleAdminSupportTicketRespond(request, env, corsHeaders);
+        case '/v1/payments/tips/create-session':
+        case '/v1/payments/tips/taptap-send-intent':
+          return await handleTipTapTapSendIntent(request, env, corsHeaders);
+        case '/v1/payments/tips/remitly-intent':
+          return await handleTipRemitlyIntent(request, env, corsHeaders);
+        case '/v1/payments/tips/taptap-send/submit':
+          return await handleTipTapTapSendSubmit(request, env, corsHeaders);
+        case '/v1/payments/tips/maxit-qr-intent':
+          return await handleTipMaxItQrIntent(request, env, corsHeaders);
+        case '/v1/payments/webhooks/tip-qr':
+          return await handleTipWebhookTipQr(request, env, corsHeaders);
+        case '/v1/admin/tips/decide':
+          return await handleAdminTipDecision(request, env, corsHeaders);
         default:
           throw new HttpError(404, 'Not found');
       }
@@ -301,8 +346,8 @@ async function handleVoteNonce(
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
   const body = await readJson(request);
-  const electionId = stringField(body, 'electionId');
-  const deviceHash = stringField(body, 'deviceHash');
+  const electionId = pickString(body, ['electionId', 'election_id']);
+  const deviceHash = pickString(body, ['deviceHash', 'device_hash']);
 
   if (!electionId || !deviceHash) {
     throw new HttpError(400, 'electionId and deviceHash are required');
@@ -355,13 +400,14 @@ async function handleVoteCast(
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
   const body = await readJson(request);
-  const electionId = stringField(body, 'electionId');
-  const candidateId = stringField(body, 'candidateId');
-  const deviceHash = stringField(body, 'deviceHash');
-  const nonceId = stringField(body, 'nonceId');
-  const signature = stringField(body, 'signature');
+  const electionId = pickString(body, ['electionId', 'election_id']);
+  const candidateId = pickString(body, ['candidateId', 'candidate_id']);
+  const deviceHash = pickString(body, ['deviceHash', 'device_hash']);
+  const nonceId = pickString(body, ['nonceId', 'nonce_id']);
+  const signature = pickString(body, ['signature', 'deviceSignature', 'device_signature']);
   const biometricVerified = booleanField(body, 'biometricVerified');
-  const livenessVerified = booleanField(body, 'livenessVerified');
+  const livenessVerified =
+    booleanField(body, 'livenessVerified') || booleanField(body, 'livenessPassed');
 
   if (!electionId || !candidateId || !deviceHash || !nonceId || !signature) {
     throw new HttpError(400, 'Missing required vote fields.');
@@ -501,8 +547,11 @@ async function handleVoteCast(
     throw err;
   }
 
+  let tallyAfter: number | null = null;
   try {
     await updateResults(env, electionId, candidateId);
+    const resultsDoc = await firestoreGet(env, `results/${electionId}`);
+    tallyAfter = resultsDoc ? docInt(resultsDoc, 'totalVotes') : null;
   } catch (error) {
     await logDeviceRisk(env, {
       uid,
@@ -513,7 +562,16 @@ async function handleVoteCast(
     });
   }
 
-  return jsonResponse({ ok: true, auditToken }, corsHeaders);
+  const tally =
+    tallyAfter === null
+      ? null
+      : {
+          before: Math.max(0, tallyAfter - 1),
+          delta: 1,
+          after: tallyAfter,
+        };
+
+  return jsonResponse({ ok: true, auditToken, tally }, corsHeaders);
 }
 
 async function handleRegistrationSubmit(
@@ -838,6 +896,53 @@ async function handlePublicResults(
   return jsonResponse({ ok: true, data }, corsHeaders);
 }
 
+async function handlePublicElectoralStats(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  if (request.method !== 'GET') {
+    throw new HttpError(405, 'Method not allowed');
+  }
+
+  const users = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'users' }],
+    limit: 4000,
+  });
+  const demographics = computeVoterDemographicsFromDocs(users);
+
+  let totalVoted = 0;
+  const resultsDoc = await firestoreGet(env, 'public_content/results');
+  if (resultsDoc?.fields) {
+    const resultsData = valueToJs({ mapValue: { fields: resultsDoc.fields } }) as Record<
+      string,
+      unknown
+    >;
+    totalVoted = toSafeInt(resultsData.totalVotesCast);
+  }
+  if (totalVoted <= 0) {
+    const votes = await firestoreRunQuery(env, {
+      from: [{ collectionId: 'votes' }],
+      limit: 6000,
+    });
+    totalVoted = votes.length;
+  }
+
+  return jsonResponse(
+    {
+      ok: true,
+      totalRegistered: demographics.total,
+      totalVoted,
+      totalDeceased: demographics.deceased,
+      total: demographics.total,
+      bands: demographics.bands,
+      derived: demographics.derived,
+      updatedAt: new Date().toISOString(),
+    },
+    corsHeaders,
+  );
+}
+
 async function handlePublicElectionsInfo(
   request: Request,
   env: Env,
@@ -954,7 +1059,11 @@ async function handleAuthResolveIdentifier(
   corsHeaders: Headers,
 ): Promise<Response> {
   const url = new URL(request.url);
-  const identifier = (url.searchParams.get('identifier') || '').trim();
+  const identifier = (
+    url.searchParams.get('identifier') ||
+    url.searchParams.get('id') ||
+    ''
+  ).trim();
   if (!identifier) {
     throw new HttpError(400, 'identifier is required');
   }
@@ -1255,7 +1364,7 @@ async function handleAdminAddCandidate(
 ): Promise<Response> {
   await requireAdmin(request, env);
   const body = await readJson(request);
-  const electionId = stringField(body, 'electionId');
+  const electionId = pickString(body, ['electionId', 'election_id']);
   const candidateId = stringField(body, 'id') || crypto.randomUUID();
   if (!electionId) throw new HttpError(400, 'electionId is required');
   const payload: Record<string, unknown> = {
@@ -1284,27 +1393,49 @@ async function handleAdminListVoters(
   const url = new URL(request.url);
   const region = url.searchParams.get('region');
   const status = url.searchParams.get('status');
-  const query: JsonObject = {
-    from: [{ collectionId: 'users' }],
-    limit: 100,
-    orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
-  };
+  const filters: JsonObject[] = [
+    {
+      fieldFilter: {
+        field: { fieldPath: 'role' },
+        op: 'EQUAL',
+        value: { stringValue: 'voter' },
+      },
+    },
+  ];
+
   if (region) {
-    query.where = {
+    filters.push({
       fieldFilter: {
         field: { fieldPath: 'regionCode' },
         op: 'EQUAL',
         value: { stringValue: region },
       },
-    };
+    });
   }
   if (status) {
-    const base = query.where as JsonObject | undefined;
-    const filters = base
-      ? { compositeFilter: { op: 'AND', filters: [base, { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: status } } }] } }
-      : { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: status } } };
-    query.where = filters;
+    filters.push({
+      fieldFilter: {
+        field: { fieldPath: 'status' },
+        op: 'EQUAL',
+        value: { stringValue: status },
+      },
+    });
   }
+
+  const query: JsonObject = {
+    from: [{ collectionId: 'users' }],
+    limit: 100,
+    orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
+    where:
+      filters.length === 1
+        ? filters[0]
+        : {
+            compositeFilter: {
+              op: 'AND',
+              filters,
+            },
+          },
+  };
   const docs = await firestoreRunQuery(env, query);
   const voters = docs.map((d) => ({
     id: d.name.split('/').pop(),
@@ -1570,13 +1701,47 @@ async function handleAdminStats(
   corsHeaders: Headers,
 ): Promise<Response> {
   await requireAdmin(request, env);
-  const verifiedUsers = await firestoreRunQuery(env, {
+  const verifiedVoters = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'users' }],
+    where: {
+      compositeFilter: {
+        op: 'AND',
+        filters: [
+          {
+            fieldFilter: {
+              field: { fieldPath: 'verified' },
+              op: 'EQUAL',
+              value: { booleanValue: true },
+            },
+          },
+          {
+            fieldFilter: {
+              field: { fieldPath: 'role' },
+              op: 'EQUAL',
+              value: { stringValue: 'voter' },
+            },
+          },
+        ],
+      },
+    },
+  });
+  const adminUsers = await firestoreRunQuery(env, {
     from: [{ collectionId: 'users' }],
     where: {
       fieldFilter: {
-        field: { fieldPath: 'verified' },
+        field: { fieldPath: 'role' },
         op: 'EQUAL',
-        value: { booleanValue: true },
+        value: { stringValue: 'admin' },
+      },
+    },
+  });
+  const observerUsers = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'users' }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: 'role' },
+        op: 'EQUAL',
+        value: { stringValue: 'observer' },
       },
     },
   });
@@ -1607,10 +1772,38 @@ async function handleAdminStats(
   return jsonResponse(
     {
       ok: true,
-      totalRegistered: verifiedUsers.length,
+      totalRegistered: verifiedVoters.length,
+      totalRegisteredVoters: verifiedVoters.length,
       totalVoted: votes.length,
       suspiciousFlags: deviceFlags.length,
       activeElections: active,
+      adminCount: adminUsers.length,
+      observerCount: observerUsers.length,
+      staffTotal: adminUsers.length + observerUsers.length,
+    },
+    corsHeaders,
+  );
+}
+
+async function handleAdminVoterDemographics(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  await requireAdmin(request, env);
+
+  const docs = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'users' }],
+    limit: 2000,
+  });
+  const demographics = computeVoterDemographicsFromDocs(docs);
+
+  return jsonResponse(
+    {
+      ok: true,
+      total: demographics.total,
+      bands: demographics.bands,
+      derived: demographics.derived,
     },
     corsHeaders,
   );
@@ -2099,7 +2292,7 @@ async function handleToolsResultsPublish(
 ): Promise<Response> {
   await requireAdmin(request, env);
   const body = await readJson(request);
-  const electionId = stringField(body, 'electionId');
+  const electionId = pickString(body, ['electionId', 'id']);
   if (!electionId) {
     throw new HttpError(400, 'electionId is required');
   }
@@ -2317,9 +2510,9 @@ async function handleSupportTicket(
 ): Promise<Response> {
   const { uid, role } = await requireAuthWithRole(request, env);
   const body = await readJson(request);
-  const name = stringField(body, 'name').trim();
-  const email = stringField(body, 'email').trim().toLowerCase();
-  const message = stringField(body, 'message').trim();
+  const name = pickString(body, ['name', 'fullName', 'displayName']).trim();
+  const email = pickString(body, ['email', 'senderEmail']).trim().toLowerCase();
+  const message = pickString(body, ['message', 'details', 'description']).trim();
 
   if (!name) {
     throw new HttpError(400, 'name is required');
@@ -2340,7 +2533,8 @@ async function handleSupportTicket(
     name,
     email,
     registrationId: stringField(body, 'registrationId').trim(),
-    category: stringField(body, 'category').trim() || 'other',
+    category:
+      pickString(body, ['category', 'subject', 'topic']).trim().toLowerCase() || 'other',
     message,
     status: 'open',
     createdAt: now,
@@ -2353,6 +2547,7 @@ async function handleSupportTicket(
       id: `support_ticket_received_${id}`,
       userId: uid,
       audience: roleToAudience(role),
+      category: roleToAudience(role),
       type: 'support',
       title: 'Support ticket received',
       body: `Your ticket ${id} was submitted successfully. Our team will reply soon.`,
@@ -2364,6 +2559,20 @@ async function handleSupportTicket(
       sourceId: id,
     },
     true,
+  );
+
+  await notifyAdmins(
+    env,
+    {
+      idPrefix: `support_ticket_new_${id}`,
+      category: 'support',
+      title: 'New help desk ticket',
+      body: `New ${role} ticket from ${name}.`,
+      route: `/admin/support?ticketId=${encodeURIComponent(id)}`,
+      source: 'support_ticket',
+      sourceId: id,
+    },
+    now,
   );
 
   return jsonResponse({ ok: true, ticketId: id, status: 'received' }, corsHeaders, 201);
@@ -2381,6 +2590,7 @@ async function handleNotificationsList(
 
   const notifications: JsonObject[] = [];
   const roleAudience = roleToAudience(role);
+  const allowedCategories = allowedNotificationCategoriesForRole(roleAudience);
 
   const userNotificationDocs = await firestoreRunQuery(env, {
     from: [{ collectionId: 'user_notifications' }],
@@ -2412,6 +2622,7 @@ async function handleNotificationsList(
       id,
       type: normalizeNotificationType(data['type']),
       audience: normalizeNotificationAudience(data['audience'], roleAudience),
+      category: normalizeNotificationCategory(data['category'], data['type'], data['audience']),
       title: `${(data['title'] as string | undefined) || 'Notification'}`.trim(),
       body: `${(data['body'] as string | undefined) || ''}`.trim(),
       createdAt,
@@ -2470,6 +2681,7 @@ async function handleNotificationsList(
       id: `support_ticket_status_${ticketId}_${sourceMarker}`,
       type: status === 'resolved' || status === 'closed' ? 'success' : 'info',
       audience: roleAudience,
+      category: roleAudience === 'admin' ? 'support' : roleAudience,
       title,
       body: message,
       createdAt: eventAt,
@@ -2491,7 +2703,16 @@ async function handleNotificationsList(
     return bDate - aDate;
   });
 
-  return jsonResponse({ ok: true, notifications: sorted }, corsHeaders);
+  const filtered = sorted.filter((item) => {
+    const category = normalizeNotificationCategory(
+      item['category'],
+      item['type'],
+      item['audience'],
+    );
+    return allowedCategories.has(category);
+  });
+
+  return jsonResponse({ ok: true, notifications: filtered }, corsHeaders);
 }
 
 async function handleNotificationMarkRead(
@@ -2501,7 +2722,7 @@ async function handleNotificationMarkRead(
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
   const body = await readJson(request);
-  const notificationId = stringField(body, 'notificationId').trim();
+  const notificationId = pickString(body, ['notificationId', 'id']).trim();
   if (!notificationId) {
     throw new HttpError(400, 'notificationId is required');
   }
@@ -2623,8 +2844,12 @@ async function handleAdminSupportTicketRespond(
 ): Promise<Response> {
   const admin = await requireAdmin(request, env);
   const body = await readJson(request);
-  const ticketId = stringField(body, 'ticketId').trim();
-  const responseMessage = stringField(body, 'responseMessage').trim();
+  const ticketId = pickString(body, ['ticketId', 'id']).trim();
+  const responseMessage = pickString(body, [
+    'responseMessage',
+    'message',
+    'response',
+  ]).trim();
   const status = stringField(body, 'status').trim().toLowerCase() || 'answered';
   if (!ticketId) {
     throw new HttpError(400, 'ticketId is required');
@@ -2663,6 +2888,7 @@ async function handleAdminSupportTicketRespond(
       id: `support_ticket_status_${ticketId}_${status}_${now}`,
       userId,
       audience: roleToAudience(docString(ticketDoc, 'role') || 'public'),
+      category: roleToAudience(docString(ticketDoc, 'role') || 'public'),
       type: status === 'resolved' || status === 'closed' ? 'success' : 'info',
       title:
         status === 'resolved'
@@ -2681,7 +2907,797 @@ async function handleAdminSupportTicketRespond(
     true,
   );
 
-  return jsonResponse({ ok: true, ticketId, status }, corsHeaders);
+  const recipientEmail = docString(ticketDoc, 'email').trim().toLowerCase();
+  const emailSent = await trySendSupportResponseEmail(env, {
+    to: recipientEmail,
+    ticketId,
+    status,
+    responseMessage,
+  });
+
+  return jsonResponse({ ok: true, ticketId, status, emailSent }, corsHeaders);
+}
+
+async function handleAdminTipList(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  await requireAdmin(request, env);
+  const url = new URL(request.url);
+  const status = (url.searchParams.get('status') || '').trim().toLowerCase();
+  const provider = (url.searchParams.get('provider') || '').trim().toLowerCase();
+
+  const filters: JsonObject[] = [];
+  if (status) {
+    filters.push({
+      fieldFilter: {
+        field: { fieldPath: 'status' },
+        op: 'EQUAL',
+        value: { stringValue: status },
+      },
+    });
+  }
+  if (provider) {
+    filters.push({
+      fieldFilter: {
+        field: { fieldPath: 'provider' },
+        op: 'EQUAL',
+        value: { stringValue: provider },
+      },
+    });
+  }
+
+  const query: JsonObject = {
+    from: [{ collectionId: 'tips' }],
+    limit: 100,
+    orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
+    ...(filters.length
+      ? {
+          where:
+            filters.length === 1
+              ? filters[0]
+              : {
+                  compositeFilter: {
+                    op: 'AND',
+                    filters,
+                  },
+                },
+        }
+      : {}),
+  };
+
+  const docs = await firestoreRunQuery(env, query);
+  const tips = docs.map((d) => ({
+    id: d.name.split('/').pop(),
+    data: valueToJs({ mapValue: { fields: d.fields ?? {} } }),
+  }));
+  return jsonResponse({ ok: true, tips }, corsHeaders);
+}
+
+async function handleAdminTipDecision(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const admin = await requireAdmin(request, env);
+  const body = await readJson(request);
+  const tipId = pickString(body, ['tipId', 'id']).trim();
+  const decisionRaw = pickString(body, ['decision', 'status']).trim().toLowerCase();
+  const note = pickString(body, ['note', 'message']).trim();
+
+  if (!tipId) {
+    throw new HttpError(400, 'tipId is required.');
+  }
+
+  const decision =
+    decisionRaw === 'success' || decisionRaw === 'approved'
+      ? 'success'
+      : decisionRaw === 'failed' || decisionRaw === 'rejected'
+      ? 'failed'
+      : '';
+
+  if (!decision) {
+    throw new HttpError(400, 'decision must be success or failed.');
+  }
+
+  const tipDoc = await firestoreGet(env, `tips/${tipId}`);
+  if (!tipDoc) {
+    throw new HttpError(404, 'Tip not found.');
+  }
+
+  const now = new Date().toISOString();
+  await firestorePatch(
+    env,
+    `tips/${tipId}`,
+    {
+      status: decision,
+      decidedBy: admin.uid,
+      decidedAt: now,
+      decisionNote: note || null,
+      updatedAt: now,
+    },
+    ['status', 'decidedBy', 'decidedAt', 'decisionNote', 'updatedAt'],
+  );
+
+  await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+    tipId,
+    provider: docString(tipDoc, 'provider') || 'taptap_send',
+    status: decision,
+    note: note || null,
+    decidedBy: admin.uid,
+    createdAt: now,
+  });
+
+  if (decision === 'success') {
+    const userId = docString(tipDoc, 'userId');
+    const userRole = docString(tipDoc, 'userRole') || 'public';
+    const amount = Number(docInt(tipDoc, 'amount') || 0);
+    const currency = docString(tipDoc, 'currency') || 'XAF';
+    const anonymous = docBool(tipDoc, 'anonymous') === true;
+    const senderName = anonymous
+      ? 'Anonymous supporter'
+      : docString(tipDoc, 'senderName') || 'Supporter';
+
+    if (userId) {
+      await createUserNotification(
+        env,
+        {
+          id: `tip_success_${tipId}`,
+          userId,
+          audience: roleToAudience(userRole),
+          category: roleToAudience(userRole),
+          type: 'tip',
+          title: 'Tip received',
+          body: buildTipThankYouMessage(senderName, amount, currency, {
+            anonymous,
+          }),
+          route: `/support/tip?tipId=${encodeURIComponent(tipId)}`,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+          source: 'tip',
+          sourceId: tipId,
+        },
+        true,
+      );
+    }
+
+    await notifyAdmins(
+      env,
+      {
+        idPrefix: `tip_confirmed_${tipId}`,
+        category: 'tip',
+        title: 'Tip confirmed',
+        body: `${formatTipAmount(amount, currency)} confirmed by admin.`,
+        route: `/support/tip?tipId=${encodeURIComponent(tipId)}`,
+        source: 'tip',
+        sourceId: tipId,
+      },
+      now,
+    );
+  }
+
+  return jsonResponse({ ok: true, tipId, status: decision }, corsHeaders);
+}
+
+async function handleTipTapTapSendIntent(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const auth = await maybeAuthWithRole(request, env);
+  const amount = Math.max(
+    0,
+    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
+  );
+  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
+  const anonymous = booleanField(body, 'anonymous');
+  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : senderNameInput || 'Supporter';
+  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
+  const note = pickString(body, ['message', 'note']).trim();
+  const source = stringField(body, 'source').trim() || 'camvote_app';
+
+  if (amount <= 0) {
+    throw new HttpError(400, 'amount must be greater than 0.');
+  }
+
+  const tipId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const orangeMoneyNumber = (env.TIP_ORANGE_MONEY_NUMBER || '').trim();
+  const orangeMoneyOwnerName = (env.TIP_ORANGE_MONEY_NAME || '').trim();
+  const exposeOrangeMoneyNumber = shouldExposeOrangeMoneyNumber(env);
+  const maskedOrangeMoneyNumber = maskPhoneNumber(orangeMoneyNumber);
+  const checkoutRecipientNumber = orangeMoneyNumber || maskedOrangeMoneyNumber;
+  const checkoutUrl = buildTapTapCheckoutUrl(
+    (env.TAPTAP_SEND_URL || '').trim(),
+    {
+      tipId,
+      amount,
+      currency,
+      recipientName: orangeMoneyOwnerName,
+      // Always use the real number for the checkout flow (user initiated),
+      // even when we keep it masked in UI responses.
+      recipientNumber: checkoutRecipientNumber,
+    },
+  );
+  const deepLink = buildTapTapDeepLink(
+    (env.TAPTAP_SEND_DEEP_LINK || '').trim(),
+    {
+      tipId,
+      amount,
+      currency,
+      recipientName: orangeMoneyOwnerName,
+      recipientNumber: orangeMoneyNumber,
+    },
+  );
+
+  await firestoreCreate(env, `tips/${tipId}`, {
+    id: tipId,
+    provider: 'taptap_send',
+    status: 'pending',
+    amount,
+    currency,
+    senderName,
+    senderEmail: senderEmail || null,
+    anonymous,
+    userId: auth?.uid || null,
+    userRole: auth?.role || 'public',
+    source,
+    note: note || null,
+    checkoutUrl: checkoutUrl || null,
+    checkoutDeepLink: deepLink || null,
+    tipRecipientName: orangeMoneyOwnerName || null,
+    tipRecipientNumberMasked: maskedOrangeMoneyNumber || null,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return jsonResponse(
+    {
+      ok: true,
+      tipId,
+      status: 'pending',
+      provider: 'taptap_send',
+      amount,
+      currency,
+      checkoutUrl: checkoutUrl || null,
+      deepLink: deepLink || null,
+      orangeMoney: {
+        number: exposeOrangeMoneyNumber
+          ? orangeMoneyNumber
+          : null,
+        maskedNumber: maskedOrangeMoneyNumber || null,
+        ownerName: orangeMoneyOwnerName,
+      },
+    },
+    corsHeaders,
+    201,
+  );
+}
+
+async function handleTipRemitlyIntent(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const auth = await maybeAuthWithRole(request, env);
+  const amount = Math.max(
+    0,
+    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
+  );
+  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
+  const anonymous = booleanField(body, 'anonymous');
+  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : senderNameInput || 'Supporter';
+  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
+  const note = pickString(body, ['message', 'note']).trim();
+  const source = stringField(body, 'source').trim() || 'camvote_app';
+
+  if (amount <= 0) {
+    throw new HttpError(400, 'amount must be greater than 0.');
+  }
+
+  const tipId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const orangeMoneyNumber = (env.TIP_ORANGE_MONEY_NUMBER || '').trim();
+  const orangeMoneyOwnerName = (env.TIP_ORANGE_MONEY_NAME || '').trim();
+  const exposeOrangeMoneyNumber = shouldExposeOrangeMoneyNumber(env);
+  const maskedOrangeMoneyNumber = maskPhoneNumber(orangeMoneyNumber);
+  const checkoutRecipientNumber = orangeMoneyNumber || maskedOrangeMoneyNumber;
+  const checkoutUrl = buildRemitlyCheckoutUrl(
+    (env.REMITLY_SEND_URL || '').trim(),
+    {
+      tipId,
+      amount,
+      currency,
+      recipientName: orangeMoneyOwnerName,
+      // Always use the real number for the checkout flow (user initiated),
+      // even when we keep it masked in UI responses.
+      recipientNumber: checkoutRecipientNumber,
+    },
+  );
+  const deepLink = buildRemitlyDeepLink(
+    (env.REMITLY_SEND_DEEP_LINK || '').trim(),
+    {
+      tipId,
+      amount,
+      currency,
+      recipientName: orangeMoneyOwnerName,
+      recipientNumber: orangeMoneyNumber,
+    },
+  );
+
+  await firestoreCreate(env, `tips/${tipId}`, {
+    id: tipId,
+    provider: 'remitly',
+    status: 'pending',
+    amount,
+    currency,
+    senderName,
+    senderEmail: senderEmail || null,
+    anonymous,
+    userId: auth?.uid || null,
+    userRole: auth?.role || 'public',
+    source,
+    note: note || null,
+    checkoutUrl: checkoutUrl || null,
+    checkoutDeepLink: deepLink || null,
+    tipRecipientName: orangeMoneyOwnerName || null,
+    tipRecipientNumberMasked: maskedOrangeMoneyNumber || null,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  return jsonResponse(
+    {
+      ok: true,
+      tipId,
+      status: 'pending',
+      provider: 'remitly',
+      amount,
+      currency,
+      checkoutUrl: checkoutUrl || null,
+      deepLink: deepLink || null,
+      orangeMoney: {
+        number: exposeOrangeMoneyNumber
+          ? orangeMoneyNumber
+          : null,
+        maskedNumber: maskedOrangeMoneyNumber || null,
+        ownerName: orangeMoneyOwnerName,
+      },
+    },
+    corsHeaders,
+    201,
+  );
+}
+
+async function handleTipTapTapSendSubmit(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const auth = await maybeAuthWithRole(request, env);
+  const tipId = pickString(body, ['tipId', 'id']).trim();
+  const reference = pickString(body, ['reference', 'txRef', 'transactionId']).trim();
+  const note = pickString(body, ['note', 'message']).trim();
+  const attachments = arrayStringField(body, 'attachments').filter((value) => value);
+
+  if (!tipId) {
+    throw new HttpError(400, 'tipId is required.');
+  }
+  if (!reference) {
+    throw new HttpError(400, 'reference is required.');
+  }
+
+  const tipDoc = await firestoreGet(env, `tips/${tipId}`);
+  if (!tipDoc) {
+    throw new HttpError(404, 'Tip not found.');
+  }
+
+  const now = new Date().toISOString();
+  await firestorePatch(
+    env,
+    `tips/${tipId}`,
+    {
+      status: 'submitted',
+      providerReference: reference,
+      submitNote: note || null,
+      receiptUrls: attachments.length ? attachments : null,
+      submittedBy: auth?.uid || null,
+      submittedAt: now,
+      updatedAt: now,
+    },
+    [
+      'status',
+      'providerReference',
+      'submitNote',
+      'receiptUrls',
+      'submittedBy',
+      'submittedAt',
+      'updatedAt',
+    ],
+  );
+
+  await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+    tipId,
+    provider: docString(tipDoc, 'provider') || 'taptap_send',
+    status: 'submitted',
+    reference,
+    note: note || null,
+    receiptUrls: attachments,
+    submittedBy: auth?.uid || null,
+    createdAt: now,
+  });
+
+  const amount = Number(docInt(tipDoc, 'amount') || 0);
+  const currency = docString(tipDoc, 'currency') || 'XAF';
+  const provider = docString(tipDoc, 'provider') || 'taptap_send';
+  const senderName = docBool(tipDoc, 'anonymous') === true
+    ? 'Anonymous supporter'
+    : docString(tipDoc, 'senderName') || 'Supporter';
+
+  await notifyAdmins(
+    env,
+    {
+      idPrefix: `tip_submitted_${tipId}`,
+      category: 'tip',
+      title: 'Tip payment submitted',
+      body: `${formatTipAmount(amount, currency)} via ${provider.toUpperCase()} from ${senderName}. Reference: ${reference}${
+        attachments.length ? ' (receipt uploaded)' : ''
+      }`,
+      route: `/support/tip?tipId=${encodeURIComponent(tipId)}`,
+      source: 'tip',
+      sourceId: tipId,
+    },
+    now,
+  );
+
+  return jsonResponse({ ok: true, tipId, status: 'submitted' }, corsHeaders);
+}
+
+async function handleTipMaxItQrIntent(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const auth = await maybeAuthWithRole(request, env);
+  const amount = Math.max(
+    0,
+    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
+  );
+  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
+  const anonymous = booleanField(body, 'anonymous');
+  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : senderNameInput || 'Supporter';
+  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
+  const note = pickString(body, ['message', 'note']).trim();
+  const source = stringField(body, 'source').trim() || 'camvote_app';
+
+  if (amount <= 0) {
+    throw new HttpError(400, 'amount must be greater than 0.');
+  }
+
+  const qrUrl = (env.MAXIT_TIP_QR_URL || '').trim();
+  const deepLink = (env.MAXIT_TIP_DEEP_LINK || '').trim();
+  // Max It QR tipping uses an in-app asset QR fallback. If these env vars are
+  // not configured, we still create the tip session and return null fields so
+  // the client can render the embedded QR image.
+
+  const tipId = crypto.randomUUID();
+  const now = new Date().toISOString();
+  await firestoreCreate(env, `tips/${tipId}`, {
+    id: tipId,
+    provider: 'maxit_qr',
+    status: 'pending',
+    amount,
+    currency,
+    senderName,
+    senderEmail: senderEmail || null,
+    anonymous,
+    userId: auth?.uid || null,
+    userRole: auth?.role || 'public',
+    source,
+    note: note || null,
+    maxItQrUrl: qrUrl || null,
+    maxItDeepLink: deepLink || null,
+    createdAt: now,
+    updatedAt: now,
+  });
+  const exposeOrangeMoneyNumber = shouldExposeOrangeMoneyNumber(env);
+
+  return jsonResponse(
+    {
+      ok: true,
+      tipId,
+      status: 'pending',
+      provider: 'maxit_qr',
+      qrUrl: qrUrl || null,
+      deepLink: deepLink || null,
+      orangeMoney: {
+        number: exposeOrangeMoneyNumber
+          ? (env.TIP_ORANGE_MONEY_NUMBER || '').trim()
+          : null,
+        ownerName: (env.TIP_ORANGE_MONEY_NAME || '').trim(),
+      },
+    },
+    corsHeaders,
+    201,
+  );
+}
+
+async function handleTipStatus(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+  tipId: string,
+): Promise<Response> {
+  void request;
+  const normalizedTipId = tipId.trim();
+  if (!normalizedTipId) {
+    throw new HttpError(400, 'tipId is required');
+  }
+
+  const tipDoc = await firestoreGet(env, `tips/${normalizedTipId}`);
+  if (!tipDoc) {
+    throw new HttpError(404, 'Tip not found.');
+  }
+
+    const provider = docString(tipDoc, 'provider') || 'taptap_send';
+    const rawStatus = docString(tipDoc, 'status');
+    let status =
+      rawStatus.trim().toLowerCase() === 'submitted'
+        ? 'submitted'
+        : normalizeTipStatus(rawStatus);
+    const amount = Number(docInt(tipDoc, 'amount') || 0);
+    const currency = docString(tipDoc, 'currency') || 'XAF';
+    const anonymous = docBool(tipDoc, 'anonymous') === true;
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : docString(tipDoc, 'senderName') || 'Supporter';
+  const receiptUrls = docArrayString(tipDoc, 'receiptUrls');
+
+    return jsonResponse(
+      {
+        ok: true,
+        tipId: normalizedTipId,
+        provider,
+        status,
+        amount,
+        currency,
+        senderName,
+      anonymous,
+      senderEmail: docString(tipDoc, 'senderEmail') || null,
+      receiptUrls,
+      updatedAt: docString(tipDoc, 'updatedAt') || null,
+      thankYouMessage:
+        status === 'success'
+          ? buildTipThankYouMessage(senderName, amount, currency, { anonymous })
+          : null,
+    },
+    corsHeaders,
+  );
+}
+
+async function handleTipNotify(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+  tipId: string,
+): Promise<Response> {
+  const body = await readJson(request);
+  const normalizedTipId = tipId.trim();
+  if (!normalizedTipId) {
+    throw new HttpError(400, 'tipId is required');
+  }
+
+  const tipDoc = await firestoreGet(env, `tips/${normalizedTipId}`);
+  if (!tipDoc) {
+    throw new HttpError(404, 'Tip not found.');
+  }
+
+  const status = normalizeTipStatus(docString(tipDoc, 'status'));
+  if (status !== 'success') {
+    throw new HttpError(409, 'Tip is not marked as successful yet.');
+  }
+
+  const userId = docString(tipDoc, 'userId');
+  const userRole = docString(tipDoc, 'userRole') || 'public';
+  const anonymous = docBool(tipDoc, 'anonymous') === true;
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : docString(tipDoc, 'senderName') || 'Supporter';
+  const senderEmail = docString(tipDoc, 'senderEmail');
+  const amount = Number(docInt(tipDoc, 'amount') || 0);
+  const currency = docString(tipDoc, 'currency') || 'XAF';
+  const inApp = body['inApp'] !== false;
+  const email = body['email'] !== false;
+  const now = new Date().toISOString();
+  const message = buildTipThankYouMessage(senderName, amount, currency, {
+    anonymous,
+  });
+
+  if (inApp && userId) {
+    await createUserNotification(
+      env,
+      {
+        id: `tip_success_${normalizedTipId}`,
+        userId,
+        audience: roleToAudience(userRole),
+        category: roleToAudience(userRole),
+        type: 'tip',
+        title: 'Tip received',
+        body: message,
+        route: `/support/tip?tipId=${encodeURIComponent(normalizedTipId)}`,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+        source: 'tip',
+        sourceId: normalizedTipId,
+      },
+      true,
+    );
+  }
+
+  const inAppSent = inApp && !!userId;
+  const emailQueued = email && senderEmail.trim().length > 0;
+  const deliveryHint =
+    !inAppSent && !emailQueued
+      ? 'Thank-you is shown in app after payment confirmation for anonymous/public tippers.'
+      : null;
+
+  await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+    tipId: normalizedTipId,
+    action: 'notify',
+    inAppSent,
+    emailQueued,
+    anonymous,
+    createdAt: now,
+  });
+
+  return jsonResponse(
+    {
+      ok: true,
+      tipId: normalizedTipId,
+      inAppSent,
+      emailQueued,
+      anonymous,
+      deliveryHint,
+      message,
+    },
+    corsHeaders,
+  );
+}
+
+async function handleTipWebhookTipQr(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const secret = (env.TIP_QR_WEBHOOK_SECRET || '').trim();
+  if (secret) {
+    const signature = (request.headers.get('x-tip-qr-signature') || '').trim();
+    if (!signature || signature !== secret) {
+      throw new HttpError(401, 'Invalid tip webhook signature.');
+    }
+  }
+
+  const body = await readJson(request);
+  const tipId = stringField(body, 'tipId').trim();
+  if (!tipId) {
+    throw new HttpError(400, 'tipId is required');
+  }
+
+  const statusRaw = stringField(body, 'status').trim().toLowerCase();
+  const normalizedStatus = normalizeTipStatus(statusRaw);
+  const now = new Date().toISOString();
+  const anonymous = booleanField(body, 'anonymous');
+  const senderNameInput = stringField(body, 'senderName').trim();
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : senderNameInput || 'Supporter';
+  const senderEmail = stringField(body, 'senderEmail').trim().toLowerCase();
+
+  const existing = await firestoreGet(env, `tips/${tipId}`);
+  if (!existing) {
+    await firestoreCreate(env, `tips/${tipId}`, {
+      id: tipId,
+      provider: 'maxit_qr',
+      status: normalizedStatus,
+      amount: Math.max(0, Math.trunc(numberField(body, 'amount'))),
+      currency: stringField(body, 'currency').trim().toUpperCase() || 'XAF',
+      senderName,
+      senderEmail: senderEmail || null,
+      anonymous,
+      providerStatus: statusRaw || null,
+      providerReference: stringField(body, 'reference').trim() || null,
+      createdAt: now,
+      updatedAt: now,
+    });
+  } else {
+    await firestorePatch(
+      env,
+      `tips/${tipId}`,
+      {
+        status: normalizedStatus,
+        providerStatus: statusRaw || null,
+        providerReference: stringField(body, 'reference').trim() || null,
+        updatedAt: now,
+      },
+      ['status', 'providerStatus', 'providerReference', 'updatedAt'],
+    );
+  }
+
+  await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+    tipId,
+    provider: 'maxit_qr',
+    status: normalizedStatus,
+    payload: body,
+    createdAt: now,
+  });
+
+  if (normalizedStatus === 'success') {
+    const fresh = await firestoreGet(env, `tips/${tipId}`);
+    if (fresh) {
+      const userId = docString(fresh, 'userId');
+      const userRole = docString(fresh, 'userRole') || 'public';
+      const amount = Number(docInt(fresh, 'amount') || 0);
+      const currency = docString(fresh, 'currency') || 'XAF';
+      const anonymous = docBool(fresh, 'anonymous') === true;
+      const senderName = anonymous
+        ? 'Anonymous supporter'
+        : docString(fresh, 'senderName') || 'Supporter';
+      if (userId) {
+        await createUserNotification(
+          env,
+          {
+            id: `tip_success_${tipId}`,
+            userId,
+            audience: roleToAudience(userRole),
+            category: roleToAudience(userRole),
+            type: 'tip',
+            title: 'Tip received',
+            body: buildTipThankYouMessage(senderName, amount, currency, {
+              anonymous,
+            }),
+            route: `/support/tip?tipId=${encodeURIComponent(tipId)}`,
+            read: false,
+            createdAt: now,
+            updatedAt: now,
+            source: 'tip',
+            sourceId: tipId,
+          },
+          true,
+        );
+      }
+      await notifyAdmins(
+        env,
+        {
+          idPrefix: `tip_received_${tipId}`,
+          category: 'tip',
+          title: 'New tip confirmed',
+          body: `${formatTipAmount(amount, currency)} received via Orange Money Max It (QR).`,
+          route: `/support/tip?tipId=${encodeURIComponent(tipId)}`,
+          source: 'tip',
+          sourceId: tipId,
+        },
+        now,
+      );
+    }
+  }
+
+  return jsonResponse({ ok: true, tipId }, corsHeaders);
 }
 
 async function handleStorageUpload(
@@ -2815,9 +3831,23 @@ function jsonResponse(body: JsonObject, headers: Headers, status = 200): Respons
 }
 
 async function readJson(request: Request): Promise<JsonObject> {
+  const raw = await request.text();
+  if (!raw.trim()) {
+    return {};
+  }
+
   try {
-    return (await request.json()) as JsonObject;
+    return JSON.parse(raw) as JsonObject;
   } catch {
+    const contentType = (request.headers.get('Content-Type') || '').toLowerCase();
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const params = new URLSearchParams(raw);
+      const parsed: JsonObject = {};
+      for (const [key, value] of params.entries()) {
+        parsed[key] = value;
+      }
+      return parsed;
+    }
     throw new HttpError(400, 'Invalid JSON body.');
   }
 }
@@ -3058,7 +4088,12 @@ function parseStoragePath(path: string): StoragePath {
   }
 
   const category = parts[0];
-  if (category !== 'public' && category !== 'registration_docs' && category !== 'incident_attachments') {
+  if (
+    category !== 'public' &&
+    category !== 'registration_docs' &&
+    category !== 'incident_attachments' &&
+    category !== 'tip_receipts'
+  ) {
     throw new HttpError(400, 'Unsupported storage category.');
   }
 
@@ -3390,6 +4425,7 @@ function normalizeNotificationType(value: unknown): string {
   if (normalized === 'election') return 'election';
   if (normalized === 'security') return 'security';
   if (normalized === 'support') return 'info';
+  if (normalized === 'tip') return 'success';
   return 'info';
 }
 
@@ -3401,13 +4437,208 @@ function normalizeNotificationAudience(value: unknown, fallback: string): string
   return fallback;
 }
 
+function normalizeNotificationCategory(
+  categoryValue: unknown,
+  typeValue: unknown,
+  audienceValue: unknown,
+): string {
+  const normalized = `${categoryValue ?? ''}`.trim().toLowerCase();
+  if (['public', 'voter', 'observer', 'admin', 'support', 'tip'].includes(normalized)) {
+    return normalized;
+  }
+
+  const rawType = `${typeValue ?? ''}`.trim().toLowerCase();
+  if (rawType === 'support') return 'support';
+  if (rawType === 'tip') return 'tip';
+
+  const type = normalizeNotificationType(typeValue);
+  if (type === 'election' || type === 'security') {
+    return 'public';
+  }
+
+  const audience = normalizeNotificationAudience(audienceValue, 'public');
+  if (audience === 'all') return 'public';
+  if (audience === 'admin' || audience === 'observer' || audience === 'voter') {
+    return audience;
+  }
+  return 'public';
+}
+
+function allowedNotificationCategoriesForRole(roleAudience: string): Set<string> {
+  const role = roleToAudience(roleAudience);
+  if (role === 'admin') {
+    return new Set(['admin', 'support', 'tip']);
+  }
+  if (role === 'voter') {
+    return new Set(['voter', 'public']);
+  }
+  if (role === 'observer') {
+    return new Set(['observer', 'public']);
+  }
+  return new Set(['public', 'observer']);
+}
+
+function computeVoterDemographicsFromDocs(
+  docs: FirestoreDoc[],
+): {
+  total: number;
+  deceased: number;
+  bands: Array<{ key: string; label: string; count: number; percent: number }>;
+  derived: {
+    youth: { count: number; percent: number };
+    adult: { count: number; percent: number };
+    senior: { count: number; percent: number };
+  };
+} {
+  const bands = [
+    { key: '18_24', min: 18, max: 24, count: 0 },
+    { key: '25_34', min: 25, max: 34, count: 0 },
+    { key: '35_44', min: 35, max: 44, count: 0 },
+    { key: '45_59', min: 45, max: 59, count: 0 },
+    { key: '60_plus', min: 60, max: 200, count: 0 },
+  ];
+
+  let total = 0;
+  let deceased = 0;
+
+  for (const doc of docs) {
+    const role = (docString(doc, 'role') || 'voter').trim().toLowerCase();
+    if (role !== 'voter') continue;
+    if (docBool(doc, 'verified') !== true) continue;
+
+    const status = (docString(doc, 'status') || '').trim().toLowerCase();
+    if (status === 'deceased') {
+      deceased += 1;
+    }
+    if (status && ['archived', 'suspended', 'deceased', 'banned'].includes(status)) {
+      continue;
+    }
+
+    const dob = docString(doc, 'dob') || docString(doc, 'dateOfBirth');
+    const age = computeAgeFromIso(dob);
+    if (age === null || age < 18) continue;
+
+    total += 1;
+    for (const band of bands) {
+      if (age >= band.min && age <= band.max) {
+        band.count += 1;
+        break;
+      }
+    }
+  }
+
+  const toPercent = (count: number): number => {
+    if (total <= 0) return 0;
+    return Math.round((count / total) * 10000) / 100;
+  };
+
+  const bandPayload = bands.map((band) => ({
+    key: band.key,
+    label: band.key === '60_plus' ? '60+' : `${band.min}-${band.max}`,
+    count: band.count,
+    percent: toPercent(band.count),
+  }));
+
+  const youthCount = bands[0].count + bands[1].count;
+  const adultCount = bands[2].count + bands[3].count;
+  const seniorCount = bands[4].count;
+
+  return {
+    total,
+    deceased,
+    bands: bandPayload,
+    derived: {
+      youth: { count: youthCount, percent: toPercent(youthCount) },
+      adult: { count: adultCount, percent: toPercent(adultCount) },
+      senior: { count: seniorCount, percent: toPercent(seniorCount) },
+    },
+  };
+}
+
+function normalizeTipStatus(statusRaw: string): string {
+  const normalized = statusRaw.trim().toLowerCase();
+  if (
+    normalized === 'success' ||
+    normalized === 'successful' ||
+    normalized === 'completed' ||
+    normalized === 'settled' ||
+    normalized === 'accepted' ||
+    normalized === 'delivered'
+  ) {
+    return 'success';
+  }
+  if (
+    normalized === 'failed' ||
+    normalized === 'cancelled' ||
+    normalized === 'canceled' ||
+    normalized === 'rejected' ||
+    normalized === 'error'
+  ) {
+    return 'failed';
+  }
+  return 'pending';
+}
+
+function toSafeInt(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  const parsed = Number(`${value ?? ''}`.trim());
+  return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+}
+
+function formatTipAmount(amount: number, currency: string): string {
+  const normalizedAmount = Number.isFinite(amount) ? Math.max(0, amount) : 0;
+  const normalizedCurrency = currency.trim().toUpperCase() || 'XAF';
+  try {
+    const formatter = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: normalizedCurrency,
+      maximumFractionDigits: normalizedCurrency === 'XAF' ? 0 : 2,
+    });
+    return formatter.format(normalizedAmount);
+  } catch {
+    const rounded =
+      normalizedCurrency === 'XAF'
+        ? Math.trunc(normalizedAmount)
+        : Number(normalizedAmount.toFixed(2));
+    return `${rounded.toLocaleString()} ${normalizedCurrency}`;
+  }
+}
+
+function buildTipThankYouMessage(
+  senderName: string,
+  amount: number,
+  currency: string,
+  options: { anonymous?: boolean } = {},
+): string {
+  const anonymous = options.anonymous === true;
+  const name = senderName.trim();
+  const supporterName = anonymous || !name ? 'Supporter' : name;
+  const money = formatTipAmount(amount, currency);
+  const intro = anonymous
+    ? 'Thank you for your anonymous support!'
+    : `Thank you ${supporterName}!`;
+  return `${intro} We received your tip of ${money}. Your support keeps CamVote secure, transparent, and improving every day.`;
+}
+
 async function createUserNotification(
   env: Env,
   payload: JsonObject,
   overwrite = false,
 ): Promise<void> {
-  const id = stringField(payload, 'id').trim();
-  const userId = stringField(payload, 'userId').trim();
+  const normalizedPayload: JsonObject = {
+    ...payload,
+    type: normalizeNotificationType(payload['type']),
+    audience: normalizeNotificationAudience(payload['audience'], 'public'),
+    category: normalizeNotificationCategory(
+      payload['category'],
+      payload['type'],
+      payload['audience'],
+    ),
+  };
+  const id = stringField(normalizedPayload, 'id').trim();
+  const userId = stringField(normalizedPayload, 'userId').trim();
   if (!id || !userId) return;
 
   const path = `user_notifications/${id}`;
@@ -3415,15 +4646,254 @@ async function createUserNotification(
   if (existing && !overwrite) return;
 
   if (existing) {
-    await firestorePatch(env, path, payload, Object.keys(payload));
+    await firestorePatch(env, path, normalizedPayload, Object.keys(normalizedPayload));
   } else {
-    await firestoreCreate(env, path, payload);
+    await firestoreCreate(env, path, normalizedPayload);
+  }
+}
+
+async function notifyAdmins(
+  env: Env,
+  payload: {
+    idPrefix: string;
+    title: string;
+    body: string;
+    category?: string;
+    type?: string;
+    route?: string;
+    source?: string;
+    sourceId?: string;
+  },
+  now = new Date().toISOString(),
+): Promise<void> {
+  const adminDocs = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'users' }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: 'role' },
+        op: 'EQUAL',
+        value: { stringValue: 'admin' },
+      },
+    },
+    limit: 250,
+  });
+  if (adminDocs.length === 0) return;
+
+  const category = normalizeNotificationCategory(
+    payload.category,
+    payload.type || payload.category || 'info',
+    'admin',
+  );
+  const type =
+    payload.type?.trim().toLowerCase() ||
+    (category === 'tip' ? 'tip' : category === 'support' ? 'support' : 'info');
+
+  for (const adminDoc of adminDocs) {
+    const userId =
+      docString(adminDoc, 'uid') || docString(adminDoc, 'id') || adminDoc.name.split('/').pop() || '';
+    if (!userId) continue;
+    await createUserNotification(
+      env,
+      {
+        id: `${payload.idPrefix}_${userId}`,
+        userId,
+        audience: 'admin',
+        category,
+        type,
+        title: payload.title,
+        body: payload.body,
+        route: payload.route || null,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+        source: payload.source || 'admin_event',
+        sourceId: payload.sourceId || null,
+      },
+      true,
+    );
+  }
+}
+
+async function trySendSupportResponseEmail(
+  env: Env,
+  payload: {
+    to: string;
+    ticketId: string;
+    status: string;
+    responseMessage: string;
+  },
+): Promise<boolean> {
+  const recipient = payload.to.trim().toLowerCase();
+  if (!isValidEmail(recipient)) return false;
+
+  const from = (env.SUPPORT_EMAIL_FROM || '').trim().toLowerCase();
+  const replyTo = (env.SUPPORT_EMAIL_REPLY_TO || '').trim().toLowerCase();
+  if (!isValidEmail(from)) return false;
+
+  const statusLabel = payload.status.trim().toLowerCase() || 'answered';
+  const subject = `CamVote support update • ticket ${payload.ticketId}`;
+  const plainText = [
+    `Hello,`,
+    ``,
+    `Your CamVote support ticket (${payload.ticketId}) has a new update.`,
+    `Status: ${statusLabel}`,
+    ``,
+    `${payload.responseMessage.trim()}`,
+    ``,
+    `If you need more help, reply to this email or open CamVote support.`,
+    ``,
+    `CamVote Help Desk`,
+  ].join('\n');
+  const htmlText = `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#1f2937;">
+  <p>Hello,</p>
+  <p>Your CamVote support ticket <strong>${escapeHtml(
+    payload.ticketId,
+  )}</strong> has a new update.</p>
+  <p><strong>Status:</strong> ${escapeHtml(statusLabel)}</p>
+  <blockquote style="margin:12px 0;padding:10px 12px;border-left:3px solid #16a34a;background:#f8fafc;">
+    ${escapeHtml(payload.responseMessage.trim()).replace(/\n/g, '<br/>')}
+  </blockquote>
+  <p>If you need more help, reply to this email or open CamVote support.</p>
+  <p style="margin-top:18px;">CamVote Help Desk</p>
+</div>`;
+
+  const requestBody: JsonObject = {
+    personalizations: [{ to: [{ email: recipient }] }],
+    from: { email: from, name: 'CamVote Help Desk' },
+    subject,
+    content: [{ type: 'text/plain', value: plainText }],
+  };
+  if (replyTo && isValidEmail(replyTo)) {
+    requestBody.reply_to = { email: replyTo };
+  }
+  requestBody.content = [
+    { type: 'text/plain', value: plainText },
+    { type: 'text/html', value: htmlText },
+  ];
+
+  try {
+    const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+    if (!response.ok) {
+      const details = await response.text();
+      console.error('Support email send failed', response.status, details);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Support email send exception', (error as Error).message);
+    return false;
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function shouldExposeOrangeMoneyNumber(env: Env): boolean {
+  const value = `${env.TIP_ORANGE_MONEY_NUMBER_PUBLIC ?? ''}`.trim().toLowerCase();
+  return value === '1' || value === 'true' || value === 'yes' || value === 'on';
+}
+
+type TapTapCheckoutOptions = {
+  tipId: string;
+  amount: number;
+  currency: string;
+  recipientName: string;
+  recipientNumber: string;
+};
+
+function buildTapTapCheckoutUrl(baseUrl: string, options: TapTapCheckoutOptions): string {
+  const fallback = 'https://www.taptapsend.com/';
+  const raw = baseUrl.trim() || fallback;
+  try {
+    const url = new URL(raw);
+    const params = new URLSearchParams(url.search);
+    params.set('utm_source', 'camvote');
+    params.set('utm_medium', 'tip');
+    params.set('camvote_tip_id', options.tipId);
+    if (options.amount > 0) params.set('amount', `${options.amount}`);
+    if (options.currency.trim()) params.set('currency', options.currency.trim().toUpperCase());
+    if (options.recipientName.trim()) params.set('recipient_name', options.recipientName.trim());
+    if (options.recipientNumber.trim()) params.set('recipient_number', options.recipientNumber.trim());
+    params.set('recipient_country', 'CM');
+    params.set('recipient_network', 'orange_money');
+    url.search = params.toString();
+    return url.toString();
+  } catch {
+    return fallback;
+  }
+}
+
+function buildTapTapDeepLink(baseDeepLink: string, options: TapTapCheckoutOptions): string {
+  const raw = baseDeepLink.trim() || 'taptapsend://send';
+  try {
+    const url = new URL(raw);
+    const params = new URLSearchParams(url.search);
+    params.set('tip_id', options.tipId);
+    if (options.amount > 0) params.set('amount', `${options.amount}`);
+    if (options.currency.trim()) params.set('currency', options.currency.trim().toUpperCase());
+    if (options.recipientName.trim()) params.set('recipient_name', options.recipientName.trim());
+    if (options.recipientNumber.trim()) params.set('recipient_number', options.recipientNumber.trim());
+    url.search = params.toString();
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
+function buildRemitlyCheckoutUrl(baseUrl: string, options: TapTapCheckoutOptions): string {
+  const fallback = 'https://www.remitly.com/';
+  const raw = baseUrl.trim() || fallback;
+  try {
+    const url = new URL(raw);
+    const params = new URLSearchParams(url.search);
+    params.set('utm_source', 'camvote');
+    params.set('utm_medium', 'tip');
+    params.set('camvote_tip_id', options.tipId);
+    if (options.amount > 0) params.set('amount', `${options.amount}`);
+    if (options.currency.trim()) params.set('currency', options.currency.trim().toUpperCase());
+    if (options.recipientName.trim()) params.set('recipient_name', options.recipientName.trim());
+    if (options.recipientNumber.trim()) params.set('recipient_number', options.recipientNumber.trim());
+    params.set('recipient_country', 'CM');
+    params.set('recipient_network', 'orange_money');
+    url.search = params.toString();
+    return url.toString();
+  } catch {
+    return fallback;
+  }
+}
+
+function buildRemitlyDeepLink(baseDeepLink: string, options: TapTapCheckoutOptions): string {
+  const raw = baseDeepLink.trim() || 'remitly://send';
+  try {
+    const url = new URL(raw);
+    const params = new URLSearchParams(url.search);
+    params.set('tip_id', options.tipId);
+    if (options.amount > 0) params.set('amount', `${options.amount}`);
+    if (options.currency.trim()) params.set('currency', options.currency.trim().toUpperCase());
+    if (options.recipientName.trim()) params.set('recipient_name', options.recipientName.trim());
+    if (options.recipientNumber.trim()) params.set('recipient_number', options.recipientNumber.trim());
+    url.search = params.toString();
+    return url.toString();
+  } catch {
+    return raw;
   }
 }
 
 function stringField(body: JsonObject, key: string): string {
   const value = body[key];
-  return typeof value === 'string' ? value : '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return `${value}`;
+  return '';
 }
 
 function isValidEmail(value: string): boolean {
@@ -3432,7 +4902,14 @@ function isValidEmail(value: string): boolean {
 
 function booleanField(body: JsonObject, key: string): boolean {
   const value = body[key];
-  return value === true;
+  if (value === true) return true;
+  if (value === false) return false;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+  }
+  return false;
 }
 
 function numberField(body: JsonObject, key: string): number {
@@ -3442,6 +4919,24 @@ function numberField(body: JsonObject, key: string): number {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function arrayStringField(body: JsonObject, key: string): string[] {
+  const value = body[key];
+  if (Array.isArray(value)) {
+    return value.map((item) => `${item ?? ''}`.trim()).filter(Boolean);
+  }
+  if (value && typeof value === 'object' && 'arrayValue' in (value as Record<string, unknown>)) {
+    const arrayValue = (value as { arrayValue?: { values?: FirestoreValue[] } }).arrayValue;
+    const values = arrayValue?.values ?? [];
+    return values
+      .map((item) => (item && 'stringValue' in item ? `${item.stringValue ?? ''}`.trim() : ''))
+      .filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  return [];
 }
 
 function pickString(body: JsonObject, keys: string[]): string {
@@ -3498,6 +4993,20 @@ function docBool(doc: FirestoreDoc, key: string): boolean | null {
   return value?.booleanValue ?? null;
 }
 
+function docArrayString(doc: FirestoreDoc, key: string): string[] {
+  const value =
+    doc.fields?.[key] as { arrayValue?: { values?: FirestoreValue[] } } | undefined;
+  const values = value?.arrayValue?.values ?? [];
+  const out: string[] = [];
+  for (const item of values) {
+    if (item && 'stringValue' in item) {
+      const str = item.stringValue.trim();
+      if (str) out.push(str);
+    }
+  }
+  return out;
+}
+
 function docInt(doc: FirestoreDoc, key: string): number | null {
   const value = doc.fields?.[key] as { integerValue?: string } | undefined;
   return value?.integerValue ? Number(value.integerValue) : null;
@@ -3518,6 +5027,19 @@ function parseDateValue(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   const parsed = Date.parse(value.toString());
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function computeAgeFromIso(dateString: string): number | null {
+  const parsed = Date.parse(dateString);
+  if (Number.isNaN(parsed)) return null;
+  const dob = new Date(parsed);
+  const now = new Date();
+  let age = now.getUTCFullYear() - dob.getUTCFullYear();
+  const monthDelta = now.getUTCMonth() - dob.getUTCMonth();
+  if (monthDelta < 0 || (monthDelta === 0 && now.getUTCDate() < dob.getUTCDate())) {
+    age -= 1;
+  }
+  return age;
 }
 
 function isAdult(dateString: string): boolean {
@@ -3541,6 +5063,21 @@ function maskReg(reg: string): string {
   const start = reg.slice(0, 2);
   const end = reg.slice(-2);
   return `${start}****${end}`;
+}
+
+function maskPhoneNumber(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const digits = trimmed.replace(/\D/g, '');
+  if (!digits) return '';
+  const keepStart = digits.length >= 3 ? 3 : 1;
+  const keepEnd = digits.length >= 2 ? 2 : 1;
+  const hiddenCount = Math.max(0, digits.length - keepStart - keepEnd);
+  const prefix = trimmed.startsWith('+') ? '+' : '';
+  const start = digits.slice(0, keepStart);
+  const end = digits.slice(digits.length - keepEnd);
+  const stars = hiddenCount > 0 ? '*'.repeat(hiddenCount) : '';
+  return `${prefix}${start}${stars}${end}`;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -3895,3 +5432,4 @@ function pemToArrayBuffer(pem: string): ArrayBuffer {
   }
   return bytes.buffer;
 }
+

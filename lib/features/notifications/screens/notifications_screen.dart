@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../../../core/motion/cam_reveal.dart';
-import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
 import '../domain/cam_notification.dart';
 import '../providers/notifications_providers.dart';
 import '../widgets/notification_app_bar.dart';
@@ -38,6 +38,7 @@ class NotificationsScreen extends ConsumerWidget {
     final state = ref.watch(notificationsControllerProvider);
     final items = ref.watch(filteredNotificationsProvider);
     final audience = ref.watch(activeAudienceProvider);
+    final availableAudiences = ref.watch(availableAudiencesProvider);
 
     return Scaffold(
       appBar: NotificationAppBar(
@@ -65,150 +66,151 @@ class NotificationsScreen extends ConsumerWidget {
         ],
       ),
       body: BrandBackdrop(
-        child: state.loading
-            ? Center(
-                child: CamVotePulseLoading(
-                  title: t.loading,
-                  subtitle: t.notificationsSubtitle,
-                  compact: true,
-                ),
-              )
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  return ResponsiveContent(
-                    child: SizedBox(
-                      height: constraints.maxHeight,
-                      child: Column(
-                        children: [
-                          CamStagger(
-                            children: [
-                              const SizedBox(height: 6),
-                              BrandHeader(
-                                title: t.notificationsTitle,
-                                subtitle: t.notificationsSubtitle,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return ResponsiveContent(
+              child: SizedBox(
+                height: constraints.maxHeight,
+                child: Column(
+                  children: [
+                    CamStagger(
+                      children: [
+                        const SizedBox(height: 6),
+                        BrandHeader(
+                          title: t.notificationsTitle,
+                          subtitle: t.notificationsSubtitle,
+                        ),
+                        const SizedBox(height: 12),
+                        if (availableAudiences.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: availableAudiences.map((a) {
+                                  final selected = a == audience;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      selected: selected,
+                                      onSelected: (_) => ref
+                                          .read(activeAudienceProvider.notifier)
+                                          .setAudience(a),
+                                      label: Text(_audienceLabel(a, t)),
+                                    ),
+                                  );
+                                }).toList(),
                               ),
-                              const SizedBox(height: 12),
-                              // Role filter chips (public/voter/observer/admin)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(0, 4, 0, 0),
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    children: CamAudience.values.map((a) {
-                                      final selected = a == audience;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          right: 8,
-                                        ),
-                                        child: ChoiceChip(
-                                          selected: selected,
-                                          onSelected: (_) => ref
-                                              .read(
-                                                activeAudienceProvider.notifier,
-                                              )
-                                              .setAudience(a),
-                                          label: Text(_audienceLabel(a, t)),
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                            ],
+                            ),
                           ),
-                          Expanded(
-                            child: items.isEmpty
-                                ? Card(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16),
-                                      child: Text(t.noNotifications),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                    if (state.loading)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: LinearProgressIndicator(minHeight: 2),
+                      ),
+                    Expanded(
+                      child: items.isEmpty
+                          ? state.loading
+                                ? Center(
+                                    child: CamVotePulseLoading(
+                                      title: t.loading,
+                                      subtitle: t.notificationsSubtitle,
+                                      compact: true,
                                     ),
                                   )
-                                : ListView.builder(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      0,
-                                      8,
-                                      0,
-                                      20,
+                                : Card(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.notifications_none_rounded,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(t.noNotifications),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    itemCount: items.length,
-                                    itemBuilder: (context, index) {
-                                      final n = items[index];
+                                  )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(0, 8, 0, 20),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final n = items[index];
 
-                                      return CamReveal(
-                                        delay: Duration(
-                                          milliseconds: 40 * index,
+                                return CamReveal(
+                                  delay: Duration(milliseconds: 40 * index),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Dismissible(
+                                      key: ValueKey(n.id),
+                                      direction: DismissDirection.endToStart,
+                                      background: Container(
+                                        alignment: Alignment.centerRight,
+                                        padding: const EdgeInsets.only(
+                                          right: 16,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                            bottom: 10,
-                                          ),
-                                          child: Dismissible(
-                                            key: ValueKey(n.id),
-                                            direction:
-                                                DismissDirection.endToStart,
-                                            background: Container(
-                                              alignment: Alignment.centerRight,
-                                              padding: const EdgeInsets.only(
-                                                right: 16,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.errorContainer,
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                              ),
-                                              child: Icon(
-                                                Icons.delete_rounded,
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onErrorContainer,
-                                              ),
-                                            ),
-                                            onDismissed: (_) => ref
-                                                .read(
-                                                  notificationsControllerProvider
-                                                      .notifier,
-                                                )
-                                                .remove(n.id),
-                                            child: _NotificationTile(
-                                              icon: _icon(n.type),
-                                              title: n.title,
-                                              body: n.body,
-                                              time: _timeLabel(n.createdAt),
-                                              unread: !n.read,
-                                              onTap: () async {
-                                                await ref
-                                                    .read(
-                                                      notificationsControllerProvider
-                                                          .notifier,
-                                                    )
-                                                    .markRead(n.id);
-
-                                                // Optional deep link route:
-                                                if (n.route != null &&
-                                                    context.mounted) {
-                                                  final route = n.route!.trim();
-                                                  if (route.isNotEmpty) {
-                                                    context.push(route);
-                                                  }
-                                                }
-                                              },
-                                            ),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.errorContainer,
+                                          borderRadius: BorderRadius.circular(
+                                            16,
                                           ),
                                         ),
-                                      );
-                                    },
+                                        child: Icon(
+                                          Icons.delete_rounded,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onErrorContainer,
+                                        ),
+                                      ),
+                                      onDismissed: (_) => ref
+                                          .read(
+                                            notificationsControllerProvider
+                                                .notifier,
+                                          )
+                                          .remove(n.id),
+                                      child: _NotificationTile(
+                                        icon: _icon(n.type),
+                                        title: n.title,
+                                        body: n.body,
+                                        time: _timeLabel(n.createdAt),
+                                        unread: !n.read,
+                                        onTap: () async {
+                                          await ref
+                                              .read(
+                                                notificationsControllerProvider
+                                                    .notifier,
+                                              )
+                                              .markRead(n.id);
+
+                                          if (n.route != null &&
+                                              context.mounted) {
+                                            final route = n.route!.trim();
+                                            if (route.isNotEmpty) {
+                                              context.push(route);
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   ),
-                          ),
-                        ],
-                      ),
+                                );
+                              },
+                            ),
                     ),
-                  );
-                },
+                  ],
+                ),
               ),
+            );
+          },
+        ),
       ),
     );
   }

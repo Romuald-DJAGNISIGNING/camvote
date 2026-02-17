@@ -4,19 +4,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/network/worker_client.dart';
+import '../../../core/offline/offline_sync_store.dart';
 
 import '../models/incident_report.dart';
 
 abstract class IncidentRepository {
   Future<IncidentReportResult> submitIncident(IncidentReport report);
+  Future<int> pendingOfflineIncidentCount();
 }
 
 class FirebaseIncidentRepository implements IncidentRepository {
-  FirebaseIncidentRepository({
-    FirebaseAuth? auth,
-    WorkerClient? workerClient,
-  }) : _auth = auth ?? FirebaseAuth.instance,
-       _workerClient = workerClient ?? WorkerClient();
+  FirebaseIncidentRepository({FirebaseAuth? auth, WorkerClient? workerClient})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _workerClient = workerClient ?? WorkerClient();
 
   final FirebaseAuth _auth;
   final WorkerClient _workerClient;
@@ -47,12 +47,20 @@ class FirebaseIncidentRepository implements IncidentRepository {
             : report.electionId.trim(),
         'attachments': urls,
       },
+      allowOfflineQueue: true,
+      queueType: 'incident_report',
     );
 
+    final queued = response['queued'] == true;
+    final offlineQueueId = response['offlineQueueId']?.toString() ?? '';
     return IncidentReportResult(
-      reportId: response['reportId']?.toString() ?? '',
-      status: response['status']?.toString() ?? 'submitted',
-      message: '',
+      reportId: response['reportId']?.toString() ?? offlineQueueId,
+      status:
+          response['status']?.toString() ??
+          (queued ? 'queued_offline' : 'submitted'),
+      message: response['message']?.toString() ?? '',
+      queuedOffline: queued,
+      offlineQueueId: offlineQueueId,
     );
   }
 
@@ -75,5 +83,10 @@ class FirebaseIncidentRepository implements IncidentRepository {
       throw StateError('upload_failed');
     }
     return url;
+  }
+
+  @override
+  Future<int> pendingOfflineIncidentCount() {
+    return OfflineSyncStore.pendingCount(queueType: 'incident_report');
   }
 }

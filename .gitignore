@@ -66,3 +66,22 @@ data/maps/*.pbf.md5
 
 # FVM Version Cache
 .fvm/
+
+# Local debug / probe artifacts (do not commit)
+.history-memo/
+devtools_options.yaml
+test-results/
+tmp-*
+tmp_*
+scripts/tmp-*
+scripts/tmp_*
+bg-test.txt
+package.json
+package-lock.json
+npm-debug.log
+tools/7zip/
+tools/dmg2img/
+
+# Local l10n scaffolding artifacts
+lib/gen/l10n/.*
+lib/l10n/.*

@@ -20,15 +20,12 @@ class VotingCentersRepository {
     );
     final items = response['centers'];
     if (items is! List) return const [];
-    return items
-        .whereType<Map>()
-        .map((doc) {
-          final data =
-              (doc['data'] as Map?)?.cast<String, dynamic>() ??
-              const <String, dynamic>{};
-          return VotingCenter.fromJson({'id': doc['id'] ?? '', ...data});
-        })
-        .toList();
+    return items.whereType<Map>().map((doc) {
+      final data =
+          (doc['data'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
+      return VotingCenter.fromJson({'id': doc['id'] ?? '', ...data});
+    }).toList();
   }
 
   Future<List<VotingCenter>> fetchNearby({
@@ -75,7 +72,16 @@ class VotingCentersRepository {
     final response = await _workerClient.post(
       '/v1/admin/centers/upsert',
       data: _centerPayload(center),
+      allowOfflineQueue: true,
+      queueType: 'center_upsert',
     );
+    final queued = response['queued'] == true;
+    if (queued && center.id.trim().isEmpty) {
+      final queueId = response['offlineQueueId']?.toString() ?? '';
+      if (queueId.isNotEmpty) {
+        return center.copyWith(id: 'queued_$queueId');
+      }
+    }
     final id = response['id']?.toString() ?? center.id;
     return center.copyWith(id: id);
   }
@@ -85,6 +91,8 @@ class VotingCentersRepository {
     await _workerClient.post(
       '/v1/admin/centers/delete',
       data: {'id': id.trim()},
+      allowOfflineQueue: true,
+      queueType: 'center_delete',
     );
   }
 
@@ -93,6 +101,8 @@ class VotingCentersRepository {
     await _workerClient.post(
       '/v1/admin/centers/batch',
       data: {'centers': centers.map(_centerPayload).toList()},
+      allowOfflineQueue: true,
+      queueType: 'center_batch_upsert',
     );
   }
 

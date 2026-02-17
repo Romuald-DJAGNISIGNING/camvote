@@ -14,6 +14,7 @@ import '../domain/election.dart';
 import '../domain/vote_receipt.dart';
 import '../providers/voter_portal_providers.dart';
 import 'voter_receipt_screen.dart';
+import 'voter_vote_impact_screen.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../gen/l10n/app_localizations.dart';
 import '../../../core/branding/brand_backdrop.dart';
@@ -268,6 +269,7 @@ class _OpenElectionVoteCard extends ConsumerWidget {
     }
 
     // Backend-enforced vote (Cloudflare Worker)
+    Map<String, dynamic>? castResponse;
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null || uid.isEmpty) {
@@ -304,7 +306,7 @@ class _OpenElectionVoteCard extends ConsumerWidget {
       );
       final signature = await DeviceKeyManager.signMessage(message);
 
-      await worker.post(
+      castResponse = await worker.post(
         '/v1/vote/cast',
         data: {
           'electionId': election.id,
@@ -351,6 +353,20 @@ class _OpenElectionVoteCard extends ConsumerWidget {
     );
     await ref.read(voteReceiptsProvider.notifier).addReceipt(receipt);
 
+    final tally = _parseVoteImpactTally(castResponse);
+
+    if (context.mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => VoterVoteImpactScreen(
+            electionTitle: election.title,
+            candidateName: c.fullName,
+            tally: tally,
+          ),
+        ),
+      );
+    }
+
     if (context.mounted) {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -358,6 +374,28 @@ class _OpenElectionVoteCard extends ConsumerWidget {
         ),
       );
     }
+  }
+
+  VoteImpactTally? _parseVoteImpactTally(Map<String, dynamic>? castResponse) {
+    if (castResponse == null) return null;
+    final raw = castResponse['tally'];
+    if (raw is! Map) return null;
+    final map = raw.cast<String, dynamic>();
+    final after = _safeInt(map['after']);
+    if (after < 0) return null;
+    final delta = _safeInt(map['delta']);
+    final before = _safeInt(map['before']);
+    return VoteImpactTally(
+      before: before >= 0 ? before : (after - (delta > 0 ? delta : 1)),
+      delta: delta > 0 ? delta : 1,
+      after: after,
+    );
+  }
+
+  int _safeInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? -1;
   }
 
   String _formatUntil(BuildContext context, DateTime until) {

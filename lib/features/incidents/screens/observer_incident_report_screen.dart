@@ -8,6 +8,7 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../../core/offline/offline_status_providers.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
 import '../../../core/widgets/navigation/app_back_button.dart';
@@ -49,6 +50,9 @@ class _ObserverIncidentReportScreenState
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final submission = ref.watch(incidentSubmissionProvider);
+    final pendingOfflineIncidents =
+        ref.watch(pendingOfflineIncidentProvider).asData?.value ?? 0;
+    final offline = ref.watch(isOfflineProvider);
     final isSubmitting = submission.isLoading;
 
     return Scaffold(
@@ -70,6 +74,24 @@ class _ObserverIncidentReportScreenState
                         title: t.observerReportIncidentTitle,
                         subtitle: t.observerReportIncidentSubtitle,
                       ),
+                      if (pendingOfflineIncidents > 0) ...[
+                        const SizedBox(height: 12),
+                        Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.cloud_upload_outlined),
+                            title: Text(t.helpSupportOfflineQueueTitle),
+                            subtitle: Text(
+                              offline
+                                  ? t.offlineBannerOfflineBodyCount(
+                                      pendingOfflineIncidents,
+                                    )
+                                  : t.offlineBannerPendingBodyCount(
+                                      pendingOfflineIncidents,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       Card(
                         child: Padding(
@@ -309,9 +331,15 @@ class _ObserverIncidentReportScreenState
     }
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.incidentSubmittedBody(result.reportId))),
-    );
+    final trackingId = result.offlineQueueId.isEmpty
+        ? (result.reportId.isEmpty ? t.unknown : result.reportId)
+        : result.offlineQueueId;
+    final successMessage = result.queuedOffline
+        ? t.offlineQueuedWithReference(trackingId)
+        : t.incidentSubmittedBody(result.reportId);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(successMessage)));
     _formKey.currentState?.reset();
     _titleCtrl.clear();
     _locationCtrl.clear();

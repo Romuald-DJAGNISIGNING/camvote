@@ -39,6 +39,20 @@ final appSettingsProvider =
       AppSettingsController.new,
     );
 
+// Session-only gate used to prevent web redirect races right after onboarding
+// completion. Persisted onboarding state still remains the source of truth.
+final onboardingSessionBypassProvider =
+    NotifierProvider<OnboardingSessionBypassController, bool>(
+      OnboardingSessionBypassController.new,
+    );
+
+class OnboardingSessionBypassController extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void enable() => state = true;
+}
+
 class AppSettingsController extends AsyncNotifier<AppSettingsState> {
   static const _kTheme = 'settings.themeMode';
   static const _kThemeStyle = 'settings.themeStyle';
@@ -90,6 +104,12 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
 
     final hasSeenOnboarding =
         seenOnboardingVersion == _currentOnboardingVersion;
+    final optimisticOnboardingSeen = state.maybeWhen(
+      data: (value) => value.hasSeenOnboarding,
+      orElse: () => false,
+    );
+    final effectiveOnboardingSeen =
+        hasSeenOnboarding || optimisticOnboardingSeen;
     final shouldMigrateLegacyOnboarding =
         seenOnboardingVersion == null && hasSeenOnboardingLegacy;
     if (shouldMigrateLegacyOnboarding) {
@@ -109,7 +129,7 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
       themeMode: themeMode,
       themeStyle: themeStyle,
       locale: locale,
-      hasSeenOnboarding: hasSeenOnboarding,
+      hasSeenOnboarding: effectiveOnboardingSeen,
     );
 
     if (needsWriteBack) {
@@ -156,8 +176,7 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
   }
 
   Future<void> setOnboardingSeen(bool seen) async {
-    final current = state.value;
-    if (current == null) return;
+    final current = state.value ?? _fallback;
 
     state = AsyncValue.data(current.copyWith(hasSeenOnboarding: seen));
     await _setBool(_kOnboarding, seen);

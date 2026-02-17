@@ -663,7 +663,7 @@ function setStoreLinks() {
         iosLive
       );
       if (smartQr) {
-        smartQr.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(smartUrl)}`;
+        setQrImageWithFallback(smartQr, smartUrl, 220);
       }
       qrWrap.classList.add('active');
       enableQrCardInteraction(qrCard, qrBurst);
@@ -674,6 +674,48 @@ function setStoreLinks() {
       }
     }
   }
+}
+
+function setQrImageWithFallback(imageEl, payload, size) {
+  if (!imageEl) return;
+  const sources = buildQrSources(payload, size);
+  if (sources.length === 0) {
+    imageEl.removeAttribute('src');
+    return;
+  }
+
+  let index = 0;
+  const loadNext = () => {
+    if (index >= sources.length) {
+      imageEl.removeAttribute('src');
+      imageEl.classList.add('qr-error');
+      return;
+    }
+    const next = sources[index];
+    index += 1;
+    imageEl.classList.remove('qr-error');
+    imageEl.src = next;
+  };
+
+  imageEl.onerror = () => {
+    loadNext();
+  };
+  imageEl.onload = () => {
+    imageEl.classList.remove('qr-error');
+  };
+  loadNext();
+}
+
+function buildQrSources(payload, size) {
+  const value = `${payload || ''}`.trim();
+  if (!value) return [];
+  const encoded = encodeURIComponent(value);
+  const qrSize = Number.isFinite(size) ? Math.max(160, Math.min(size, 320)) : 220;
+  return [
+    `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encoded}&margin=2&ecc=H`,
+    `https://quickchart.io/qr?size=${qrSize}&text=${encoded}&ecLevel=H&margin=2`,
+    `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encoded}&choe=UTF-8`,
+  ];
 }
 
 function resolveUrl(url) {

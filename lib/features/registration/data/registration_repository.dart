@@ -16,6 +16,8 @@ class RegistrationRepository {
     final result = await _client.post(
       '/v1/registration/submit',
       data: {...submission.toJson(), 'deviceHash': deviceHash},
+      allowOfflineQueue: true,
+      queueType: 'registration_submit',
     );
     return RegistrationSubmissionResult.fromJson(result);
   }
@@ -38,7 +40,12 @@ class RegistrationRepository {
       payload['renewalToken'] = renewalToken;
     }
 
-    final result = await _client.post('/v1/registration/submit', data: payload);
+    final result = await _client.post(
+      '/v1/registration/submit',
+      data: payload,
+      allowOfflineQueue: true,
+      queueType: 'registration_renew',
+    );
     return RegistrationSubmissionResult.fromJson(result);
   }
 }

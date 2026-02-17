@@ -22,72 +22,74 @@ import 'core/firebase/firebase_bootstrap.dart';
 import 'app.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded<Future<void>>(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  if (kIsWeb) {
-    // Keep hash strategy on web. Path strategy can cause stale/404 route
-    // behavior in static hosting setups and contributes to frozen startup flows.
-  }
+      if (kIsWeb) {
+        // Keep hash strategy on web. Path strategy can cause stale/404 route
+        // behavior in static hosting setups and contributes to frozen startup flows.
+      }
 
-  if (!kIsWeb) {
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarDividerColor: Colors.transparent,
-      ),
-    );
-  }
+      if (!kIsWeb) {
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+        SystemChrome.setSystemUIOverlayStyle(
+          const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarDividerColor: Colors.transparent,
+          ),
+        );
+      }
 
-  await _bootstrap();
-  // Start optional startup services in parallel, but do not block first frame.
-  unawaited(_loadEnv());
-  unawaited(ensureFirebaseInitialized());
+      await _bootstrap();
+      // Env must be ready before providers read AppConfig on startup.
+      await _loadEnv();
+      // Do not block first frame on Firebase boot.
+      unawaited(ensureFirebaseInitialized());
 
-  // Forward Flutter framework errors into the zone (and keep them visible in debug).
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    Zone.current.handleUncaughtError(
-      details.exception,
-      details.stack ?? StackTrace.current,
-    );
-  };
+      // Forward Flutter framework errors into the zone (and keep them visible in debug).
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        Zone.current.handleUncaughtError(
+          details.exception,
+          details.stack ?? StackTrace.current,
+        );
+      };
 
-  // Catch unhandled async errors (especially important on Web).
-  PlatformDispatcher.instance.onError = (error, stack) {
-    Zone.current.handleUncaughtError(error, stack);
-    // Return false so Flutter still reports framework errors instead of
-    // silently swallowing them into a blank screen.
-    return false;
-  };
+      // Catch unhandled async errors (especially important on Web).
+      PlatformDispatcher.instance.onError = (error, stack) {
+        Zone.current.handleUncaughtError(error, stack);
+        // Return false so Flutter still reports framework errors instead of
+        // silently swallowing them into a blank screen.
+        return false;
+      };
 
-  if (!kIsWeb) {
-    unawaited(
-      LocalNotificationsService.instance.init().catchError((error, stack) {
-        if (kDebugMode) {
-          // ignore: avoid_print
-          print('Local notifications init skipped: $error');
-          // ignore: avoid_print
-          print(stack);
-        }
-      }),
-    );
-  }
+      if (!kIsWeb) {
+        unawaited(
+          LocalNotificationsService.instance.init().catchError((error, stack) {
+            if (kDebugMode) {
+              // ignore: avoid_print
+              print('Local notifications init skipped: $error');
+              // ignore: avoid_print
+              print(stack);
+            }
+          }),
+        );
+      }
 
-  // Guard the whole app: hook for crash reporting in production builds.
-  runZonedGuarded(() => runApp(const ProviderScope(child: CamVoteApp())), (
-    error,
-    stack,
-  ) {
-    if (kDebugMode) {
-      // In debug we print; production can forward to crash reporting.
-      // ignore: avoid_print
-      print('Uncaught error: $error');
-      // ignore: avoid_print
-      print(stack);
-    }
-  });
+      runApp(const ProviderScope(child: CamVoteApp()));
+    },
+    (error, stack) {
+      if (kDebugMode) {
+        // In debug we print; production can forward to crash reporting.
+        // ignore: avoid_print
+        print('Uncaught error: $error');
+        // ignore: avoid_print
+        print(stack);
+      }
+    },
+  );
 }
 
 Future<void> _bootstrap() async {
@@ -136,11 +138,19 @@ Future<void> _loadEnv() async {
     // Optional: ignore missing .env in CI or production.
   }
 
-  if (dotenv.env.isEmpty) {
+  if (_isDotEnvEmpty()) {
     try {
       await dotenv.load(fileName: '.env.public', isOptional: true);
     } catch (_) {
       // Optional: ignore missing .env.public in CI or production.
     }
+  }
+}
+
+bool _isDotEnvEmpty() {
+  try {
+    return dotenv.env.isEmpty;
+  } catch (_) {
+    return true;
   }
 }

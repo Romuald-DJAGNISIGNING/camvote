@@ -62,7 +62,10 @@ import '../../features/settings/screens/account_delete_screen.dart';
 import '../../features/notifications/screens/notifications_screen.dart';
 import '../../features/about_me/screens/about_me_screen.dart';
 import '../../features/support/screens/admin_support_tickets_screen.dart';
+import '../../features/support/screens/admin_tip_review_screen.dart';
 import '../../features/support/screens/help_support_screen.dart';
+import '../../features/support/screens/tip_support_screen.dart';
+import '../../features/support/screens/camguide_screen.dart';
 
 import '../../features/registration/screens/registration_hub_screen.dart';
 import '../../features/registration/screens/voter_registration_draft_screen.dart';
@@ -107,11 +110,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final loc = state.matchedLocation;
       final isWeb = kIsWeb;
+      final sessionOnboardingBypass = ref.read(onboardingSessionBypassProvider);
+      final onboardingEntry = _resolveOnboardingEntry(
+        loc: loc,
+        state: state,
+        isWeb: isWeb,
+      );
+      final assistantIntent = state.uri.queryParameters['assistant']
+          ?.trim()
+          .toLowerCase();
 
       if (isBootstrapping) return null;
 
-      if (!hasSeenOnboarding && loc != RoutePaths.onboarding) {
-        return RoutePaths.onboarding;
+      if (loc == RoutePaths.helpSupport &&
+          (assistantIntent == 'camguide' || assistantIntent == '1')) {
+        final qp = Map<String, String>.from(state.uri.queryParameters);
+        qp.remove('assistant');
+        return Uri(path: RoutePaths.camGuide, queryParameters: qp).toString();
+      }
+
+      final isOnboardingRoute = loc == RoutePaths.onboarding;
+      final onboardingRevisit = state.uri.queryParameters['revisit'] == '1';
+      if (hasSeenOnboarding && isOnboardingRoute && !onboardingRevisit) {
+        return _resolveOnboardingExitTarget(
+          state: state,
+          isWeb: isWeb,
+          fallbackEntry: onboardingEntry,
+        );
+      }
+
+      if (!hasSeenOnboarding &&
+          !isOnboardingRoute &&
+          !sessionOnboardingBypass) {
+        final from = state.uri.toString();
+        return Uri(
+          path: RoutePaths.onboarding,
+          queryParameters: {
+            if (onboardingEntry != null) 'entry': onboardingEntry,
+            'from': from,
+          },
+        ).toString();
       }
 
       if (auth?.errorCode == AuthErrorCodes.accountArchived &&
@@ -590,6 +628,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           transition: CamRouteTransition.fadeSlide,
         ),
       ),
+      GoRoute(
+        path: RoutePaths.adminTips,
+        pageBuilder: (context, state) => CamRouteTransitions.page(
+          state: state,
+          child: const AdminTipReviewScreen(),
+          transition: CamRouteTransition.fadeSlide,
+        ),
+      ),
       //Registration
       GoRoute(
         path: RoutePaths.register,
@@ -689,6 +735,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           child: const HelpSupportScreen(),
         ),
       ),
+      GoRoute(
+        path: RoutePaths.camGuide,
+        pageBuilder: (context, state) => RouteTransitions.fadeSlide(
+          state: state,
+          child: const CamGuideScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.supportTip,
+        pageBuilder: (context, state) => RouteTransitions.fadeSlide(
+          state: state,
+          child: const TipSupportScreen(),
+        ),
+      ),
     ],
   );
 });
@@ -701,6 +761,92 @@ String _homeForRole(AppRole role) {
     AppRole.admin => kIsWeb ? RoutePaths.adminDashboard : RoutePaths.gateway,
     _ => RoutePaths.publicHome,
   };
+}
+
+String? _resolveOnboardingEntry({
+  required String loc,
+  required GoRouterState state,
+  required bool isWeb,
+}) {
+  final entry = state.uri.queryParameters['entry'];
+  if (entry == 'admin' || entry == 'general') {
+    return entry;
+  }
+
+  if (loc == RoutePaths.adminPortal ||
+      loc.startsWith(RoutePaths.adminDashboard)) {
+    return 'admin';
+  }
+  if (loc == RoutePaths.webPortal) {
+    return 'general';
+  }
+
+  if (isWeb) {
+    final fragment = Uri.base.fragment;
+    if (fragment.isNotEmpty) {
+      final normalized = fragment.startsWith('/') ? fragment : '/$fragment';
+      final parsed = Uri.tryParse(normalized);
+      final fragmentPath = parsed?.path.toLowerCase() ?? '';
+      if (fragmentPath.contains('/backoffice')) {
+        return 'admin';
+      }
+      if (fragmentPath.contains('/portal')) {
+        return 'general';
+      }
+    }
+
+    final path = Uri.base.path.toLowerCase();
+    if (path.contains('/backoffice')) {
+      return 'admin';
+    }
+    if (path.contains('/portal')) {
+      return 'general';
+    }
+    return 'general';
+  }
+
+  return null;
+}
+
+String _resolveOnboardingExitTarget({
+  required GoRouterState state,
+  required bool isWeb,
+  required String? fallbackEntry,
+}) {
+  final from = _sanitizeOnboardingFrom(state.uri.queryParameters['from']);
+  if (from != null) {
+    return from;
+  }
+
+  final entry =
+      state.uri.queryParameters['entry'] == 'admin' ||
+          state.uri.queryParameters['entry'] == 'general'
+      ? state.uri.queryParameters['entry']
+      : fallbackEntry;
+  if (entry == 'admin') {
+    return RoutePaths.adminPortal;
+  }
+  if (isWeb) {
+    return RoutePaths.webPortal;
+  }
+  return RoutePaths.gateway;
+}
+
+String? _sanitizeOnboardingFrom(String? raw) {
+  if (raw == null || raw.trim().isEmpty) {
+    return null;
+  }
+  final parsed = Uri.tryParse(raw.trim());
+  if (parsed == null) {
+    return null;
+  }
+  if (!parsed.path.startsWith('/')) {
+    return null;
+  }
+  if (parsed.path == RoutePaths.onboarding) {
+    return null;
+  }
+  return parsed.toString();
 }
 
 String _resolveInitialLocation() {
