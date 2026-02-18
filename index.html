@@ -107,7 +107,7 @@
         document.getElementById("link-universal").href = urls.universal;
       }
 
-      function pickUrl() {
+      function pickUrlFromUA() {
         var looksLikeAndroid = ua.indexOf("android") !== -1;
         var hasArm64 = ua.indexOf("arm64") !== -1 || ua.indexOf("aarch64") !== -1;
         var hasArmv7 = ua.indexOf("armeabi-v7a") !== -1 || ua.indexOf("armv7") !== -1;
@@ -133,13 +133,56 @@
       }
 
       setManualLinks();
-      var choice = pickUrl();
-      statusEl.textContent = choice.note;
+      var params = new URLSearchParams(window.location.search || "");
+      if (params.get("no_redirect") === "1") {
+        statusEl.textContent = "Auto-redirect disabled (no_redirect=1). Choose an APK below.";
+        return;
+      }
 
-      // Delay slightly so users see status text before redirect starts.
-      setTimeout(function () {
-        window.location.href = choice.url;
-      }, 700);
+      function redirect(choice) {
+        statusEl.textContent = choice.note;
+        // Delay slightly so users see status text before redirect starts.
+        setTimeout(function () {
+          window.location.href = choice.url;
+        }, 700);
+      }
+
+      // Prefer User-Agent Client Hints (more reliable than UA parsing when available).
+      // Falls back to legacy UA string matching.
+      if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        navigator.userAgentData
+          .getHighEntropyValues(["architecture", "bitness", "platform"])
+          .then(function (data) {
+            var plat = (data.platform || "").toLowerCase();
+            var arch = (data.architecture || "").toLowerCase();
+            var bits = (data.bitness || "").toLowerCase();
+
+            if (plat.indexOf("android") !== -1) {
+              if (arch.indexOf("arm") !== -1 && bits === "64") {
+                redirect({ url: urls.arm64, note: "Android (ARM, 64-bit) detected. Redirecting..." });
+                return;
+              }
+              if (arch.indexOf("arm") !== -1 && bits === "32") {
+                redirect({ url: urls.armv7, note: "Android (ARM, 32-bit) detected. Redirecting..." });
+                return;
+              }
+              if (arch.indexOf("x86") !== -1 && bits === "64") {
+                redirect({ url: urls.x86_64, note: "Android (x86, 64-bit) detected. Redirecting..." });
+                return;
+              }
+              redirect({ url: urls.universal, note: "Android detected. Using universal fallback APK." });
+              return;
+            }
+
+            // Non-Android: keep behavior consistent with UA fallback.
+            redirect(pickUrlFromUA());
+          })
+          .catch(function () {
+            redirect(pickUrlFromUA());
+          });
+      } else {
+        redirect(pickUrlFromUA());
+      }
     })();
   </script>
 </body>
