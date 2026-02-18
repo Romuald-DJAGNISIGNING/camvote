@@ -34,6 +34,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Init Build Logs
+        shell: bash
+        run: |
+          # Ensure logs exist even if early steps fail (e.g., missing secrets).
+          : > ios-build.log
+          : > pods-install.log
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -146,13 +153,6 @@ jobs:
       - name: Validate Firebase Mobile Config
         run: dart run tools/validate_firebase_mobile_config.dart
 
-      - name: Init Build Logs
-        shell: bash
-        run: |
-          # Ensure logs exist even if early steps fail.
-          : > ios-build.log
-          : > pods-install.log
-
       - name: Install CocoaPods Dependencies
         id: pods
         shell: bash
@@ -214,7 +214,7 @@ jobs:
           path: |
             ios-build.log
             pods-install.log
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Locate IPA
