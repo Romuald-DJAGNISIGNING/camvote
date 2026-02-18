@@ -45,6 +45,7 @@ pwsh scripts/deploy-worker.ps1
 pwsh scripts/deploy-web.ps1 -ProjectName camvote
 pwsh scripts/deploy-all.ps1 -PagesProject camvote
 pwsh scripts/validate-mobile-config.ps1
+pwsh scripts/release-android.ps1
 ```
 
 Notes:
@@ -53,3 +54,21 @@ Notes:
 - `deploy-all.ps1` prefers `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth and avoids deprecated `FIREBASE_TOKEN` when service-account auth is available.
 - Web deploy commands pass `--commit-dirty=true` so deployment is not blocked/warned by local uncommitted changes.
 - `validate-mobile-config.ps1` checks `lib/firebase_options.dart` against `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist`.
+- `release-android.ps1` builds signed Android release artifacts (`.aab` + split `.apk`) and writes SHA-256 checksums to `build/mobile-android-sha256.txt`.
+
+## Android release script arguments
+
+```
+pwsh scripts/release-android.ps1 `
+  -ApiBaseUrl https://camvote.romuald-djagnisigning.workers.dev `
+  -SkipPubGet `
+  -SkipValidation `
+  -SkipApk `
+  -SkipAab
+```
+
+Use flags only when needed:
+- `-SkipPubGet`: skip `flutter pub get`
+- `-SkipValidation`: skip `dart run tools/validate_firebase_mobile_config.dart`
+- `-SkipApk`: build only App Bundle
+- `-SkipAab`: build only APKs

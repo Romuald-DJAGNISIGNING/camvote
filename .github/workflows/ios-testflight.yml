@@ -1,0 +1,211 @@
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "CAMVOTE_API_BASE_URL override"
+        required: false
+        default: "https://camvote.romuald-djagnisigning.workers.dev"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-upload:
+    name: Build and Upload IPA to TestFlight
+    runs-on: macos-latest
+    env:
+      CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+      CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+      CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+      IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+      IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64 }}
+      IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+      IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+      APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64 }}
+      IOS_KEYCHAIN_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}-camvote
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.9"
+          channel: stable
+          cache: true
+
+      - name: Resolve API Base URL
+        id: api
+        shell: bash
+        run: |
+          api="${{ inputs.api_base_url }}"
+          if [ -z "$api" ]; then
+            api="https://camvote.romuald-djagnisigning.workers.dev"
+          fi
+          echo "value=$api" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Required Secrets
+        shell: bash
+        run: |
+          missing=0
+          for key in \
+            CAMVOTE_FIREBASE_WEB_API_KEY \
+            CAMVOTE_FIREBASE_ANDROID_API_KEY \
+            CAMVOTE_FIREBASE_IOS_API_KEY \
+            IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64 \
+            IOS_DISTRIBUTION_CERTIFICATE_PASSWORD \
+            IOS_PROVISIONING_PROFILE_BASE64 \
+            APPLE_TEAM_ID \
+            APP_STORE_CONNECT_ISSUER_ID \
+            APP_STORE_CONNECT_KEY_ID
+          do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required repository secret: $key"
+              missing=1
+            fi
+          done
+
+          if [ -z "$APP_STORE_CONNECT_API_PRIVATE_KEY" ] && [ -z "$APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64" ]; then
+            echo "::error::Define APP_STORE_CONNECT_API_PRIVATE_KEY or APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64."
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Restore GoogleService-Info.plist
+        shell: bash
+        run: |
+          if [ -f ios/Runner/GoogleService-Info.plist ]; then
+            exit 0
+          fi
+          if [ -z "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "::error::ios/Runner/GoogleService-Info.plist is missing and IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 was not provided."
+            exit 1
+          fi
+          mkdir -p ios/Runner
+          printf '%s' "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Install Apple Signing Assets
+        id: signing
+        shell: bash
+        run: |
+          CERT_PATH="$RUNNER_TEMP/camvote-dist.p12"
+          PROFILE_PATH="$RUNNER_TEMP/camvote.mobileprovision"
+          PROFILE_PLIST_PATH="$RUNNER_TEMP/camvote.mobileprovision.plist"
+          KEYCHAIN_PATH="$RUNNER_TEMP/camvote-signing.keychain-db"
+
+          printf '%s' "$IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+
+          security create-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$IOS_DISTRIBUTION_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$IOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          security default-keychain -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST_PATH"
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" "$PROFILE_PLIST_PATH")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$PROFILE_PLIST_PATH")
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+
+          echo "profile_name=$PROFILE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Install App Store Connect API Key
+        id: appstore
+        shell: bash
+        run: |
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          if [ -n "$APP_STORE_CONNECT_API_PRIVATE_KEY" ]; then
+            printf '%s' "$APP_STORE_CONNECT_API_PRIVATE_KEY" > "$KEY_PATH"
+          else
+            printf '%s' "$APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64" | base64 --decode > "$KEY_PATH"
+          fi
+          chmod 600 "$KEY_PATH"
+          {
+            echo "private_key<<EOF"
+            cat "$KEY_PATH"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Validate Firebase Mobile Config
+        run: dart run tools/validate_firebase_mobile_config.dart
+
+      - name: Install CocoaPods Dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Create Export Options
+        shell: bash
+        run: |
+          cat > ios/ExportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+            <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>teamID</key>
+              <string>${APPLE_TEAM_ID}</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                <key>com.camvote.app</key>
+                <string>${{ steps.signing.outputs.profile_name }}</string>
+              </dict>
+            </dict>
+          </plist>
+          EOF
+
+      - name: Build Signed IPA
+        run: >
+          flutter build ipa --release
+          --export-options-plist=ios/ExportOptions.plist
+          --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }}
+          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }}
+
+      - name: Locate IPA
+        id: ipa
+        shell: bash
+        run: |
+          ipa_path=$(find build/ios/ipa -maxdepth 1 -name "*.ipa" | head -n 1)
+          if [ -z "$ipa_path" ]; then
+            echo "::error::No IPA generated in build/ios/ipa."
+            exit 1
+          fi
+          echo "path=$ipa_path" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ steps.ipa.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload Build to TestFlight
+        uses: apple-actions/upload-testflight-build@v4
+        with:
+          app-path: ${{ steps.ipa.outputs.path }}
+          issuer-id: ${{ env.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key-id: ${{ env.APP_STORE_CONNECT_KEY_ID }}
+          api-private-key: ${{ steps.appstore.outputs.private_key }}

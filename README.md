@@ -88,6 +88,46 @@
    - Static mobile pages are served from `/mobile/` and `/mobile/app-store/index.html`.
 4. **Helper**: `pwsh scripts/deploy-all.ps1` (skips web with `-SkipWebBuild`).
 
+## Mobile Release Pipeline
+- **Local Android signed release**:
+  ```bash
+  pwsh scripts/release-android.ps1
+  ```
+  Generates:
+  - `build/app/outputs/bundle/release/app-release.aab`
+  - `build/app/outputs/flutter-apk/*release*.apk`
+  - `build/mobile-android-sha256.txt`
+- **GitHub Actions Android release**: `.github/workflows/android-release.yml`
+  - Runs on tag push (`v*`) and manual dispatch.
+  - Publishes release artifacts to GitHub Releases for tags.
+  - Optional manual upload to Google Play track.
+- **GitHub Actions iOS TestFlight**: `.github/workflows/ios-testflight.yml`
+  - Manual dispatch on macOS runner.
+  - Builds signed IPA and uploads to TestFlight.
+
+### Mobile CI Secrets
+Set these in GitHub repository settings:
+- Shared:
+  - `CAMVOTE_FIREBASE_WEB_API_KEY`
+  - `CAMVOTE_FIREBASE_ANDROID_API_KEY`
+  - `CAMVOTE_FIREBASE_IOS_API_KEY`
+- Android release:
+  - `ANDROID_UPLOAD_KEYSTORE_BASE64` (base64 of `upload-keystore.jks`)
+  - `ANDROID_KEYSTORE_PASSWORD`
+  - `ANDROID_KEY_ALIAS`
+  - `ANDROID_KEY_PASSWORD`
+  - `ANDROID_GOOGLE_SERVICES_JSON_BASE64` (base64 of `android/app/google-services.json`, if not committed)
+  - `PLAY_STORE_SERVICE_ACCOUNT_JSON` (required only when using upload-to-Play option)
+- iOS TestFlight:
+  - `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` (base64 of `ios/Runner/GoogleService-Info.plist`, if not committed)
+  - `IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64`
+  - `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
+  - `IOS_PROVISIONING_PROFILE_BASE64`
+  - `APPLE_TEAM_ID`
+  - `APP_STORE_CONNECT_ISSUER_ID`
+  - `APP_STORE_CONNECT_KEY_ID`
+  - `APP_STORE_CONNECT_API_PRIVATE_KEY` (raw `.p8` content) or `APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64`
+
 ## Release Preflight
 Run this before any production push/deploy:
 ```bash
@@ -104,6 +144,7 @@ cd cf-worker && npm ci && npm run lint
 - In GitHub repository settings, define these Actions secrets:
   `CAMVOTE_FIREBASE_WEB_API_KEY`, `CAMVOTE_FIREBASE_ANDROID_API_KEY`, `CAMVOTE_FIREBASE_IOS_API_KEY`.
   The CI workflow now fails on `main`/`master` pushes if any of these are missing.
+  Mobile release workflows require additional Android/iOS signing secrets described in `Mobile CI Secrets`.
 
 ## Web Portal Links
 - General portal: `https://camvote.pages.dev/portal`
