@@ -3254,12 +3254,18 @@ function buildCamGuideHumanAnswer(params: {
         'Si vous voulez, je peux approfondir un point, comparer les sources, ou vous faire un plan d action.',
       );
     } else {
+      const fallbackSteps = buildCamGuidePracticalFallback({
+        question: params.question,
+        isFrench: true,
+      });
       lines.push(
         `Je n ai pas pu recuperer de contexte web en direct pour "${params.question}".`,
       );
-      lines.push(
-        'Partagez plus de details (pays, periode, objectif) et je vais reformuler une reponse pratique.',
-      );
+      lines.push('Voici un plan pratique a executer tout de suite:');
+      fallbackSteps.forEach((step, index) => {
+        lines.push(`${index + 1}. ${step}`);
+      });
+      lines.push('Partagez votre ecran exact et je vous donne une version personnalisee.');
     }
   } else {
     lines.push(`Great question. I will answer as a ${roleLabel} advisor.`);
@@ -3273,10 +3279,16 @@ function buildCamGuideHumanAnswer(params: {
         'If you want, I can go deeper, compare sources, or turn this into a practical action plan.',
       );
     } else {
+      const fallbackSteps = buildCamGuidePracticalFallback({
+        question: params.question,
+        isFrench: false,
+      });
       lines.push(`I could not fetch reliable live web context for "${params.question}" just now.`);
-      lines.push(
-        'Share a bit more detail (country, timeframe, exact goal) and I will refine the answer.',
-      );
+      lines.push('Here is a practical plan you can apply immediately:');
+      fallbackSteps.forEach((step, index) => {
+        lines.push(`${index + 1}. ${step}`);
+      });
+      lines.push('Share your exact screen or blocker and I will tailor this precisely.');
     }
   }
 
@@ -3296,11 +3308,7 @@ function buildCamGuideFollowUps(params: {
           'Explique-le en version simple en 5 points.',
           'Quels risques ou limites dois-je verifier ?',
         ]
-      : [
-          'Voici mon contexte exact...',
-          'Peux-tu me poser 3 questions pour mieux cadrer ?',
-          'Donne-moi une check-list pratique.',
-        ];
+      : buildCamGuideNoLiveFollowUps(params.question, true);
   }
 
   return params.hasLiveContext
@@ -3309,6 +3317,143 @@ function buildCamGuideFollowUps(params: {
         'Give me a step-by-step plan.',
         'Explain this in plain language in 5 points.',
         'What risks or limitations should I verify?',
+      ]
+    : buildCamGuideNoLiveFollowUps(params.question, false);
+}
+
+function buildCamGuidePracticalFallback(params: {
+  question: string;
+  isFrench: boolean;
+}): string[] {
+  const question = params.question.toLowerCase();
+  const hasAny = (tokens: string[]): boolean => tokens.some((token) => question.includes(token));
+
+  if (
+    hasAny([
+      'register',
+      'registration',
+      'inscription',
+      'verify',
+      'verification',
+      'electoral card',
+      'voter card',
+    ])
+  ) {
+    return params.isFrench
+      ? [
+          'Ouvrez Inscription et remplissez vos donnees d identite exactement comme sur votre document.',
+          'Utilisez la verification OCR/biometrique si proposee puis verifiez chaque champ avant envoi.',
+          'Suivez le statut dans Verification d inscription et conservez votre numero de reference.',
+          'Si le statut bloque, soumettez un ticket Support avec votre identifiant et la capture d erreur.',
+        ]
+      : [
+          'Open Registration and enter identity details exactly as they appear on your official document.',
+          'Use OCR/biometric verification when available, then review every field before submitting.',
+          'Track status in Registration Verification and keep your reference ID.',
+          'If status is blocked, submit a Support ticket with your registration ID and screenshot.',
+        ];
+  }
+
+  if (hasAny(['vote', 'voting', 'ballot', 'receipt', 'recu'])) {
+    return params.isFrench
+      ? [
+          'Verifiez d abord votre eligibilite et la fenetre de vote dans Tableau de bord.',
+          'Confirmez votre identite, puis validez votre choix de vote une seule fois.',
+          'Recuperez votre recu de vote securise et sauvegardez-le localement.',
+          'En cas de souci technique, signalez-le immediatement via Support ou Incident.',
+        ]
+      : [
+          'First confirm eligibility and the active voting window in your dashboard.',
+          'Verify your identity, then submit your ballot once.',
+          'Open your secure vote receipt and keep a local copy.',
+          'If anything fails, report it immediately via Support or Incident report.',
+        ];
+  }
+
+  if (hasAny(['support', 'ticket', 'help desk', 'incident', 'fraud'])) {
+    return params.isFrench
+      ? [
+          'Choisissez Support pour creer un ticket avec email valide et description precise.',
+          'Ajoutez identifiant d inscription, horodatage, appareil, et captures utiles.',
+          'Pour fraude/incident, utilisez le formulaire Incident avec categorie et niveau de severite.',
+          'Surveillez les notifications pour la reponse admin et le statut de resolution.',
+        ]
+      : [
+          'Use Support to open a ticket with a valid email and clear problem statement.',
+          'Include registration ID, timestamp, device details, and useful screenshots.',
+          'For fraud/incidents, use Incident report with category and severity.',
+          'Watch notifications for admin responses and resolution status.',
+        ];
+  }
+
+  if (hasAny(['tip', 'taptap', 'remitly', 'maxit', 'orange money'])) {
+    return params.isFrench
+      ? [
+          'Dans Support CamVote, choisissez TapTap Send, Remitly, ou Orange Money Max It.',
+          'Verifiez toujours le nom du destinataire avant paiement et gardez la reference.',
+          'Pour Max It, ouvrez l app et scannez le QR affiche dans CamVote.',
+          'Soumettez la preuve si demandee puis suivez le statut jusqu a confirmation.',
+        ]
+      : [
+          'In Support CamVote, choose TapTap Send, Remitly, or Orange Money Max It.',
+          'Always verify recipient name before payment and keep your transaction reference.',
+          'For Max It, open the app and scan the QR shown in CamVote.',
+          'Submit proof when requested and track status until confirmed.',
+        ];
+  }
+
+  return params.isFrench
+    ? [
+        'Definissez votre objectif exact en une phrase.',
+        'Partagez votre role (public, electeur, observateur, admin) et la page courante.',
+        'Precisez le message d erreur ou le blocage concret.',
+        'Je vous renverrai un plan court avec les prochaines actions prioritaires.',
+      ]
+    : [
+        'State your exact goal in one sentence.',
+        'Share your role (public, voter, observer, admin) and current page.',
+        'Provide the exact error or blocker you see.',
+        'I will return a short prioritized action plan.',
+      ];
+}
+
+function buildCamGuideNoLiveFollowUps(question: string, isFrench: boolean): string[] {
+  const normalized = question.toLowerCase();
+  const hasAny = (tokens: string[]): boolean => tokens.some((token) => normalized.includes(token));
+
+  if (hasAny(['register', 'registration', 'inscription', 'verify', 'verification'])) {
+    return isFrench
+      ? [
+          'Peux-tu me donner la checklist complete d inscription ?',
+          'Quels documents dois-je preparer exactement ?',
+          'Comment accelerer la verification si elle reste en attente ?',
+        ]
+      : [
+          'Can you give me the full registration checklist?',
+          'Which exact documents should I prepare?',
+          'How do I speed up verification if it stays pending?',
+        ];
+  }
+
+  if (hasAny(['tip', 'taptap', 'remitly', 'maxit', 'orange money'])) {
+    return isFrench
+      ? [
+          'Quel canal est le plus simple entre TapTap, Remitly et Max It ?',
+          'Comment verifier le destinataire avant paiement ?',
+          'Comment suivre la confirmation de mon tip ?',
+        ]
+      : [
+          'Which channel is simplest for me: TapTap, Remitly, or Max It?',
+          'How do I verify the recipient before paying?',
+          'How do I track my tip confirmation?',
+        ];
+  }
+
+  return isFrench
+    ? [
+        'Voici mon contexte exact...',
+        'Peux-tu me poser 3 questions pour mieux cadrer ?',
+        'Donne-moi une check-list pratique.',
       ]
     : [
         'Here is my exact context...',

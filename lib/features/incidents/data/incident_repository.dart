@@ -65,7 +65,11 @@ class FirebaseIncidentRepository implements IncidentRepository {
   }
 
   Future<String> _uploadEvidence(String uid, XFile file) async {
-    final name = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+    final safeName = file.name
+        .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .trim();
+    final name = '${DateTime.now().millisecondsSinceEpoch}_${safeName.isEmpty ? 'attachment' : safeName}';
     final bytes = await file.readAsBytes();
     final contentType = file.mimeType ?? 'application/octet-stream';
 
