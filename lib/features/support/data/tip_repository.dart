@@ -10,8 +10,11 @@ import '../../../core/firebase/firebase_auth_scope.dart';
 import '../../../core/offline/offline_sync_store.dart';
 import '../models/tip_models.dart';
 import '../utils/tip_checkout_links.dart';
+import '../utils/tip_input_constraints.dart';
 
 class TipRepository {
+  static const int _maxReceiptFileBytes = 8 * 1024 * 1024;
+
   TipRepository({WorkerClient? workerClient, FirebaseAuth? auth})
     : _workerClient = workerClient ?? WorkerClient(),
       _auth = auth ?? FirebaseAuth.instance;
@@ -28,18 +31,19 @@ class TipRepository {
     String message = '',
     String source = 'camvote_app',
   }) async {
+    final payload = _buildIntentPayload(
+      senderName: senderName,
+      senderEmail: senderEmail,
+      amount: amount,
+      currency: currency,
+      anonymous: anonymous,
+      message: message,
+      source: source,
+    );
     final response = await _workerClient.post(
       '/v1/payments/tips/taptap-send-intent',
       authRequired: _hasSignedInUser,
-      data: {
-        'senderName': senderName.trim(),
-        'senderEmail': senderEmail.trim(),
-        'amount': amount,
-        'currency': currency.trim().toUpperCase(),
-        'anonymous': anonymous,
-        'message': message.trim(),
-        'source': source,
-      },
+      data: payload,
     );
     return _parseSession(response);
   }
@@ -53,18 +57,19 @@ class TipRepository {
     String message = '',
     String source = 'camvote_app',
   }) async {
+    final payload = _buildIntentPayload(
+      senderName: senderName,
+      senderEmail: senderEmail,
+      amount: amount,
+      currency: currency,
+      anonymous: anonymous,
+      message: message,
+      source: source,
+    );
     final response = await _workerClient.post(
       '/v1/payments/tips/maxit-qr-intent',
       authRequired: _hasSignedInUser,
-      data: {
-        'senderName': senderName.trim(),
-        'senderEmail': senderEmail.trim(),
-        'amount': amount,
-        'currency': currency.trim().toUpperCase(),
-        'anonymous': anonymous,
-        'message': message.trim(),
-        'source': source,
-      },
+      data: payload,
     );
     return _parseSession(response);
   }
@@ -78,15 +83,15 @@ class TipRepository {
     String message = '',
     String source = 'camvote_app',
   }) async {
-    final payload = {
-      'senderName': senderName.trim(),
-      'senderEmail': senderEmail.trim(),
-      'amount': amount,
-      'currency': currency.trim().toUpperCase(),
-      'anonymous': anonymous,
-      'message': message.trim(),
-      'source': source,
-    };
+    final payload = _buildIntentPayload(
+      senderName: senderName,
+      senderEmail: senderEmail,
+      amount: amount,
+      currency: currency,
+      anonymous: anonymous,
+      message: message,
+      source: source,
+    );
 
     try {
       final response = await _workerClient.post(
@@ -131,14 +136,25 @@ class TipRepository {
     String note = '',
     List<String> attachments = const [],
   }) async {
+    final normalizedTipId = tipId.trim();
+    final normalizedReference = sanitizeTipReference(reference);
+    final normalizedNote = sanitizeTipMessage(note);
+    final normalizedAttachments = _sanitizeAttachmentsOrThrow(attachments);
+    if (normalizedTipId.isEmpty) {
+      throw WorkerException('Tip ID is required.');
+    }
+    if (normalizedReference.isEmpty) {
+      throw WorkerException('Payment reference is required.');
+    }
+
     final response = await _workerClient.post(
       '/v1/payments/tips/taptap-send/submit',
       authRequired: _hasSignedInUser,
       data: {
-        'tipId': tipId.trim(),
-        'reference': reference.trim(),
-        'note': note.trim(),
-        'attachments': attachments,
+        'tipId': normalizedTipId,
+        'reference': normalizedReference,
+        'note': normalizedNote,
+        'attachments': normalizedAttachments,
       },
       allowOfflineQueue: true,
       queueType: 'tip_proof_submit',
@@ -146,7 +162,7 @@ class TipRepository {
     final queued = response['queued'] == true;
     final queueId = response['offlineQueueId']?.toString() ?? '';
     return TipProofSubmissionResult(
-      tipId: response['tipId']?.toString() ?? tipId.trim(),
+      tipId: response['tipId']?.toString() ?? normalizedTipId,
       status:
           response['status']?.toString() ??
           (queued ? 'queued_offline' : 'submitted'),
@@ -163,6 +179,9 @@ class TipRepository {
     }
     final name = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
     final bytes = await file.readAsBytes();
+    if (bytes.length > _maxReceiptFileBytes) {
+      throw WorkerException('Receipt image must be 8 MB or smaller.');
+    }
     final contentType = file.mimeType ?? 'application/octet-stream';
     final result = await _workerClient.post(
       '/v1/storage/upload',
@@ -184,8 +203,12 @@ class TipRepository {
     bool inApp = true,
     bool email = true,
   }) async {
+    final normalizedTipId = tipId.trim();
+    if (normalizedTipId.isEmpty) {
+      throw WorkerException('Tip ID is required.');
+    }
     await _workerClient.post(
-      '/v1/payments/tips/${Uri.encodeComponent(tipId)}/notify',
+      '/v1/payments/tips/${Uri.encodeComponent(normalizedTipId)}/notify',
       authRequired: false,
       data: {'inApp': inApp, 'email': email},
       allowOfflineQueue: true,
@@ -257,6 +280,56 @@ class TipRepository {
       checkoutUrl: fallbackLinks.checkoutUrl,
       deepLink: fallbackLinks.deepLink,
     );
+  }
+
+  Map<String, dynamic> _buildIntentPayload({
+    required String senderName,
+    required String senderEmail,
+    required int amount,
+    required String currency,
+    required bool anonymous,
+    required String message,
+    required String source,
+  }) {
+    if (!isTipAmountInRange(amount)) {
+      throw WorkerException(
+        'Tip amount must be between $tipMinAmount and $tipMaxAmount.',
+      );
+    }
+    final normalizedCurrency = _normalizeCurrencyOrThrow(currency);
+    final normalizedEmail = sanitizeTipEmail(senderEmail);
+    if (normalizedEmail.isNotEmpty && !isValidTipEmail(normalizedEmail)) {
+      throw WorkerException('Sender email address is invalid.');
+    }
+
+    return <String, dynamic>{
+      'senderName': sanitizeTipName(senderName, anonymous: anonymous),
+      'senderEmail': normalizedEmail,
+      'amount': amount,
+      'currency': normalizedCurrency,
+      'anonymous': anonymous,
+      'message': sanitizeTipMessage(message),
+      'source': sanitizeTipSource(source),
+    };
+  }
+
+  List<String> _sanitizeAttachmentsOrThrow(List<String> attachments) {
+    try {
+      return sanitizeTipAttachmentUrls(attachments);
+    } on ArgumentError catch (error) {
+      final message = error.message?.toString().trim() ?? '';
+      throw WorkerException(
+        message.isEmpty ? 'Attachment URL is invalid.' : message,
+      );
+    }
+  }
+
+  String _normalizeCurrencyOrThrow(String currency) {
+    try {
+      return normalizeTipCurrency(currency);
+    } on ArgumentError {
+      throw WorkerException('Unsupported tip currency.');
+    }
   }
 
   int _safeInt(dynamic value) {

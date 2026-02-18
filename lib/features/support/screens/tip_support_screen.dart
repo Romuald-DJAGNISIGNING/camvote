@@ -27,6 +27,7 @@ import '../../notifications/widgets/notification_app_bar.dart';
 import '../models/tip_models.dart';
 import '../providers/tip_providers.dart';
 import '../utils/tip_checkout_links.dart';
+import '../utils/tip_input_constraints.dart';
 
 class TipSupportScreen extends ConsumerStatefulWidget {
   const TipSupportScreen({super.key});
@@ -36,6 +37,7 @@ class TipSupportScreen extends ConsumerStatefulWidget {
 }
 
 class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
+  static const List<int> _quickAmounts = <int>[2000, 5000, 10000, 20000, 50000];
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -92,6 +94,7 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     final offline = ref.watch(isOfflineProvider);
     final pendingOfflineTipCount =
         ref.watch(pendingOfflineTipQueueProvider).asData?.value ?? 0;
+    final selectedAmount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
     final isSignedIn = authState.asData?.value.user != null;
     final isSubmitting = checkoutState.isLoading;
     final session = checkoutState.asData?.value;
@@ -108,6 +111,14 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
         ? sessionQrValue
         : configuredMaxItQrImage;
     final hasMaxItQr = isMaxItQrSession && maxItQrPayload.isNotEmpty;
+    final statusResult = statusState.asData?.value;
+    final statusPollingProgress = (_statusPollAttempts / _statusPollMaxAttempts)
+        .clamp(0.0, 1.0);
+    final showStatusPollingProgress =
+        _activeTipId.isNotEmpty &&
+        _statusPollAttempts > 0 &&
+        _statusPollAttempts < _statusPollMaxAttempts &&
+        !(statusResult?.isSuccess ?? false);
 
     ref.listen<AsyncValue<TipStatusResult?>>(tipStatusProvider, (
       previous,
@@ -240,6 +251,7 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                               final next = value.first;
                               if (next == _channel) return;
                               _stopStatusPolling();
+                              unawaited(HapticFeedback.selectionClick());
                               setState(() {
                                 _channel = next;
                                 _activeTipId = '';
@@ -296,6 +308,15 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                               decoration: InputDecoration(
                                 labelText: t.helpSupportEmailLabel,
                               ),
+                              validator: (value) {
+                                final normalized = sanitizeTipEmail(
+                                  value?.trim() ?? '',
+                                );
+                                if (normalized.isEmpty) return null;
+                                return isValidTipEmail(normalized)
+                                    ? null
+                                    : t.invalidEmailAddress;
+                              },
                             ),
                             const SizedBox(height: 10),
                             Row(
@@ -314,7 +335,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                                       final amount = int.tryParse(
                                         value?.trim() ?? '',
                                       );
-                                      if (amount == null || amount <= 0) {
+                                      if (amount == null ||
+                                          !isTipAmountInRange(amount)) {
                                         return t.tipAmountInvalid;
                                       }
                                       return null;
@@ -350,6 +372,26 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final quickAmount in _quickAmounts)
+                                    ChoiceChip(
+                                      selected: selectedAmount == quickAmount,
+                                      label: Text(
+                                        _formatTipAmountLabel(quickAmount),
+                                      ),
+                                      onSelected: (_) {
+                                        _setQuickAmount(quickAmount);
+                                      },
+                                    ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 10),
                             TextFormField(
@@ -559,6 +601,12 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                                 ),
                               ],
                             ),
+                            if (showStatusPollingProgress) ...[
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: statusPollingProgress,
+                              ),
+                            ],
                             const SizedBox(height: 8),
                             AnimatedSwitcher(
                               duration: CamMotion.medium,
@@ -625,7 +673,17 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid) return;
     final amount = int.tryParse(_amountCtrl.text.trim()) ?? 0;
+    if (!isTipAmountInRange(amount)) {
+      final t = AppLocalizations.of(context);
+      CamToast.show(context, message: t.tipAmountInvalid);
+      return;
+    }
     final t = AppLocalizations.of(context);
+    final senderEmail = sanitizeTipEmail(_emailCtrl.text);
+    if (senderEmail.isNotEmpty && !isValidTipEmail(senderEmail)) {
+      CamToast.show(context, message: t.invalidEmailAddress);
+      return;
+    }
     final senderName = _anonymous
         ? t.tipAnonymousSupporterName
         : _nameCtrl.text.trim();
@@ -635,7 +693,7 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       case TipProviderChannel.tapTapSend:
         session = await controller.createTapTapSend(
           senderName: senderName,
-          senderEmail: _emailCtrl.text.trim(),
+          senderEmail: senderEmail,
           amount: amount,
           currency: _currency,
           anonymous: _anonymous,
@@ -645,7 +703,7 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       case TipProviderChannel.remitly:
         session = await controller.createRemitly(
           senderName: senderName,
-          senderEmail: _emailCtrl.text.trim(),
+          senderEmail: senderEmail,
           amount: amount,
           currency: _currency,
           anonymous: _anonymous,
@@ -655,7 +713,7 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       case TipProviderChannel.maxItQr:
         session = await controller.createMaxItQr(
           senderName: senderName,
-          senderEmail: _emailCtrl.text.trim(),
+          senderEmail: senderEmail,
           amount: amount,
           currency: _currency,
           anonymous: _anonymous,
@@ -688,6 +746,12 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     if (_activeTipId.isNotEmpty) {
       await ref.read(tipStatusProvider.notifier).refresh(_activeTipId);
     }
+  }
+
+  void _setQuickAmount(int amount) {
+    setState(() {
+      _amountCtrl.text = '$amount';
+    });
   }
 
   TipCheckoutSession _normalizeSessionForSelectedChannel(
@@ -1396,4 +1460,17 @@ bool _isLikelyImageQrPayload(String value) {
       raw.contains('image') ||
       raw.contains('format=png') ||
       raw.contains('qr');
+}
+
+String _formatTipAmountLabel(int amount) {
+  final digits = amount.toString();
+  final out = StringBuffer();
+  for (var i = 0; i < digits.length; i += 1) {
+    out.write(digits[i]);
+    final remaining = digits.length - i - 1;
+    if (remaining > 0 && remaining % 3 == 0) {
+      out.write(' ');
+    }
+  }
+  return out.toString();
 }

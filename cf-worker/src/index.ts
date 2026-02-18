@@ -18,6 +18,11 @@ export interface Env {
   TIP_ORANGE_MONEY_NUMBER?: string;
   TIP_ORANGE_MONEY_NAME?: string;
   TIP_ORANGE_MONEY_NUMBER_PUBLIC?: string;
+  TIP_RATE_LIMIT_WINDOW_SECONDS?: string;
+  TIP_RATE_LIMIT_MAX_REQUESTS?: string;
+  TIP_SUSPICIOUS_AMOUNT?: string;
+  TIP_MIN_AMOUNT?: string;
+  TIP_MAX_AMOUNT?: string;
   SUPPORT_EMAIL_FROM?: string;
   SUPPORT_EMAIL_REPLY_TO?: string;
   R2_PRIMARY: R2Bucket;
@@ -3433,23 +3438,15 @@ async function handleTipTapTapSendIntent(
 ): Promise<Response> {
   const body = await readJson(request);
   const auth = await maybeAuthWithRole(request, env);
-  const amount = Math.max(
-    0,
-    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
-  );
-  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
-  const anonymous = booleanField(body, 'anonymous');
-  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
-  const senderName = anonymous
-    ? 'Anonymous supporter'
-    : senderNameInput || 'Supporter';
-  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
-  const note = pickString(body, ['message', 'note']).trim();
-  const source = stringField(body, 'source').trim() || 'camvote_app';
-
-  if (amount <= 0) {
-    throw new HttpError(400, 'amount must be greater than 0.');
-  }
+  const payload = parseTipIntentPayload(body, env);
+  await enforceTipIntentRateLimit({
+    request,
+    env,
+    auth,
+    provider: 'taptap_send',
+    amount: payload.amount,
+    currency: payload.currency,
+  });
 
   const tipId = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -3462,8 +3459,8 @@ async function handleTipTapTapSendIntent(
     (env.TAPTAP_SEND_URL || '').trim(),
     {
       tipId,
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       recipientName: orangeMoneyOwnerName,
       // Always use the real number for the checkout flow (user initiated),
       // even when we keep it masked in UI responses.
@@ -3474,8 +3471,8 @@ async function handleTipTapTapSendIntent(
     (env.TAPTAP_SEND_DEEP_LINK || '').trim(),
     {
       tipId,
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       recipientName: orangeMoneyOwnerName,
       recipientNumber: orangeMoneyNumber,
     },
@@ -3485,15 +3482,15 @@ async function handleTipTapTapSendIntent(
     id: tipId,
     provider: 'taptap_send',
     status: 'pending',
-    amount,
-    currency,
-    senderName,
-    senderEmail: senderEmail || null,
-    anonymous,
+    amount: payload.amount,
+    currency: payload.currency,
+    senderName: payload.senderName,
+    senderEmail: payload.senderEmail || null,
+    anonymous: payload.anonymous,
     userId: auth?.uid || null,
     userRole: auth?.role || 'public',
-    source,
-    note: note || null,
+    source: payload.source,
+    note: payload.note || null,
     checkoutUrl: checkoutUrl || null,
     checkoutDeepLink: deepLink || null,
     tipRecipientName: orangeMoneyOwnerName || null,
@@ -3508,8 +3505,8 @@ async function handleTipTapTapSendIntent(
       tipId,
       status: 'pending',
       provider: 'taptap_send',
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       checkoutUrl: checkoutUrl || null,
       deepLink: deepLink || null,
       orangeMoney: {
@@ -3532,23 +3529,15 @@ async function handleTipRemitlyIntent(
 ): Promise<Response> {
   const body = await readJson(request);
   const auth = await maybeAuthWithRole(request, env);
-  const amount = Math.max(
-    0,
-    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
-  );
-  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
-  const anonymous = booleanField(body, 'anonymous');
-  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
-  const senderName = anonymous
-    ? 'Anonymous supporter'
-    : senderNameInput || 'Supporter';
-  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
-  const note = pickString(body, ['message', 'note']).trim();
-  const source = stringField(body, 'source').trim() || 'camvote_app';
-
-  if (amount <= 0) {
-    throw new HttpError(400, 'amount must be greater than 0.');
-  }
+  const payload = parseTipIntentPayload(body, env);
+  await enforceTipIntentRateLimit({
+    request,
+    env,
+    auth,
+    provider: 'remitly',
+    amount: payload.amount,
+    currency: payload.currency,
+  });
 
   const tipId = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -3561,8 +3550,8 @@ async function handleTipRemitlyIntent(
     (env.REMITLY_SEND_URL || '').trim(),
     {
       tipId,
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       recipientName: orangeMoneyOwnerName,
       // Always use the real number for the checkout flow (user initiated),
       // even when we keep it masked in UI responses.
@@ -3573,8 +3562,8 @@ async function handleTipRemitlyIntent(
     (env.REMITLY_SEND_DEEP_LINK || '').trim(),
     {
       tipId,
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       recipientName: orangeMoneyOwnerName,
       recipientNumber: orangeMoneyNumber,
     },
@@ -3584,15 +3573,15 @@ async function handleTipRemitlyIntent(
     id: tipId,
     provider: 'remitly',
     status: 'pending',
-    amount,
-    currency,
-    senderName,
-    senderEmail: senderEmail || null,
-    anonymous,
+    amount: payload.amount,
+    currency: payload.currency,
+    senderName: payload.senderName,
+    senderEmail: payload.senderEmail || null,
+    anonymous: payload.anonymous,
     userId: auth?.uid || null,
     userRole: auth?.role || 'public',
-    source,
-    note: note || null,
+    source: payload.source,
+    note: payload.note || null,
     checkoutUrl: checkoutUrl || null,
     checkoutDeepLink: deepLink || null,
     tipRecipientName: orangeMoneyOwnerName || null,
@@ -3607,8 +3596,8 @@ async function handleTipRemitlyIntent(
       tipId,
       status: 'pending',
       provider: 'remitly',
-      amount,
-      currency,
+      amount: payload.amount,
+      currency: payload.currency,
       checkoutUrl: checkoutUrl || null,
       deepLink: deepLink || null,
       orangeMoney: {
@@ -3632,9 +3621,11 @@ async function handleTipTapTapSendSubmit(
   const body = await readJson(request);
   const auth = await maybeAuthWithRole(request, env);
   const tipId = pickString(body, ['tipId', 'id']).trim();
-  const reference = pickString(body, ['reference', 'txRef', 'transactionId']).trim();
-  const note = pickString(body, ['note', 'message']).trim();
-  const attachments = arrayStringField(body, 'attachments').filter((value) => value);
+  const reference = normalizeTipReference(
+    pickString(body, ['reference', 'txRef', 'transactionId']),
+  );
+  const note = sanitizeTipNote(pickString(body, ['note', 'message']));
+  const attachments = normalizeTipAttachments(arrayStringField(body, 'attachments'));
 
   if (!tipId) {
     throw new HttpError(400, 'tipId is required.');
@@ -3646,6 +3637,30 @@ async function handleTipTapTapSendSubmit(
   const tipDoc = await firestoreGet(env, `tips/${tipId}`);
   if (!tipDoc) {
     throw new HttpError(404, 'Tip not found.');
+  }
+
+  const existingReference = normalizeTipReference(
+    docString(tipDoc, 'providerReference'),
+  );
+  if (existingReference && existingReference !== reference) {
+    throw new HttpError(
+      409,
+      'Tip already has a different reference. Contact support if this is incorrect.',
+    );
+  }
+
+  const duplicateReferenceTipId = await findTipIdByProviderReference(env, reference);
+  if (duplicateReferenceTipId && duplicateReferenceTipId !== tipId) {
+    const now = new Date().toISOString();
+    await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+      tipId,
+      action: 'duplicate_reference',
+      reference,
+      conflictingTipId: duplicateReferenceTipId,
+      submittedBy: auth?.uid || null,
+      createdAt: now,
+    });
+    throw new HttpError(409, 'Reference already used by another tip.');
   }
 
   const now = new Date().toISOString();
@@ -3716,23 +3731,15 @@ async function handleTipMaxItQrIntent(
 ): Promise<Response> {
   const body = await readJson(request);
   const auth = await maybeAuthWithRole(request, env);
-  const amount = Math.max(
-    0,
-    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
-  );
-  const currency = stringField(body, 'currency').trim().toUpperCase() || 'XAF';
-  const anonymous = booleanField(body, 'anonymous');
-  const senderNameInput = pickString(body, ['senderName', 'name']).trim();
-  const senderName = anonymous
-    ? 'Anonymous supporter'
-    : senderNameInput || 'Supporter';
-  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
-  const note = pickString(body, ['message', 'note']).trim();
-  const source = stringField(body, 'source').trim() || 'camvote_app';
-
-  if (amount <= 0) {
-    throw new HttpError(400, 'amount must be greater than 0.');
-  }
+  const payload = parseTipIntentPayload(body, env);
+  await enforceTipIntentRateLimit({
+    request,
+    env,
+    auth,
+    provider: 'maxit_qr',
+    amount: payload.amount,
+    currency: payload.currency,
+  });
 
   const qrUrl = (env.MAXIT_TIP_QR_URL || '').trim();
   const deepLink = (env.MAXIT_TIP_DEEP_LINK || '').trim();
@@ -3746,15 +3753,15 @@ async function handleTipMaxItQrIntent(
     id: tipId,
     provider: 'maxit_qr',
     status: 'pending',
-    amount,
-    currency,
-    senderName,
-    senderEmail: senderEmail || null,
-    anonymous,
+    amount: payload.amount,
+    currency: payload.currency,
+    senderName: payload.senderName,
+    senderEmail: payload.senderEmail || null,
+    anonymous: payload.anonymous,
     userId: auth?.uid || null,
     userRole: auth?.role || 'public',
-    source,
-    note: note || null,
+    source: payload.source,
+    note: payload.note || null,
     maxItQrUrl: qrUrl || null,
     maxItDeepLink: deepLink || null,
     createdAt: now,
@@ -4898,6 +4905,313 @@ function computeVoterDemographicsFromDocs(
       senior: { count: seniorCount, percent: toPercent(seniorCount) },
     },
   };
+}
+
+const TIP_DEFAULT_MIN_AMOUNT = 100;
+const TIP_DEFAULT_MAX_AMOUNT = 5_000_000;
+const TIP_DEFAULT_SUSPICIOUS_AMOUNT = 250_000;
+const TIP_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 15 * 60;
+const TIP_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 10;
+const TIP_MAX_MESSAGE_LENGTH = 280;
+const TIP_MAX_SOURCE_LENGTH = 64;
+const TIP_MAX_NAME_LENGTH = 80;
+const TIP_MAX_REFERENCE_LENGTH = 120;
+const TIP_MAX_ATTACHMENTS = 5;
+const TIP_ALLOWED_CURRENCIES = new Set(['XAF', 'USD', 'EUR']);
+
+type TipIntentPayload = {
+  amount: number;
+  currency: string;
+  anonymous: boolean;
+  senderName: string;
+  senderEmail: string;
+  note: string;
+  source: string;
+};
+
+function parseTipIntentPayload(body: JsonObject, env: Env): TipIntentPayload {
+  const amount = sanitizeTipAmount(
+    Math.trunc(numberField(body, 'amount') || numberField(body, 'value')),
+    env,
+  );
+  const currency = normalizeTipCurrency(stringField(body, 'currency'));
+  const anonymous = booleanField(body, 'anonymous');
+  const senderNameInput = sanitizePlainText(
+    pickString(body, ['senderName', 'name']),
+    TIP_MAX_NAME_LENGTH,
+  );
+  const senderName = anonymous
+    ? 'Anonymous supporter'
+    : senderNameInput || 'Supporter';
+  const senderEmail = pickString(body, ['senderEmail', 'email']).trim().toLowerCase();
+  if (senderEmail && !isValidEmail(senderEmail)) {
+    throw new HttpError(400, 'senderEmail is invalid.');
+  }
+
+  return {
+    amount,
+    currency,
+    anonymous,
+    senderName,
+    senderEmail,
+    note: sanitizeTipNote(pickString(body, ['message', 'note'])),
+    source: normalizeTipSource(stringField(body, 'source')),
+  };
+}
+
+function sanitizeTipAmount(value: number, env: Env): number {
+  if (!Number.isFinite(value)) {
+    throw new HttpError(400, 'amount must be a valid number.');
+  }
+  const minAmount = parseIntEnv(
+    env.TIP_MIN_AMOUNT,
+    TIP_DEFAULT_MIN_AMOUNT,
+    1,
+    100_000_000,
+  );
+  const maxAmount = parseIntEnv(
+    env.TIP_MAX_AMOUNT,
+    Math.max(minAmount, TIP_DEFAULT_MAX_AMOUNT),
+    minAmount,
+    2_000_000_000,
+  );
+  const normalized = Math.trunc(value);
+  if (normalized < minAmount || normalized > maxAmount) {
+    throw new HttpError(
+      400,
+      `amount must be between ${minAmount} and ${maxAmount}.`,
+    );
+  }
+  return normalized;
+}
+
+function normalizeTipCurrency(value: string): string {
+  const normalized = value.trim().toUpperCase() || 'XAF';
+  if (!TIP_ALLOWED_CURRENCIES.has(normalized)) {
+    throw new HttpError(400, 'Unsupported tip currency.');
+  }
+  return normalized;
+}
+
+function normalizeTipSource(value: string): string {
+  const cleaned = sanitizePlainText(value, TIP_MAX_SOURCE_LENGTH).toLowerCase();
+  if (!cleaned) return 'camvote_app';
+  const normalized = cleaned
+    .replace(/[^a-z0-9_-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  return normalized || 'camvote_app';
+}
+
+function sanitizeTipNote(value: string): string {
+  return sanitizePlainText(value, TIP_MAX_MESSAGE_LENGTH);
+}
+
+function normalizeTipReference(value: string): string {
+  return sanitizePlainText(value, TIP_MAX_REFERENCE_LENGTH).toUpperCase();
+}
+
+function normalizeTipAttachments(values: string[]): string[] {
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of values) {
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (trimmed.length > 2048) {
+      throw new HttpError(400, 'Attachment URL is too long.');
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      throw new HttpError(400, 'Attachment URL is invalid.');
+    }
+    const protocol = parsed.protocol.toLowerCase();
+    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    if (protocol !== 'https:' && !(protocol === 'http:' && isLocalhost)) {
+      throw new HttpError(400, 'Attachment URL must use HTTPS.');
+    }
+    const key = parsed.toString();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(key);
+    if (normalized.length > TIP_MAX_ATTACHMENTS) {
+      throw new HttpError(
+        400,
+        `Maximum ${TIP_MAX_ATTACHMENTS} attachments are allowed.`,
+      );
+    }
+  }
+
+  return normalized;
+}
+
+function sanitizePlainText(value: string, maxLength: number): string {
+  const stripped = value
+    .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (stripped.length <= maxLength) return stripped;
+  return stripped.slice(0, maxLength).trim();
+}
+
+function parseIntEnv(
+  raw: string | undefined,
+  fallback: number,
+  minValue: number,
+  maxValue: number,
+): number {
+  const parsed = Number(`${raw ?? ''}`.trim());
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.trunc(parsed);
+  return Math.min(maxValue, Math.max(minValue, normalized));
+}
+
+async function enforceTipIntentRateLimit(params: {
+  request: Request;
+  env: Env;
+  auth: { uid: string; role: string } | null;
+  provider: string;
+  amount: number;
+  currency: string;
+}): Promise<void> {
+  const { request, env, auth, provider, amount, currency } = params;
+  const windowSeconds = parseIntEnv(
+    env.TIP_RATE_LIMIT_WINDOW_SECONDS,
+    TIP_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.TIP_RATE_LIMIT_MAX_REQUESTS,
+    TIP_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    200,
+  );
+  const suspiciousAmount = parseIntEnv(
+    env.TIP_SUSPICIOUS_AMOUNT,
+    TIP_DEFAULT_SUSPICIOUS_AMOUNT,
+    1,
+    2_000_000_000,
+  );
+
+  const requesterSeed = resolveTipRequesterSeed(request, auth);
+  const requesterHash = (await sha256Hex(`${provider}|${requesterSeed}`)).slice(
+    0,
+    48,
+  );
+  const docId = `${provider}_${requesterHash}`;
+  const nowEpoch = Math.floor(Date.now() / 1000);
+  const nowIso = new Date().toISOString();
+  const limitPath = `tip_rate_limits/${docId}`;
+  const existing = await firestoreGet(env, limitPath);
+  const existingWindowEnd = existing ? docInt(existing, 'windowEnd') : null;
+  const existingWindowStart = existing ? docInt(existing, 'windowStart') : null;
+  const existingCount = existing ? Number(docInt(existing, 'count') || 0) : 0;
+  const inExistingWindow =
+    existingWindowStart !== null &&
+    existingWindowEnd !== null &&
+    nowEpoch >= existingWindowStart &&
+    nowEpoch <= existingWindowEnd;
+
+  const count = inExistingWindow ? existingCount + 1 : 1;
+  const windowStart = inExistingWindow ? existingWindowStart! : nowEpoch;
+  const windowEnd = inExistingWindow
+    ? existingWindowEnd!
+    : nowEpoch + windowSeconds;
+
+  const payload = {
+    provider,
+    requesterHash,
+    requesterType: auth?.uid ? 'auth_user' : 'anonymous',
+    count,
+    windowStart,
+    windowEnd,
+    lastAmount: amount,
+    lastCurrency: currency,
+    lastAttemptAt: nowIso,
+    updatedAt: nowIso,
+    ...(existing ? {} : { createdAt: nowIso }),
+  };
+  if (existing) {
+    await firestorePatch(env, limitPath, payload, Object.keys(payload));
+  } else {
+    await firestoreCreate(env, limitPath, payload);
+  }
+
+  if (count > maxRequests) {
+    await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+      action: 'rate_limited',
+      provider,
+      requesterHash,
+      count,
+      maxRequests,
+      windowSeconds,
+      amount,
+      currency,
+      createdAt: nowIso,
+    });
+    throw new HttpError(429, 'Too many tip requests. Please wait and try again.');
+  }
+
+  if (amount >= suspiciousAmount) {
+    await firestoreCreate(env, `tip_events/${crypto.randomUUID()}`, {
+      action: 'suspicious_amount',
+      provider,
+      requesterHash,
+      amount,
+      currency,
+      threshold: suspiciousAmount,
+      createdAt: nowIso,
+    });
+  }
+}
+
+function resolveTipRequesterSeed(
+  request: Request,
+  auth: { uid: string; role: string } | null,
+): string {
+  if (auth?.uid) {
+    return `uid:${auth.uid}`;
+  }
+  const cfIp = (request.headers.get('CF-Connecting-IP') || '').trim();
+  if (cfIp) {
+    return `ip:${cfIp}`;
+  }
+  const forwarded = (request.headers.get('X-Forwarded-For') || '')
+    .split(',')[0]
+    ?.trim();
+  if (forwarded) {
+    return `ip:${forwarded}`;
+  }
+  const userAgent = sanitizePlainText(
+    request.headers.get('User-Agent') || '',
+    160,
+  );
+  if (userAgent) {
+    return `ua:${userAgent}`;
+  }
+  return 'anonymous';
+}
+
+async function findTipIdByProviderReference(
+  env: Env,
+  reference: string,
+): Promise<string> {
+  const docs = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'tips' }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: 'providerReference' },
+        op: 'EQUAL',
+        value: { stringValue: reference },
+      },
+    },
+    limit: 1,
+  });
+  const tip = docs[0];
+  return tip ? tip.name.split('/').pop() || '' : '';
 }
 
 function normalizeTipStatus(statusRaw: string): string {

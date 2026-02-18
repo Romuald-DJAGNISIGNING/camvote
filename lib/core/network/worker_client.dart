@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -41,6 +42,7 @@ class WorkerClient {
 
   final Dio _dio;
   final FirebaseAuth? _authOverride;
+  final Random _jitter = Random();
 
   FirebaseAuth get _auth {
     final override = _authOverride;
@@ -118,6 +120,9 @@ class WorkerClient {
     if (statusCode == 404) {
       return 'Service endpoint not found. Please try again later.';
     }
+    if (statusCode == 429) {
+      return 'Too many requests. Please wait a bit and try again.';
+    }
     if (statusCode != null && statusCode >= 500) {
       return 'Service is temporarily unavailable. Please try again.';
     }
@@ -126,7 +131,7 @@ class WorkerClient {
   }
 
   bool _shouldRetry(DioException error, int attempt) {
-    if (attempt >= 1) return false;
+    if (attempt >= 2) return false;
     final status = error.response?.statusCode ?? 0;
     if (status >= 500 && status <= 599) return true;
     switch (error.type) {
@@ -159,7 +164,8 @@ class WorkerClient {
   }
 
   Future<void> _waitBeforeRetry(int attempt) {
-    final delay = 250 * (attempt + 1);
+    final exponential = 300 * (1 << attempt);
+    final delay = exponential + _jitter.nextInt(140);
     return Future<void>.delayed(Duration(milliseconds: delay));
   }
 
@@ -177,7 +183,7 @@ class WorkerClient {
       }
     }
 
-    for (var attempt = 0; attempt < 2; attempt += 1) {
+    for (var attempt = 0; attempt < 3; attempt += 1) {
       try {
         final response = await _dio.get(
           path,
@@ -256,7 +262,7 @@ class WorkerClient {
       }
     }
 
-    for (var attempt = 0; attempt < 2; attempt += 1) {
+    for (var attempt = 0; attempt < 3; attempt += 1) {
       try {
         final response = await _dio.post(
           path,

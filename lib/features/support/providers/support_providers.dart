@@ -17,9 +17,14 @@ final camGuideAssistantProvider = Provider<CamGuideAssistant>((ref) {
 
 final pendingOfflineSupportTicketsProvider = StreamProvider<int>((ref) async* {
   final repo = ref.watch(supportRepositoryProvider);
+  var disposed = false;
+  ref.onDispose(() {
+    disposed = true;
+  });
   yield await repo.pendingOfflineTicketCount();
-  while (true) {
+  while (!disposed) {
     await Future<void>.delayed(const Duration(seconds: 6));
+    if (disposed) break;
     yield await repo.pendingOfflineTicketCount();
   }
 });

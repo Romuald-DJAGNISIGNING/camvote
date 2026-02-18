@@ -29,6 +29,8 @@ final tipCheckoutProvider =
     );
 
 class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
+  int _requestVersion = 0;
+
   @override
   Future<TipCheckoutSession?> build() async => null;
 
@@ -48,9 +50,7 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
     bool anonymous = false,
     String message = '',
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(tipRepositoryProvider);
+    return _runCheckoutRequest((repo) {
       return repo.createTapTapSendIntent(
         senderName: senderName,
         senderEmail: senderEmail,
@@ -61,7 +61,6 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
         source: 'camvote_taptap_send',
       );
     });
-    return state.value;
   }
 
   Future<TipCheckoutSession?> createMaxItQr({
@@ -72,9 +71,7 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
     bool anonymous = false,
     String message = '',
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(tipRepositoryProvider);
+    return _runCheckoutRequest((repo) {
       return repo.createMaxItQrIntent(
         senderName: senderName,
         senderEmail: senderEmail,
@@ -85,7 +82,6 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
         source: 'camvote_maxit_qr',
       );
     });
-    return state.value;
   }
 
   Future<TipCheckoutSession?> createRemitly({
@@ -96,9 +92,7 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
     bool anonymous = false,
     String message = '',
   }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final repo = ref.read(tipRepositoryProvider);
+    return _runCheckoutRequest((repo) {
       return repo.createRemitlyIntent(
         senderName: senderName,
         senderEmail: senderEmail,
@@ -109,6 +103,22 @@ class TipCheckoutController extends AsyncNotifier<TipCheckoutSession?> {
         source: 'camvote_remitly',
       );
     });
+  }
+
+  Future<TipCheckoutSession?> _runCheckoutRequest(
+    Future<TipCheckoutSession> Function(TipRepository repo) request,
+  ) async {
+    if (state.isLoading) return state.value;
+    final version = ++_requestVersion;
+    state = const AsyncLoading();
+    final next = await AsyncValue.guard(() async {
+      final repo = ref.read(tipRepositoryProvider);
+      return request(repo);
+    });
+    if (version != _requestVersion) {
+      return state.value;
+    }
+    state = next;
     return state.value;
   }
 }
@@ -119,6 +129,10 @@ final tipStatusProvider =
     );
 
 class TipStatusController extends AsyncNotifier<TipStatusResult?> {
+  static const Duration _minimumRefreshSpacing = Duration(seconds: 2);
+  DateTime? _lastRefreshAt;
+  String _lastTipId = '';
+
   @override
   Future<TipStatusResult?> build() async => null;
 
@@ -129,6 +143,19 @@ class TipStatusController extends AsyncNotifier<TipStatusResult?> {
   Future<TipStatusResult?> refresh(String tipId) async {
     final normalized = tipId.trim();
     if (normalized.isEmpty) return state.value;
+    if (state.isLoading && normalized == _lastTipId) {
+      return state.value;
+    }
+    final now = DateTime.now();
+    final wasRecentlyRefreshed =
+        normalized == _lastTipId &&
+        _lastRefreshAt != null &&
+        now.difference(_lastRefreshAt!) < _minimumRefreshSpacing;
+    if (wasRecentlyRefreshed && state.hasValue) {
+      return state.value;
+    }
+    _lastTipId = normalized;
+    _lastRefreshAt = now;
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(tipRepositoryProvider);
