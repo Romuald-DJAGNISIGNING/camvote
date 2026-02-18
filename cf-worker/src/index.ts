@@ -18,6 +18,12 @@ export interface Env {
   VOTE_CAST_RATE_LIMIT_MAX_REQUESTS?: string;
   REGISTRATION_RATE_LIMIT_WINDOW_SECONDS?: string;
   REGISTRATION_RATE_LIMIT_MAX_REQUESTS?: string;
+  INCIDENT_SUBMIT_RATE_LIMIT_WINDOW_SECONDS?: string;
+  INCIDENT_SUBMIT_RATE_LIMIT_MAX_REQUESTS?: string;
+  AUTH_RESOLVE_RATE_LIMIT_WINDOW_SECONDS?: string;
+  AUTH_RESOLVE_RATE_LIMIT_MAX_REQUESTS?: string;
+  AUTH_REFRESH_RATE_LIMIT_WINDOW_SECONDS?: string;
+  AUTH_REFRESH_RATE_LIMIT_MAX_REQUESTS?: string;
   TRELLO_KEY?: string;
   TRELLO_TOKEN?: string;
   TRELLO_BOARD_ID?: string;
@@ -95,6 +101,13 @@ const VOTE_CAST_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60; // 10 minutes
 const VOTE_CAST_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 8;
 const REGISTRATION_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60; // 1 day
 const REGISTRATION_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 3;
+const INCIDENT_SUBMIT_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 60 * 60; // 1 hour
+const INCIDENT_SUBMIT_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 12;
+const AUTH_RESOLVE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60; // 10 minutes
+const AUTH_RESOLVE_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 30;
+const AUTH_REFRESH_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60; // 10 minutes
+const AUTH_REFRESH_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 30;
+const INCIDENT_MAX_ATTACHMENTS = 8;
 
 let cachedAccessToken = '';
 let cachedAccessTokenExp = 0;
@@ -1228,6 +1241,7 @@ async function handleAuthResolveIdentifier(
   corsHeaders: Headers,
 ): Promise<Response> {
   const url = new URL(request.url);
+  const auth = await maybeAuthWithRole(request, env);
   const identifier = (
     url.searchParams.get('identifier') ||
     url.searchParams.get('id') ||
@@ -1236,8 +1250,38 @@ async function handleAuthResolveIdentifier(
   if (!identifier) {
     throw new HttpError(400, 'identifier is required');
   }
+  if (identifier.length > 120) {
+    throw new HttpError(400, 'identifier is too long');
+  }
+  const normalizedIdentifier = identifier.toLowerCase();
+  const windowSeconds = parseIntEnv(
+    env.AUTH_RESOLVE_RATE_LIMIT_WINDOW_SECONDS,
+    AUTH_RESOLVE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.AUTH_RESOLVE_RATE_LIMIT_MAX_REQUESTS,
+    AUTH_RESOLVE_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    500,
+  );
+  const lookupKeyHash = (await sha256Hex(`resolve_identifier|${normalizedIdentifier}`)).slice(0, 64);
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'auth_resolve_identifier',
+    key: lookupKeyHash,
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many account lookup requests. Please wait and try again.',
+  });
   if (identifier.includes('@')) {
-    return jsonResponse({ ok: true, email: identifier }, corsHeaders);
+    if (!isValidEmail(normalizedIdentifier)) {
+      throw new HttpError(400, 'A valid email address is required.');
+    }
+    return jsonResponse({ ok: true, email: normalizedIdentifier }, corsHeaders);
   }
 
   const voterDocs = await firestoreRunQuery(env, {
@@ -1289,6 +1333,33 @@ async function handleAuthRefresh(
   if (!refreshToken) {
     throw new HttpError(400, 'refresh_token is required.');
   }
+  if (refreshToken.length > 2048) {
+    throw new HttpError(400, 'refresh_token is invalid.');
+  }
+  const auth = await maybeAuthWithRole(request, env);
+  const windowSeconds = parseIntEnv(
+    env.AUTH_REFRESH_RATE_LIMIT_WINDOW_SECONDS,
+    AUTH_REFRESH_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.AUTH_REFRESH_RATE_LIMIT_MAX_REQUESTS,
+    AUTH_REFRESH_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    500,
+  );
+  const refreshKeyHash = (await sha256Hex(`auth_refresh|${refreshToken}`)).slice(0, 64);
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'auth_refresh',
+    key: refreshKeyHash,
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many refresh attempts. Please wait before trying again.',
+  });
 
   const apiKey = (env.FIREBASE_API_KEY || '').trim();
   if (!apiKey) {
@@ -2756,25 +2827,98 @@ async function handleIncidentSubmit(
   corsHeaders: Headers,
 ): Promise<Response> {
   const { uid, role } = await requireAuthWithRole(request, env);
+  const auth: RateLimitAuth = { uid, role };
   if (role !== 'observer' && role !== 'voter' && role !== 'admin') {
     throw new HttpError(403, 'Authenticated role required.');
   }
+  const windowSeconds = parseIntEnv(
+    env.INCIDENT_SUBMIT_RATE_LIMIT_WINDOW_SECONDS,
+    INCIDENT_SUBMIT_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.INCIDENT_SUBMIT_RATE_LIMIT_MAX_REQUESTS,
+    INCIDENT_SUBMIT_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    200,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'incident_submit',
+    key: 'submit',
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many incident reports. Please wait and try again.',
+  });
+
   const body = await readJson(request);
+  const title = sanitizePlainText(stringField(body, 'title'), 160);
+  const description = sanitizePlainText(stringField(body, 'description'), 4000);
+  const location = sanitizePlainText(stringField(body, 'location'), 200);
+  const occurredAt = stringField(body, 'occurredAt').trim();
+  const category = sanitizePlainText(stringField(body, 'category').toLowerCase(), 40);
+  const severity = sanitizePlainText(stringField(body, 'severity').toLowerCase(), 20);
+  const electionId = sanitizePlainText(stringField(body, 'electionId'), 120);
+
+  if (!title) throw new HttpError(400, 'title is required');
+  if (!description) throw new HttpError(400, 'description is required');
+  if (!location) throw new HttpError(400, 'location is required');
+  if (!occurredAt) throw new HttpError(400, 'occurredAt is required');
+  const occurredTs = Date.parse(occurredAt);
+  if (Number.isNaN(occurredTs)) {
+    throw new HttpError(400, 'occurredAt must be a valid ISO date');
+  }
+  const nowTs = Date.now();
+  if (occurredTs > nowTs + 24 * 60 * 60 * 1000) {
+    throw new HttpError(400, 'occurredAt cannot be in the future');
+  }
+  if (occurredTs < nowTs - 730 * 24 * 60 * 60 * 1000) {
+    throw new HttpError(400, 'occurredAt is too old');
+  }
+  if (
+    ![
+      'fraud',
+      'intimidation',
+      'violence',
+      'logistics',
+      'technical',
+      'accessibility',
+      'other',
+    ].includes(category)
+  ) {
+    throw new HttpError(400, 'Unsupported incident category.');
+  }
+  if (!['low', 'medium', 'high', 'critical'].includes(severity)) {
+    throw new HttpError(400, 'Unsupported incident severity.');
+  }
+
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const attachments = body['attachments'];
+  const attachmentsInput = body['attachments'];
+  const attachments = Array.isArray(attachmentsInput)
+    ? attachmentsInput
+        .map((item) => sanitizePlainText(`${item ?? ''}`, 2048))
+        .filter((value) => value.length > 0)
+        .slice(0, INCIDENT_MAX_ATTACHMENTS)
+    : [];
+  if (Array.isArray(attachmentsInput) && attachmentsInput.length > INCIDENT_MAX_ATTACHMENTS) {
+    throw new HttpError(400, `Maximum ${INCIDENT_MAX_ATTACHMENTS} attachments are allowed.`);
+  }
 
   await firestoreCreate(env, `incidents/${id}`, {
     id,
     reportedBy: uid,
-    title: stringField(body, 'title'),
-    description: stringField(body, 'description'),
-    location: stringField(body, 'location'),
-    occurredAt: stringField(body, 'occurredAt'),
-    category: stringField(body, 'category'),
-    severity: stringField(body, 'severity'),
-    electionId: stringField(body, 'electionId') || null,
-    attachments: Array.isArray(attachments) ? attachments : [],
+    title,
+    description,
+    location,
+    occurredAt: new Date(occurredTs).toISOString(),
+    category,
+    severity,
+    electionId: electionId || null,
+    attachments,
     status: 'submitted',
     createdAt: now,
   });
@@ -2791,9 +2935,20 @@ async function handleSupportTicket(
   const uid = auth?.uid || '';
   const role = auth?.role || 'public';
   const body = await readJson(request);
-  const name = pickString(body, ['name', 'fullName', 'displayName']).trim();
+  const name = sanitizePlainText(
+    pickString(body, ['name', 'fullName', 'displayName']),
+    120,
+  );
   const email = pickString(body, ['email', 'senderEmail']).trim().toLowerCase();
-  const message = pickString(body, ['message', 'details', 'description']).trim();
+  const message = sanitizePlainText(
+    pickString(body, ['message', 'details', 'description']),
+    4000,
+  );
+  const registrationId = sanitizePlainText(stringField(body, 'registrationId'), 120);
+  const category = sanitizePlainText(
+    pickString(body, ['category', 'subject', 'topic']).toLowerCase(),
+    80,
+  );
 
   if (!name) {
     throw new HttpError(400, 'name is required');
@@ -2835,9 +2990,8 @@ async function handleSupportTicket(
     role,
     name,
     email,
-    registrationId: stringField(body, 'registrationId').trim(),
-    category:
-      pickString(body, ['category', 'subject', 'topic']).trim().toLowerCase() || 'other',
+    registrationId,
+    category: category || 'other',
     message,
     status: 'open',
     createdAt: now,
