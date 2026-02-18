@@ -85,44 +85,59 @@ class ApiAdminRepository implements AdminRepository {
         adminCount: _asInt(response['adminCount']),
         observerCount: _asInt(response['observerCount']),
       );
-    } catch (_) {
-      final verifiedUsersSnap = await _firestore
-          .collection('users')
-          .where('verified', isEqualTo: true)
-          .get();
-      final adminUsersSnap = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'admin')
-          .get();
-      final observerUsersSnap = await _firestore
-          .collection('users')
-          .where('role', isEqualTo: 'observer')
-          .get();
-      final votesSnap = await _firestore.collection('votes').get();
-      final deviceFlagsSnap = await _firestore
-          .collection('device_risks')
-          .where('status', isEqualTo: 'flagged')
-          .get();
-      final electionsSnap = await _firestore.collection('elections').get();
-      final now = DateTime.now();
-      final active = electionsSnap.docs.where((doc) {
-        final data = doc.data();
-        final endAt = _parseDate(data['endAt'] ?? data['closesAt']);
-        return endAt == null || endAt.isAfter(now);
-      }).length;
-      final verifiedVoters = verifiedUsersSnap.docs.where((doc) {
-        final role = _asString(doc.data()['role']).toLowerCase();
-        return role.isEmpty || role == 'voter';
-      }).length;
+    } catch (error) {
+      if (_isUnauthorized(error)) {
+        final observerFallback = await _tryFetchPublicStatsFallback();
+        if (observerFallback != null) {
+          return observerFallback;
+        }
+      }
 
-      return AdminStats(
-        totalRegistered: verifiedVoters,
-        totalVoted: votesSnap.size,
-        suspiciousFlags: deviceFlagsSnap.size,
-        activeElections: active,
-        adminCount: adminUsersSnap.size,
-        observerCount: observerUsersSnap.size,
-      );
+      try {
+        final verifiedUsersSnap = await _firestore
+            .collection('users')
+            .where('verified', isEqualTo: true)
+            .get();
+        final adminUsersSnap = await _firestore
+            .collection('users')
+            .where('role', isEqualTo: 'admin')
+            .get();
+        final observerUsersSnap = await _firestore
+            .collection('users')
+            .where('role', isEqualTo: 'observer')
+            .get();
+        final votesSnap = await _firestore.collection('votes').get();
+        final deviceFlagsSnap = await _firestore
+            .collection('device_risks')
+            .where('status', isEqualTo: 'flagged')
+            .get();
+        final electionsSnap = await _firestore.collection('elections').get();
+        final now = DateTime.now();
+        final active = electionsSnap.docs.where((doc) {
+          final data = doc.data();
+          final endAt = _parseDate(data['endAt'] ?? data['closesAt']);
+          return endAt == null || endAt.isAfter(now);
+        }).length;
+        final verifiedVoters = verifiedUsersSnap.docs.where((doc) {
+          final role = _asString(doc.data()['role']).toLowerCase();
+          return role.isEmpty || role == 'voter';
+        }).length;
+
+        return AdminStats(
+          totalRegistered: verifiedVoters,
+          totalVoted: votesSnap.size,
+          suspiciousFlags: deviceFlagsSnap.size,
+          activeElections: active,
+          adminCount: adminUsersSnap.size,
+          observerCount: observerUsersSnap.size,
+        );
+      } catch (_) {
+        final fallback = await _tryFetchPublicStatsFallback();
+        if (fallback != null) {
+          return fallback;
+        }
+        rethrow;
+      }
     }
   }
 
@@ -908,6 +923,33 @@ class ApiAdminRepository implements AdminRepository {
   }
 
   String _asString(dynamic value) => value?.toString().trim() ?? '';
+
+  bool _isUnauthorized(Object error) {
+    return error is WorkerException &&
+        (error.statusCode == 401 || error.statusCode == 403);
+  }
+
+  Future<AdminStats?> _tryFetchPublicStatsFallback() async {
+    try {
+      final response = await _workerClient.get(
+        '/v1/public/electoral-stats',
+        authRequired: false,
+      );
+      return AdminStats(
+        totalRegistered: _firstNonZero([
+          response['totalRegistered'],
+          response['total'],
+        ]),
+        totalVoted: _asInt(response['totalVoted']),
+        suspiciousFlags: _asInt(response['suspiciousFlags']),
+        activeElections: 0,
+        adminCount: 0,
+        observerCount: 0,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 
   int _firstNonZero(List<dynamic> values) {
     for (final value in values) {

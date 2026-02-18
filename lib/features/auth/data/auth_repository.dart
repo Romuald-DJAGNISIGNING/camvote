@@ -157,14 +157,25 @@ class AuthRepository {
       await _auth.signOut();
       throw StateError(_accountArchivedError);
     }
+    final role = AppRoleX.fromApi(data['role'] as String?) ?? AppRole.public;
+    final mustChangePasswordFlag = _asBool(data['mustChangePassword']);
+    final temporaryPasswordIssuedAt = _parseDate(
+      data['observerTemporaryPasswordIssuedAt'],
+    );
+    final passwordChangedAt = _parseDate(data['passwordChangedAt']);
+    final observerNeedsPasswordChange =
+        role == AppRole.observer &&
+        temporaryPasswordIssuedAt != null &&
+        (passwordChangedAt == null ||
+            passwordChangedAt.isBefore(temporaryPasswordIssuedAt));
     return AuthUser(
       id: uid,
       fullName: (data['fullName'] as String?) ?? '',
       email: (data['email'] as String?) ?? '',
-      role: AppRoleX.fromApi(data['role'] as String?) ?? AppRole.public,
+      role: role,
       voterId: data['voterId'] as String?,
       verified: (data['verified'] as bool?) ?? false,
-      mustChangePassword: (data['mustChangePassword'] as bool?) ?? false,
+      mustChangePassword: mustChangePasswordFlag || observerNeedsPasswordChange,
     );
   }
 
@@ -182,5 +193,20 @@ class AuthRepository {
     } catch (_) {
       // Best-effort; Firestore fetch below will surface issues if any.
     }
+  }
+
+  bool _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    final raw = value?.toString().trim().toLowerCase() ?? '';
+    return raw == 'true' || raw == '1' || raw == 'yes';
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    final raw = value.toString().trim();
+    if (raw.isEmpty) return null;
+    return DateTime.tryParse(raw);
   }
 }
