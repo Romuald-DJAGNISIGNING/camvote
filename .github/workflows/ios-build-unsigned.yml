@@ -118,11 +118,6 @@ jobs:
       - name: Validate Firebase Mobile Config
         run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
 
-      - name: Install CocoaPods Dependencies
-        run: |
-          cd ios
-          pod install --repo-update
-
       - name: Build Unsigned iOS Archive
         run: >
           flutter build ipa --release --no-codesign
