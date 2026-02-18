@@ -720,6 +720,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loginPasswordLabel => 'Password';
 
   @override
+  String get showPassword => 'Show password';
+
+  @override
+  String get hidePassword => 'Hide password';
+
+  @override
   String passwordMinLength(Object length) {
     return 'Min $length characters';
   }

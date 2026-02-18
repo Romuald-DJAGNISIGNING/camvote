@@ -35,6 +35,8 @@ class _VoterRegistrationReviewScreenState
   bool _consent = false;
   bool _renewing = false;
   bool _isProcessingSubmit = false;
+  bool _isPasswordObscured = true;
+  bool _isConfirmPasswordObscured = true;
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
   final _pwConfirmCtrl = TextEditingController();
@@ -244,10 +246,25 @@ class _VoterRegistrationReviewScreenState
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _pwCtrl,
-                            obscureText: true,
+                            obscureText: _isPasswordObscured,
                             decoration: InputDecoration(
                               labelText: t.passwordLabel,
                               border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: _isPasswordObscured
+                                    ? t.showPassword
+                                    : t.hidePassword,
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordObscured = !_isPasswordObscured;
+                                  });
+                                },
+                                icon: Icon(
+                                  _isPasswordObscured
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
                             ),
                             validator: (v) => (v == null || v.trim().length < 6)
                                 ? t.passwordMinLength(6)
@@ -256,10 +273,26 @@ class _VoterRegistrationReviewScreenState
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _pwConfirmCtrl,
-                            obscureText: true,
+                            obscureText: _isConfirmPasswordObscured,
                             decoration: InputDecoration(
                               labelText: t.passwordConfirmLabel,
                               border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: _isConfirmPasswordObscured
+                                    ? t.showPassword
+                                    : t.hidePassword,
+                                onPressed: () {
+                                  setState(() {
+                                    _isConfirmPasswordObscured =
+                                        !_isConfirmPasswordObscured;
+                                  });
+                                },
+                                icon: Icon(
+                                  _isConfirmPasswordObscured
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
                             ),
                             validator: (v) => (v == null || v.trim().isEmpty)
                                 ? t.requiredField

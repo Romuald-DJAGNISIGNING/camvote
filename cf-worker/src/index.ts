@@ -2867,9 +2867,16 @@ function camGuideString(value: unknown): string {
 }
 
 function camGuideTrim(value: string, maxChars = 240): string {
-  const normalized = value.replace(/\s+/g, ' ').trim();
+  const normalized = value
+    .replace(/\s+/g, ' ')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, '-')
+    .replace(/…/g, '...')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '')
+    .trim();
   if (normalized.length <= maxChars) return normalized;
-  return `${normalized.slice(0, maxChars - 1).trimEnd()}…`;
+  return `${normalized.slice(0, maxChars - 3).trimEnd()}...`;
 }
 
 function camGuideHostLabel(url: string, fallback: string): string {

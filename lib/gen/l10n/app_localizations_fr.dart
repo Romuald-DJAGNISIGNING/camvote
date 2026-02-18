@@ -726,6 +726,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get loginPasswordLabel => 'Mot de passe';
 
   @override
+  String get showPassword => 'Afficher le mot de passe';
+
+  @override
+  String get hidePassword => 'Masquer le mot de passe';
+
+  @override
   String passwordMinLength(Object length) {
     return 'Min $length caractères';
   }

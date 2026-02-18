@@ -231,6 +231,8 @@
   "loginRequiresVerification": "Votre inscription est en attente de validation. Vous pourrez vous connecter dès qu’un administrateur aura approuvé votre document camerounais.",
   "loginIdentifierLabel": "Email ou numéro d'inscription",
   "loginPasswordLabel": "Mot de passe",
+  "showPassword": "Afficher le mot de passe",
+  "hidePassword": "Masquer le mot de passe",
   "passwordMinLength": "Min {length} caractères",
   "@passwordMinLength": {
     "placeholders": {

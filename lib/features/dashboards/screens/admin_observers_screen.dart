@@ -29,6 +29,7 @@ class _AdminObserversScreenState extends ConsumerState<AdminObserversScreen> {
   final _createEmailController = TextEditingController();
   final _createPasswordController = TextEditingController();
   bool _creating = false;
+  bool _isCreatePasswordObscured = true;
 
   @override
   void dispose() {
@@ -155,12 +156,28 @@ class _AdminObserversScreenState extends ConsumerState<AdminObserversScreen> {
                           const SizedBox(height: 10),
                           TextField(
                             controller: _createPasswordController,
-                            obscureText: true,
+                            obscureText: _isCreatePasswordObscured,
                             decoration: InputDecoration(
                               labelText: t.passwordLabel,
                               helperText: t.adminObserverTempPasswordHelp,
                               border: const OutlineInputBorder(),
                               prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                tooltip: _isCreatePasswordObscured
+                                    ? t.showPassword
+                                    : t.hidePassword,
+                                onPressed: () {
+                                  setState(() {
+                                    _isCreatePasswordObscured =
+                                        !_isCreatePasswordObscured;
+                                  });
+                                },
+                                icon: Icon(
+                                  _isCreatePasswordObscured
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),

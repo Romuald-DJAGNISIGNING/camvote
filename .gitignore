@@ -46,6 +46,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+/android/.kotlin/
+.gradle-user-home/
+.tmp_android_tools/
 .env
 .env.*
 !.env.public

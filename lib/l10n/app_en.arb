@@ -258,6 +258,8 @@
   "loginRequiresVerification": "Your registration is pending verification. You can sign in once an admin approves your Cameroonian document.",
   "loginIdentifierLabel": "Email or registration ID",
   "loginPasswordLabel": "Password",
+  "showPassword": "Show password",
+  "hidePassword": "Hide password",
   "passwordMinLength": "Min {length} characters",
   "@passwordMinLength": {
     "placeholders": {

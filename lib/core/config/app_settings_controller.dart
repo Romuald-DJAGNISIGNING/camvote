@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/app_locales.dart';
 import '../theme/app_theme_style.dart';
 
 class AppSettingsState {
@@ -122,8 +123,11 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
       _ => ThemeMode.system,
     };
 
-    final locale = Locale(localeRaw);
+    final locale = AppLocales.fromTag(localeRaw);
     final themeStyle = AppThemeStyleX.fromId(themeStyleRaw);
+    if (localeRaw.toLowerCase() != locale.languageCode) {
+      needsWriteBack = true;
+    }
 
     final resolved = AppSettingsState(
       themeMode: themeMode,
@@ -171,8 +175,9 @@ class AppSettingsController extends AsyncNotifier<AppSettingsState> {
     final current = state.value;
     if (current == null) return;
 
-    state = AsyncValue.data(current.copyWith(locale: locale));
-    await _setString(_kLocale, locale.languageCode);
+    final normalized = AppLocales.resolve(locale);
+    state = AsyncValue.data(current.copyWith(locale: normalized));
+    await _setString(_kLocale, normalized.languageCode);
   }
 
   Future<void> setOnboardingSeen(bool seen) async {

@@ -26,6 +26,8 @@ class _ForcePasswordChangeScreenState
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isPasswordObscured = true;
+  bool _isConfirmPasswordObscured = true;
 
   @override
   void dispose() {
@@ -62,10 +64,25 @@ class _ForcePasswordChangeScreenState
                       children: [
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _isPasswordObscured,
                           decoration: InputDecoration(
                             labelText: t.passwordLabel,
                             border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              tooltip: _isPasswordObscured
+                                  ? t.showPassword
+                                  : t.hidePassword,
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordObscured = !_isPasswordObscured;
+                                });
+                              },
+                              icon: Icon(
+                                _isPasswordObscured
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().length < 8) {
@@ -77,10 +94,26 @@ class _ForcePasswordChangeScreenState
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _confirmController,
-                          obscureText: true,
+                          obscureText: _isConfirmPasswordObscured,
                           decoration: InputDecoration(
                             labelText: t.passwordConfirmLabel,
                             border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              tooltip: _isConfirmPasswordObscured
+                                  ? t.showPassword
+                                  : t.hidePassword,
+                              onPressed: () {
+                                setState(() {
+                                  _isConfirmPasswordObscured =
+                                      !_isConfirmPasswordObscured;
+                                });
+                              },
+                              icon: Icon(
+                                _isConfirmPasswordObscured
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
                           ),
                           validator: (value) {
                             if (value != _passwordController.text) {

@@ -35,6 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _idCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isPasswordObscured = true;
 
   @override
   void dispose() {
@@ -126,10 +127,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     autofillHints: const [
                                       AutofillHints.password,
                                     ],
-                                    obscureText: true,
+                                    obscureText: _isPasswordObscured,
                                     decoration: InputDecoration(
                                       labelText: t.loginPasswordLabel,
                                       border: const OutlineInputBorder(),
+                                      suffixIcon: IconButton(
+                                        tooltip: _isPasswordObscured
+                                            ? t.showPassword
+                                            : t.hidePassword,
+                                        onPressed: () {
+                                          setState(() {
+                                            _isPasswordObscured =
+                                                !_isPasswordObscured;
+                                          });
+                                        },
+                                        icon: Icon(
+                                          _isPasswordObscured
+                                              ? Icons.visibility_outlined
+                                              : Icons.visibility_off_outlined,
+                                        ),
+                                      ),
                                     ),
                                     validator: (v) =>
                                         (v == null || v.trim().length < 6)
