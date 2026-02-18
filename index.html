@@ -74,9 +74,8 @@
 </head>
 <body>
   <main class="card">
-    <h1>Preparing your CamVote download</h1>
-    <p id="status">Detecting your device architecture and choosing the best APK...</p>
-    <p class="small">If auto-redirect does not start, pick your APK below:</p>
+    <h1>Starting download...</h1>
+    <p id="status">If your download does not start automatically, use the links below.</p>
     <ul>
       <li><a id="link-arm64" href="#">Android ARM64 (recommended for most phones)</a></li>
       <li><a id="link-armv7" href="#">Android ARMv7 (32-bit)</a></li>
@@ -115,73 +114,83 @@
         var iOSLike = /iphone|ipad|ipod/.test(ua) || (platform === "macintel" && maxTouchPoints > 1);
 
         if (iOSLike) {
-          return { url: urls.universal, note: "iOS detected. Redirecting to universal APK fallback." };
+          return { url: urls.universal, note: "Non-Android device detected. Using universal APK fallback." };
         }
         if (hasArm64) {
-          return { url: urls.arm64, note: "ARM64 Android detected. Redirecting..." };
+          return { url: urls.arm64, note: "Downloading ARM64 APK..." };
         }
         if (hasArmv7) {
-          return { url: urls.armv7, note: "ARMv7 Android detected. Redirecting..." };
+          return { url: urls.armv7, note: "Downloading ARMv7 APK..." };
         }
         if (hasX64) {
-          return { url: urls.x86_64, note: "x86_64 Android environment detected. Redirecting..." };
+          return { url: urls.x86_64, note: "Downloading x86_64 APK..." };
         }
         if (looksLikeAndroid) {
-          return { url: urls.universal, note: "Android detected. Using universal fallback APK." };
+          // UA strings often omit architecture on Android; universal is the safe choice.
+          return { url: urls.universal, note: "Downloading universal APK (safe fallback)..." };
         }
-        return { url: urls.universal, note: "Unknown architecture. Using universal fallback APK." };
+        return { url: urls.universal, note: "Downloading universal APK (safe fallback)..." };
       }
 
       setManualLinks();
       var params = new URLSearchParams(window.location.search || "");
       if (params.get("no_redirect") === "1") {
-        statusEl.textContent = "Auto-redirect disabled (no_redirect=1). Choose an APK below.";
+        statusEl.textContent = "Auto-redirect disabled (no_redirect=1). Use the links below.";
         return;
       }
 
-      function redirect(choice) {
+      var didRedirect = false;
+      function redirectNow(choice) {
+        if (didRedirect) return;
+        didRedirect = true;
         statusEl.textContent = choice.note;
-        // Delay slightly so users see status text before redirect starts.
-        setTimeout(function () {
-          window.location.href = choice.url;
-        }, 700);
+        // Use replace() so the Back button doesn't bounce users back into the redirect page.
+        window.location.replace(choice.url);
       }
 
       // Prefer User-Agent Client Hints (more reliable than UA parsing when available).
       // Falls back to legacy UA string matching.
       if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+        // If CH is slow/unavailable, fall back quickly to a safe choice.
+        var fallbackChoice = pickUrlFromUA();
+        var fallbackTimer = setTimeout(function () {
+          redirectNow(fallbackChoice);
+        }, 250);
+
         navigator.userAgentData
           .getHighEntropyValues(["architecture", "bitness", "platform"])
           .then(function (data) {
+            clearTimeout(fallbackTimer);
             var plat = (data.platform || "").toLowerCase();
             var arch = (data.architecture || "").toLowerCase();
             var bits = (data.bitness || "").toLowerCase();
 
             if (plat.indexOf("android") !== -1) {
               if (arch.indexOf("arm") !== -1 && bits === "64") {
-                redirect({ url: urls.arm64, note: "Android (ARM, 64-bit) detected. Redirecting..." });
+                redirectNow({ url: urls.arm64, note: "Downloading ARM64 APK..." });
                 return;
               }
               if (arch.indexOf("arm") !== -1 && bits === "32") {
-                redirect({ url: urls.armv7, note: "Android (ARM, 32-bit) detected. Redirecting..." });
+                redirectNow({ url: urls.armv7, note: "Downloading ARMv7 APK..." });
                 return;
               }
               if (arch.indexOf("x86") !== -1 && bits === "64") {
-                redirect({ url: urls.x86_64, note: "Android (x86, 64-bit) detected. Redirecting..." });
+                redirectNow({ url: urls.x86_64, note: "Downloading x86_64 APK..." });
                 return;
               }
-              redirect({ url: urls.universal, note: "Android detected. Using universal fallback APK." });
+              redirectNow({ url: urls.universal, note: "Downloading universal APK (safe fallback)..." });
               return;
             }
 
             // Non-Android: keep behavior consistent with UA fallback.
-            redirect(pickUrlFromUA());
+            redirectNow(pickUrlFromUA());
           })
           .catch(function () {
-            redirect(pickUrlFromUA());
+            clearTimeout(fallbackTimer);
+            redirectNow(pickUrlFromUA());
           });
       } else {
-        redirect(pickUrlFromUA());
+        redirectNow(pickUrlFromUA());
       }
     })();
   </script>
