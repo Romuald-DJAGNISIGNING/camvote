@@ -48,6 +48,16 @@ android {
         versionName = flutter.versionName
     }
 
+    // Generate lean APKs per ABI plus a universal fallback APK.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     signingConfigs {
         create("release") {
             if (hasKeystore) {

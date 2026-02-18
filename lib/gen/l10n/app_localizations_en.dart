@@ -956,29 +956,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get offlineBannerHintAdmin =>
-      'Admin: keep working offline. CamVote will sync when internet returns (support replies, incidents, tip proofs/decisions, audits, notification reads).';
+      'Admin: continue triaging support, incidents, tips, and audit notes offline. CamVote syncs those actions automatically when internet returns.';
 
   @override
   String get offlineBannerHintObserver =>
-      'Observer: you can still report incidents and update your checklist offline. Evidence uploads and status updates will sync automatically.';
+      'Observer: keep reporting incidents, updating checklist items, and tracking field notes offline. Sync runs automatically once connection is back.';
 
   @override
   String get offlineBannerHintVoter =>
-      'Voter: you can browse cached pages offline. Key submissions (registration, support tickets, tip proofs) queue and sync when you are back online.';
+      'Voter: continue registration steps, support tickets, and tip confirmations offline. Queued actions sync automatically when you are online again.';
 
   @override
   String get offlineBannerHintPublic =>
-      'Public: cached info remains available. New updates load automatically when internet returns.';
+      'Public: you can still read cached results, civic info, and legal guides offline. Fresh updates load automatically after reconnection.';
 
   @override
   String get helpSupportAiTitle => 'CamGuide assistant';
 
   @override
   String get helpSupportAiSubtitle =>
-      'Ask about registration, observer rules, vote security, incidents, or Cameroon election context.';
+      'Start naturally: say hi, ask how-to questions, or discuss CamVote and general topics.';
 
   @override
-  String get helpSupportAiInputHint => 'Ask CamGuide a question...';
+  String get helpSupportAiInputHint => 'Start with hi or ask anything...';
 
   @override
   String get helpSupportAiSend => 'Ask';
@@ -3468,7 +3468,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get tipGenerateMaxItQr => 'Show Max It QR';
+  String get tipGenerateMaxItQr => 'Show Orange Money Max It QR';
 
   @override
   String get tipMsisdnLabel => 'Mobile money number';
@@ -3480,7 +3480,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tipMsisdnInvalid => 'Enter a valid phone number.';
 
   @override
-  String get tipScanMaxItQr => 'Open Max It and scan this QR to tip';
+  String get tipScanMaxItQr =>
+      'Open your Max It app and scan this Orange Money QR to tip';
 
   @override
   String get tipPaymentTrackingTitle => 'Payment tracking';

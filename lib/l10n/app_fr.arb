@@ -348,13 +348,13 @@
       "count": {}
     }
   },
-  "offlineBannerHintAdmin": "Admin: continuez hors ligne. CamVote synchronise au retour d internet (reponses support, incidents, preuves/decisions de tip, audit, lectures de notifications).",
-  "offlineBannerHintObserver": "Observateur: vous pouvez signaler des incidents et mettre a jour la checklist hors ligne. Les preuves et mises a jour se synchronisent automatiquement.",
-  "offlineBannerHintVoter": "Electeur: vous pouvez consulter les pages en cache hors ligne. Les actions (inscription, tickets, preuves de tip) se mettent en file et se synchronisent au retour d internet.",
-  "offlineBannerHintPublic": "Public: les infos en cache restent disponibles. Les mises a jour se chargent automatiquement au retour d internet.",
+  "offlineBannerHintAdmin": "Admin: continuez le tri support, incidents, tips et notes d audit hors ligne. CamVote synchronise automatiquement ces actions au retour d internet.",
+  "offlineBannerHintObserver": "Observateur: continuez a signaler des incidents, mettre a jour la checklist et enregistrer vos notes terrain hors ligne. La synchro reprend automatiquement au retour de connexion.",
+  "offlineBannerHintVoter": "Electeur: poursuivez inscription, tickets support et confirmations de tip hors ligne. Les actions en file se synchronisent automatiquement quand internet revient.",
+  "offlineBannerHintPublic": "Public: vous pouvez consulter les resultats en cache, l education civique et les guides juridiques hors ligne. Les mises a jour se chargent automatiquement a la reconnexion.",
   "helpSupportAiTitle": "Assistant CamGuide",
-  "helpSupportAiSubtitle": "Posez des questions sur l inscription, le mode observateur, la securite du vote, les incidents et le contexte electoral camerounais.",
-  "helpSupportAiInputHint": "Posez une question a CamGuide...",
+  "helpSupportAiSubtitle": "Parlez naturellement: dites bonjour, posez vos questions CamVote ou des questions generales.",
+  "helpSupportAiInputHint": "Commencez par bonjour ou posez votre question...",
   "helpSupportAiSend": "Envoyer",
   "helpSupportAiThinking": "CamGuide analyse votre question...",
   "helpSupportAiSourcesLabel": "Sources",
@@ -1395,11 +1395,11 @@
       "count": {}
     }
   },
-  "tipGenerateMaxItQr": "Afficher le QR Max It",
+  "tipGenerateMaxItQr": "Afficher le QR Orange Money Max It",
   "tipMsisdnLabel": "Numero mobile money",
   "tipMsisdnHint": "ex. +2376XXXXXXXX",
   "tipMsisdnInvalid": "Entrez un numero de telephone valide.",
-  "tipScanMaxItQr": "Ouvrez Max It et scannez ce QR pour envoyer un tip",
+  "tipScanMaxItQr": "Ouvrez votre application Max It et scannez ce QR Orange Money pour envoyer un tip",
   "tipPaymentTrackingTitle": "Suivi du paiement",
   "tipReferenceLabel": "Reference",
   "tipCheckStatus": "Verifier",

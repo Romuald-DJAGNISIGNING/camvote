@@ -1829,25 +1829,25 @@ abstract class AppLocalizations {
   /// No description provided for @offlineBannerHintAdmin.
   ///
   /// In en, this message translates to:
-  /// **'Admin: keep working offline. CamVote will sync when internet returns (support replies, incidents, tip proofs/decisions, audits, notification reads).'**
+  /// **'Admin: continue triaging support, incidents, tips, and audit notes offline. CamVote syncs those actions automatically when internet returns.'**
   String get offlineBannerHintAdmin;
 
   /// No description provided for @offlineBannerHintObserver.
   ///
   /// In en, this message translates to:
-  /// **'Observer: you can still report incidents and update your checklist offline. Evidence uploads and status updates will sync automatically.'**
+  /// **'Observer: keep reporting incidents, updating checklist items, and tracking field notes offline. Sync runs automatically once connection is back.'**
   String get offlineBannerHintObserver;
 
   /// No description provided for @offlineBannerHintVoter.
   ///
   /// In en, this message translates to:
-  /// **'Voter: you can browse cached pages offline. Key submissions (registration, support tickets, tip proofs) queue and sync when you are back online.'**
+  /// **'Voter: continue registration steps, support tickets, and tip confirmations offline. Queued actions sync automatically when you are online again.'**
   String get offlineBannerHintVoter;
 
   /// No description provided for @offlineBannerHintPublic.
   ///
   /// In en, this message translates to:
-  /// **'Public: cached info remains available. New updates load automatically when internet returns.'**
+  /// **'Public: you can still read cached results, civic info, and legal guides offline. Fresh updates load automatically after reconnection.'**
   String get offlineBannerHintPublic;
 
   /// No description provided for @helpSupportAiTitle.
@@ -1859,13 +1859,13 @@ abstract class AppLocalizations {
   /// No description provided for @helpSupportAiSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Ask about registration, observer rules, vote security, incidents, or Cameroon election context.'**
+  /// **'Start naturally: say hi, ask how-to questions, or discuss CamVote and general topics.'**
   String get helpSupportAiSubtitle;
 
   /// No description provided for @helpSupportAiInputHint.
   ///
   /// In en, this message translates to:
-  /// **'Ask CamGuide a question...'**
+  /// **'Start with hi or ask anything...'**
   String get helpSupportAiInputHint;
 
   /// No description provided for @helpSupportAiSend.
@@ -6358,7 +6358,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipGenerateMaxItQr.
   ///
   /// In en, this message translates to:
-  /// **'Show Max It QR'**
+  /// **'Show Orange Money Max It QR'**
   String get tipGenerateMaxItQr;
 
   /// No description provided for @tipMsisdnLabel.
@@ -6382,7 +6382,7 @@ abstract class AppLocalizations {
   /// No description provided for @tipScanMaxItQr.
   ///
   /// In en, this message translates to:
-  /// **'Open Max It and scan this QR to tip'**
+  /// **'Open your Max It app and scan this Orange Money QR to tip'**
   String get tipScanMaxItQr;
 
   /// No description provided for @tipPaymentTrackingTitle.

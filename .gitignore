@@ -81,6 +81,8 @@ package-lock.json
 npm-debug.log
 tools/7zip/
 tools/dmg2img/
+tools/android/
+tools/android-*
 
 # Local l10n scaffolding artifacts
 lib/gen/l10n/.*
