@@ -214,6 +214,19 @@ jobs:
           if [ -d build/ios/iphoneos/Runner.app ]; then
             runner_app_zip="release-artifacts/ios/Runner.app.zip"
             ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app "$runner_app_zip"
+
+            # Convenience: package an unsigned .ipa for Windows sideload tools (AltStore/Sideloadly).
+            # This is just a zip with a top-level Payload/Runner.app and is not installable until signed.
+            unsigned_ipa="release-artifacts/ios/Runner-unsigned.ipa"
+            tmpdir="$(mktemp -d)"
+            mkdir -p "$tmpdir/Payload"
+            cp -R build/ios/iphoneos/Runner.app "$tmpdir/Payload/"
+            if command -v zip >/dev/null 2>&1; then
+              (cd "$tmpdir" && zip -qry "$GITHUB_WORKSPACE/$unsigned_ipa" Payload)
+            else
+              (cd "$tmpdir" && ditto -c -k --sequesterRsrc Payload "$GITHUB_WORKSPACE/$unsigned_ipa")
+            fi
+            rm -rf "$tmpdir"
           fi
 
           archive_path=$(find build/ios/archive -maxdepth 1 -name "*.xcarchive" | head -n 1 || true)
