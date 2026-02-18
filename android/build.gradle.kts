@@ -7,14 +7,17 @@ allprojects {
     }
 }
 
-// Keep Gradle outputs outside OneDrive-synced project folders to avoid file locks
-// during release merges/cleanup on Windows.
-val localBuildRoot =
-    File(
-        System.getenv("LOCALAPPDATA") ?: System.getProperty("java.io.tmpdir"),
-        "camvote-android-build",
-    )
-rootProject.layout.buildDirectory.value(rootProject.layout.dir(rootProject.provider { localBuildRoot }).get())
+// Use the project-root build directory by default so Flutter tooling can find
+// APK/AAB artifacts. Optionally override with CAMVOTE_ANDROID_BUILD_ROOT for
+// Windows hosts that need a non-OneDrive location.
+val buildRootDir =
+    System.getenv("CAMVOTE_ANDROID_BUILD_ROOT")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let(::File)
+        ?: rootProject.projectDir.resolve("../build")
+
+rootProject.layout.buildDirectory.value(rootProject.layout.dir(rootProject.provider { buildRootDir }).get())
 
 subprojects {
     val newSubprojectBuildDir: Directory = rootProject.layout.buildDirectory.dir(project.name).get()
@@ -33,6 +36,17 @@ subprojects {
             ) {
                 useVersion("2.1.4")
             }
+        }
+    }
+}
+
+// Some transitive Android library plugins can fail lintVital on CI/Windows with
+// missing generated lint-resources artifacts. Keep release builds deterministic
+// by disabling only the lintVital analyze task on subprojects.
+subprojects {
+    tasks.configureEach {
+        if (name == "lintVitalAnalyzeRelease") {
+            enabled = false
         }
     }
 }

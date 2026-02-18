@@ -23,6 +23,8 @@ android {
     val buildingBundle = gradle.startParameter.taskNames.any {
         it.contains("bundle", ignoreCase = true)
     }
+    val enableReleaseMinify =
+        (findProperty("camvote.minifyRelease") as String?)?.toBooleanStrictOrNull() ?: false
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -76,11 +78,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
+            isMinifyEnabled = enableReleaseMinify
+            isShrinkResources = enableReleaseMinify
+            if (enableReleaseMinify) {
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro",
+                )
+            }
             signingConfig = if (hasKeystore) {
                 signingConfigs.getByName("release")
             } else {
