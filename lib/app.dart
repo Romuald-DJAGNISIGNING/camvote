@@ -106,7 +106,11 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
         final routeFromRouter = _routeContextFromUri(routeInformation.uri);
         final routeFromBrowser = _routeContextFromUri(Uri.base);
         final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-        if (_hideLauncherOnRoute(route.path)) {
+        final hideForOnboarding =
+            _isOnboardingOverlayContext(route) ||
+            _isOnboardingOverlayContext(routeFromRouter) ||
+            _isOnboardingOverlayContext(routeFromBrowser);
+        if (hideForOnboarding || _hideLauncherOnRoute(route.path)) {
           return child;
         }
 
@@ -228,7 +232,11 @@ class _WebActionDock extends ConsumerWidget {
         final routeFromRouter = _routeContextFromUri(routeInformation.uri);
         final routeFromBrowser = _routeContextFromUri(Uri.base);
         final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-        if (_hideDockOnRoute(route.path)) {
+        final hideForOnboarding =
+            _isOnboardingOverlayContext(route) ||
+            _isOnboardingOverlayContext(routeFromRouter) ||
+            _isOnboardingOverlayContext(routeFromBrowser);
+        if (hideForOnboarding || _hideDockOnRoute(route.path)) {
           return child;
         }
 
@@ -492,6 +500,7 @@ _RouteContext _routeContextFromUri(Uri uri) {
         path: parsed.path.isEmpty ? RoutePaths.gateway : parsed.path,
         entry: parsed.queryParameters['entry'],
         role: parsed.queryParameters['role'],
+        revisit: parsed.queryParameters['revisit'],
       );
     }
   }
@@ -500,6 +509,7 @@ _RouteContext _routeContextFromUri(Uri uri) {
     path: uri.path.isEmpty ? RoutePaths.gateway : uri.path,
     entry: uri.queryParameters['entry'],
     role: uri.queryParameters['role'],
+    revisit: uri.queryParameters['revisit'],
   );
 }
 
@@ -516,7 +526,17 @@ _RouteContext _mergeRouteContext(
   final path = browserPath != RoutePaths.gateway ? browserPath : routerPath;
   final entry = routeFromRouter.entry ?? routeFromBrowser.entry;
   final role = routeFromRouter.role ?? routeFromBrowser.role;
-  return _RouteContext(path: path, entry: entry, role: role);
+  final revisit = routeFromRouter.revisit ?? routeFromBrowser.revisit;
+  return _RouteContext(path: path, entry: entry, role: role, revisit: revisit);
+}
+
+bool _isOnboardingOverlayContext(_RouteContext route) {
+  final normalized = route.path.isEmpty ? RoutePaths.gateway : route.path;
+  if (normalized == RoutePaths.onboarding ||
+      normalized.startsWith('${RoutePaths.onboarding}/')) {
+    return true;
+  }
+  return route.revisit == '1' && normalized == RoutePaths.gateway;
 }
 
 class _RouteContext {
@@ -524,11 +544,13 @@ class _RouteContext {
     required this.path,
     required this.entry,
     required this.role,
+    required this.revisit,
   });
 
   final String path;
   final String? entry;
   final String? role;
+  final String? revisit;
 }
 
 class _NotificationToastListener extends ConsumerStatefulWidget {
