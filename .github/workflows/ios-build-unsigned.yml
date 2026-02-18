@@ -1,6 +1,15 @@
 name: iOS Build (Unsigned)
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ios/**"
+      - "lib/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/ios-build-unsigned.yml"
   workflow_dispatch:
     inputs:
       api_base_url:
@@ -118,9 +127,9 @@ jobs:
       - name: Validate Firebase Mobile Config
         run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
 
-      - name: Build Unsigned iOS Archive
+      - name: Build Unsigned iOS App
         run: >
-          flutter build ipa --release --no-codesign
+          flutter build ios --release --no-codesign
           --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }}
           --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }}
           --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
@@ -133,14 +142,16 @@ jobs:
           set -euo pipefail
           mkdir -p release-artifacts/ios
 
-          archive_path=$(find build/ios/archive -maxdepth 1 -name "*.xcarchive" | head -n 1)
-          if [ -z "$archive_path" ]; then
-            echo "::error::No .xcarchive generated in build/ios/archive."
-            exit 1
+          if [ -d build/ios/iphoneos/Runner.app ]; then
+            runner_app_zip="release-artifacts/ios/Runner.app.zip"
+            ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app "$runner_app_zip"
           fi
 
-          archive_zip="release-artifacts/ios/$(basename "$archive_path").zip"
-          ditto -c -k --sequesterRsrc --keepParent "$archive_path" "$archive_zip"
+          archive_path=$(find build/ios/archive -maxdepth 1 -name "*.xcarchive" | head -n 1 || true)
+          if [ -n "$archive_path" ]; then
+            archive_zip="release-artifacts/ios/$(basename "$archive_path").zip"
+            ditto -c -k --sequesterRsrc --keepParent "$archive_path" "$archive_zip"
+          fi
 
           ipa_path=$(find build/ios/ipa -maxdepth 1 -name "*.ipa" | head -n 1 || true)
           if [ -n "$ipa_path" ]; then
