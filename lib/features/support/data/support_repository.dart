@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../core/firebase/firebase_auth_scope.dart';
 import '../../../core/network/worker_client.dart';
 import '../../../core/offline/offline_sync_store.dart';
+import '../../../core/theme/role_theme.dart';
 
 import '../models/admin_support_ticket.dart';
+import '../models/camguide_chat.dart';
 import '../models/support_ticket.dart';
 
 class SupportRepository {
@@ -40,6 +43,37 @@ class SupportRepository {
       message: response['message']?.toString() ?? '',
       queuedOffline: queued,
       offlineQueueId: queueId,
+    );
+  }
+
+  Future<CamGuideReply> askCamGuide({
+    required String question,
+    required Locale locale,
+    required AppRole role,
+    String lastIntentId = '',
+  }) async {
+    final response = await _workerClient.post(
+      '/v1/camguide/chat',
+      data: {
+        'question': question.trim(),
+        'locale': locale.languageCode.trim().toLowerCase(),
+        'role': role.apiValue,
+        if (lastIntentId.trim().isNotEmpty) 'lastIntentId': lastIntentId.trim(),
+      },
+      authRequired: false,
+    );
+
+    final answer = _asString(response['answer']);
+    if (answer.isEmpty) {
+      throw StateError('CamGuide returned an empty answer.');
+    }
+
+    return CamGuideReply(
+      answer: answer,
+      followUps: _asStringList(response['followUps']),
+      sourceHints: _asStringList(response['sourceHints']),
+      confidence: _asDouble(response['confidence']).clamp(0, 1),
+      intentId: _asString(response['intentId']),
     );
   }
 
@@ -122,5 +156,24 @@ class SupportRepository {
       queuedOffline: queued,
       offlineQueueId: queueId,
     );
+  }
+
+  String _asString(dynamic value) => value?.toString().trim() ?? '';
+
+  List<String> _asStringList(dynamic value) {
+    if (value is! List) return const <String>[];
+    final out = <String>[];
+    for (final item in value) {
+      final text = _asString(item);
+      if (text.isNotEmpty) {
+        out.add(text);
+      }
+    }
+    return out;
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(_asString(value)) ?? 0;
   }
 }

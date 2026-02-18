@@ -224,6 +224,8 @@ export default {
         case '/v1/support/ticket':
         case '/v1/support/tickets':
           return await handleSupportTicket(request, env, corsHeaders);
+        case '/v1/camguide/chat':
+          return await handleCamGuideChat(request, env, corsHeaders);
         case '/v1/notifications/mark-read':
           return await handleNotificationMarkRead(request, env, corsHeaders);
         case '/v1/notifications/mark-all-read':

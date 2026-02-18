@@ -733,12 +733,22 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       final locale = Localizations.localeOf(context);
       final role = ref.read(currentRoleProvider);
       final assistant = ref.read(camGuideAssistantProvider);
-      final reply = assistant.reply(
-        question: question,
-        locale: locale,
-        role: role,
-        lastIntentId: _lastIntentId,
-      );
+      final supportRepo = ref.read(supportRepositoryProvider);
+      final reply = await supportRepo
+          .askCamGuide(
+            question: question,
+            locale: locale,
+            role: role,
+            lastIntentId: _lastIntentId,
+          )
+          .catchError((_) {
+            return assistant.reply(
+              question: question,
+              locale: locale,
+              role: role,
+              lastIntentId: _lastIntentId,
+            );
+          });
       if (!mounted) return;
 
       setState(() {
