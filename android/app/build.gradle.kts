@@ -20,6 +20,9 @@ android {
     namespace = "com.camvote.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+    val buildingBundle = gradle.startParameter.taskNames.any {
+        it.contains("bundle", ignoreCase = true)
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -51,10 +54,12 @@ android {
     // Generate lean APKs per ABI plus a universal fallback APK.
     splits {
         abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = true
+            isEnable = !buildingBundle
+            if (!buildingBundle) {
+                reset()
+                include("armeabi-v7a", "arm64-v8a", "x86_64")
+                isUniversalApk = true
+            }
         }
     }
 

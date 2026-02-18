@@ -79,6 +79,7 @@ data/maps/*.pbf.md5
 .history-memo/
 devtools_options.yaml
 test-results/
+release-artifacts/
 tmp-*
 tmp_*
 scripts/tmp-*

@@ -1,5 +1,7 @@
 param(
-  [switch]$SkipInstall = $false
+  [switch]$SkipInstall = $false,
+  [switch]$SkipLint = $false,
+  [switch]$AllowDirty = $false
 )
 
 Set-StrictMode -Version Latest
@@ -28,9 +30,23 @@ function Assert-LastExitCode([string]$FailureMessage) {
   }
 }
 
+function Assert-CleanGitWorktree {
+  $gitStatus = git status --porcelain
+  if ($LASTEXITCODE -ne 0) {
+    throw "Unable to determine git worktree status."
+  }
+  if (-not [string]::IsNullOrWhiteSpace($gitStatus)) {
+    throw "Working tree is dirty. Commit or stash changes, or pass -AllowDirty."
+  }
+}
+
 $NpmCmd = Resolve-ToolPath @('npm.cmd', 'npm') "Install Node.js"
 $NpxCmd = Resolve-ToolPath @('npx.cmd', 'npx') "Install Node.js"
 $WranglerCmd = Resolve-ToolPath @('wrangler.cmd', 'wrangler') "Install wrangler: npm i -g wrangler" -Optional
+
+if (-not $AllowDirty) {
+  Assert-CleanGitWorktree
+}
 
 function Run-Wrangler {
   if ($WranglerCmd) {
@@ -48,6 +64,10 @@ Push-Location cf-worker
 if (-not $SkipInstall) {
   & $NpmCmd install --quiet
   Assert-LastExitCode "cf-worker npm install failed"
+}
+if (-not $SkipLint) {
+  & $NpmCmd run lint
+  Assert-LastExitCode "cf-worker lint failed"
 }
 Run-Wrangler
 Pop-Location

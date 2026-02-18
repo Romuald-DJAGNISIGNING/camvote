@@ -1,6 +1,8 @@
 param(
   [string]$ProjectName = "camvote",
-  [switch]$SkipBuild = $false
+  [switch]$SkipBuild = $false,
+  [switch]$SkipQualityChecks = $false,
+  [switch]$AllowDirty = $false
 )
 
 Set-StrictMode -Version Latest
@@ -25,6 +27,16 @@ function Assert-LastExitCode([string]$FailureMessage) {
   }
 }
 
+function Assert-CleanGitWorktree {
+  $gitStatus = git status --porcelain
+  if ($LASTEXITCODE -ne 0) {
+    throw "Unable to determine git worktree status."
+  }
+  if (-not [string]::IsNullOrWhiteSpace($gitStatus)) {
+    throw "Working tree is dirty. Commit or stash changes, or pass -AllowDirty."
+  }
+}
+
 $FlutterCmd = Resolve-ToolPath @('flutter.bat', 'flutter') "Install Flutter SDK"
 $NpxCmd = Resolve-ToolPath @('npx.cmd', 'npx') "Install Node.js"
 
@@ -41,6 +53,18 @@ function Warn-Env($path) {
 
 Warn-Env ".env.public"
 
+if (-not $AllowDirty) {
+  Assert-CleanGitWorktree
+}
+
+if (-not $SkipQualityChecks) {
+  Write-Host "==> Running Flutter quality checks" -ForegroundColor Cyan
+  & $FlutterCmd analyze
+  Assert-LastExitCode "flutter analyze failed"
+  & $FlutterCmd test
+  Assert-LastExitCode "flutter test failed"
+}
+
 if (-not $SkipBuild) {
   Write-Host "==> Building web bundle (Flutter)" -ForegroundColor Cyan
   & $FlutterCmd build web --release --no-wasm-dry-run
@@ -52,5 +76,6 @@ if (-not (Test-Path "build/web")) {
 }
 
 Write-Host "==> Deploying to Cloudflare Pages ($ProjectName)" -ForegroundColor Cyan
-& $NpxCmd wrangler pages deploy build/web --project-name $ProjectName --commit-dirty=true
+$commitDirty = if ($AllowDirty) { "true" } else { "false" }
+& $NpxCmd wrangler pages deploy build/web --project-name $ProjectName "--commit-dirty=$commitDirty"
 Assert-LastExitCode "Cloudflare Pages deploy failed"

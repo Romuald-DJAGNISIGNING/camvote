@@ -51,7 +51,8 @@ wrangler secret put TRELLO_TOKEN
   - `STORAGE_UPLOAD_MAX_BYTES` (default `10485760`) and strict content-type allowlist for uploads.
   - `DEVICE_MAX_PER_USER` (default `1`) for account-level device cap.
   - `DEVICE_REGISTER_RATE_LIMIT_*`, `VOTE_NONCE_RATE_LIMIT_*`, `VOTE_CAST_RATE_LIMIT_*`,
-    `REGISTRATION_RATE_LIMIT_*`, `SUPPORT_TICKET_RATE_LIMIT_*`, `CAMGUIDE_RATE_LIMIT_*`
+    `REGISTRATION_RATE_LIMIT_*`, `INCIDENT_SUBMIT_RATE_LIMIT_*`, `SUPPORT_TICKET_RATE_LIMIT_*`,
+    `CAMGUIDE_RATE_LIMIT_*`, `AUTH_RESOLVE_RATE_LIMIT_*`, `AUTH_REFRESH_RATE_LIMIT_*`
     where each pair is `*_WINDOW_SECONDS` + `*_MAX_REQUESTS`.
   - Tip webhook signatures must be HMAC-SHA256 in `X-Tip-QR-Signature` (raw secret header values are rejected).
 

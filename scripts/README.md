@@ -36,6 +36,38 @@ After running the script, log in on the web app using the seeded credentials.
 
 Keep the service account JSON out of git (already covered by `.gitignore`). Rotate it if it was ever committed.
 
+## Smoke/E2E data cleanup
+
+Use this helper to remove known smoke/e2e records from Firebase Auth and Firestore.
+It targets users/emails that match these markers by default:
+
+- `camvoteadmin.inspect+`
+- `camvoteadmin.e2e+`
+- `camvoteappassist+e2e`
+
+Dry run (no deletion):
+
+```
+cd scripts
+node cleanup-smoke-data.mjs --serviceAccount ../service-account.json
+```
+
+Apply deletion:
+
+```
+cd scripts
+node cleanup-smoke-data.mjs --serviceAccount ../service-account.json --apply
+```
+
+Optional extra markers:
+
+```
+node cleanup-smoke-data.mjs \
+  --serviceAccount ../service-account.json \
+  --emailMarker "qa+e2e@camvote.app,bot+smoke@camvote.app" \
+  --userMarker "camvoteadmin.qa"
+```
+
 ## Deploy helpers (PowerShell)
 
 From repo root:
@@ -52,7 +84,8 @@ Notes:
 - `deploy-web.ps1` builds with `--release` by default.
 - `deploy-all.ps1` also deploys Firestore rules/indexes and the Worker.
 - `deploy-all.ps1` prefers `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth and avoids deprecated `FIREBASE_TOKEN` when service-account auth is available.
-- Web deploy commands pass `--commit-dirty=true` so deployment is not blocked/warned by local uncommitted changes.
+- Deploy scripts now require a clean git worktree by default; pass `-AllowDirty` only when intentional.
+- `deploy-web.ps1` and `deploy-all.ps1` run Flutter analyze/test by default; pass `-SkipQualityChecks` if needed.
 - `validate-mobile-config.ps1` checks `lib/firebase_options.dart` against `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist`.
 - `release-android.ps1` builds signed Android release artifacts (`.aab` + split `.apk`) and writes SHA-256 checksums to `build/mobile-android-sha256.txt`.
 
