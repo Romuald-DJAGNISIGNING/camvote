@@ -49,3 +49,5 @@ pwsh scripts/deploy-all.ps1 -PagesProject camvote
 Notes:
 - `deploy-web.ps1` builds with `--release` by default.
 - `deploy-all.ps1` also deploys Firestore rules/indexes and the Worker.
+- `deploy-all.ps1` prefers `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth and avoids deprecated `FIREBASE_TOKEN` when service-account auth is available.
+- Web deploy commands pass `--commit-dirty=true` so deployment is not blocked/warned by local uncommitted changes.

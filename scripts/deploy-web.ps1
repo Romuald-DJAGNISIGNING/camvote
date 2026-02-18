@@ -19,6 +19,12 @@ function Resolve-ToolPath(
   throw "Required tool not found ($($Candidates -join ', ')). $Hint"
 }
 
+function Assert-LastExitCode([string]$FailureMessage) {
+  if ($LASTEXITCODE -ne 0) {
+    throw "$FailureMessage (exit code: $LASTEXITCODE)"
+  }
+}
+
 $FlutterCmd = Resolve-ToolPath @('flutter.bat', 'flutter') "Install Flutter SDK"
 $NpxCmd = Resolve-ToolPath @('npx.cmd', 'npx') "Install Node.js"
 
@@ -38,6 +44,7 @@ Warn-Env ".env.public"
 if (-not $SkipBuild) {
   Write-Host "==> Building web bundle (Flutter)" -ForegroundColor Cyan
   & $FlutterCmd build web --release --no-wasm-dry-run
+  Assert-LastExitCode "Flutter web build failed"
 }
 
 if (-not (Test-Path "build/web")) {
@@ -45,4 +52,5 @@ if (-not (Test-Path "build/web")) {
 }
 
 Write-Host "==> Deploying to Cloudflare Pages ($ProjectName)" -ForegroundColor Cyan
-& $NpxCmd wrangler pages deploy build/web --project-name $ProjectName
+& $NpxCmd wrangler pages deploy build/web --project-name $ProjectName --commit-dirty=true
+Assert-LastExitCode "Cloudflare Pages deploy failed"
