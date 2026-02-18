@@ -28,24 +28,44 @@ jobs:
         run: flutter pub get
 
       - name: Analyze
+        id: analyze
         run: |
-          set -o pipefail
+          set +e
           flutter analyze 2>&1 | tee flutter-analyze.log
+          analyze_exit=${PIPESTATUS[0]}
+          echo "exit_code=$analyze_exit" >> "$GITHUB_OUTPUT"
+          exit 0
 
       - name: Upload Analyze Log
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: flutter-analyze-log
           path: flutter-analyze.log
 
+      - name: Analyze Summary
+        if: always()
+        run: |
+          echo "### flutter analyze exit code: ${{ steps.analyze.outputs.exit_code }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "```" >> "$GITHUB_STEP_SUMMARY"
+          tail -n 200 flutter-analyze.log >> "$GITHUB_STEP_SUMMARY"
+          echo "```" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail If Analyze Failed
+        if: steps.analyze.outputs.exit_code != '0'
+        run: exit 1
+
       - name: Test
+        if: steps.analyze.outputs.exit_code == '0'
         run: flutter test
 
       - name: Build Web Release
+        if: steps.analyze.outputs.exit_code == '0'
         run: flutter build web --release --no-wasm-dry-run
 
       - name: Ensure sensitive files are not tracked
+        if: steps.analyze.outputs.exit_code == '0'
         run: |
           disallowed=$(git ls-files | grep -E '(^\.env$|^service-account\.json$|^cf-worker/node_modules/|wrangler-account\.json|firebase-tools\.json)') || true
           if [ -n "$disallowed" ]; then
