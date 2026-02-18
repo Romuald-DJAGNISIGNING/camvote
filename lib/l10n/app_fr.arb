@@ -309,20 +309,20 @@
       "ticketId": {}
     }
   },
-  "helpSupportTicketQueued": "Ticket mis en file hors ligne. Reference: {queueId}. Il sera envoye automatiquement au retour de la connexion.",
+  "helpSupportTicketQueued": "Ticket mis en file hors ligne. Référence : {queueId}. Il sera envoyé automatiquement au retour de la connexion.",
   "@helpSupportTicketQueued": {
     "placeholders": {
       "queueId": {}
     }
   },
-  "offlineQueuedWithReference": "Action mise en file hors ligne. Reference: {queueId}. Elle sera synchronisee automatiquement au retour de la connexion.",
+  "offlineQueuedWithReference": "Action mise en file hors ligne. Référence : {queueId}. Elle sera synchronisée automatiquement au retour de la connexion.",
   "@offlineQueuedWithReference": {
     "placeholders": {
       "queueId": {}
     }
   },
   "helpSupportOfflineQueueTitle": "Synchronisation hors ligne en attente",
-  "helpSupportOfflineQueueBodyCount": "{count} ticket(s) support sont en file hors ligne et seront envoyes automatiquement au retour de la connexion.",
+  "helpSupportOfflineQueueBodyCount": "{count} ticket(s) support sont en file hors ligne et seront envoyés automatiquement au retour de la connexion.",
   "@helpSupportOfflineQueueBodyCount": {
     "placeholders": {
       "count": {}
@@ -1365,7 +1365,7 @@
   "supportCamVoteImpactCommunity": "Amelioration de l education civique et acces elargi pour electeurs et observateurs.",
   "supportCamVoteImpactTransparency": "Operations transparentes avec mises a jour auditables et impact public mesurable.",
   "helpSupportLiveHelpDesk": "Live Help Desk",
-  "helpSupportLiveHelpDeskHint": "Votre message sera envoye a l administrateur Help Desk et vous recevrez les mises a jour dans les notifications.",
+  "helpSupportLiveHelpDeskHint": "Votre message sera envoyé à l’administrateur Help Desk et vous recevrez les mises à jour dans les notifications.",
   "helpSupportChatWhatsApp": "Chat WhatsApp",
   "helpSupportWhatsAppGreeting": "Bonjour CamVote, je contacte le support via WhatsApp.",
   "helpSupportWhatsAppOpenFailed": "Impossible d ouvrir WhatsApp pour le moment.",
@@ -1502,8 +1502,8 @@
     }
   },
   "adminSupportNewStatusLabel": "Nouveau statut",
-  "adminSupportResponseMessageLabel": "Message de reponse",
-  "adminSupportSendResponse": "Envoyer la reponse",
+  "adminSupportResponseMessageLabel": "Message de réponse",
+  "adminSupportSendResponse": "Envoyer la réponse",
   "adminSupportRegistrationIdValue": "ID d inscription: {registrationId}",
   "@adminSupportRegistrationIdValue": {
     "placeholders": {

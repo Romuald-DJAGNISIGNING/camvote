@@ -926,12 +926,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String helpSupportTicketQueued(Object queueId) {
-    return 'Ticket mis en file hors ligne. Reference: $queueId. Il sera envoye automatiquement au retour de la connexion.';
+    return 'Ticket mis en file hors ligne. Référence : $queueId. Il sera envoyé automatiquement au retour de la connexion.';
   }
 
   @override
   String offlineQueuedWithReference(Object queueId) {
-    return 'Action mise en file hors ligne. Reference: $queueId. Elle sera synchronisee automatiquement au retour de la connexion.';
+    return 'Action mise en file hors ligne. Référence : $queueId. Elle sera synchronisée automatiquement au retour de la connexion.';
   }
 
   @override
@@ -940,7 +940,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String helpSupportOfflineQueueBodyCount(Object count) {
-    return '$count ticket(s) support sont en file hors ligne et seront envoyes automatiquement au retour de la connexion.';
+    return '$count ticket(s) support sont en file hors ligne et seront envoyés automatiquement au retour de la connexion.';
   }
 
   @override
@@ -3418,7 +3418,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get helpSupportLiveHelpDeskHint =>
-      'Votre message sera envoye a l administrateur Help Desk et vous recevrez les mises a jour dans les notifications.';
+      'Votre message sera envoyé à l’administrateur Help Desk et vous recevrez les mises à jour dans les notifications.';
 
   @override
   String get helpSupportChatWhatsApp => 'Chat WhatsApp';
@@ -3690,10 +3690,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get adminSupportNewStatusLabel => 'Nouveau statut';
 
   @override
-  String get adminSupportResponseMessageLabel => 'Message de reponse';
+  String get adminSupportResponseMessageLabel => 'Message de réponse';
 
   @override
-  String get adminSupportSendResponse => 'Envoyer la reponse';
+  String get adminSupportSendResponse => 'Envoyer la réponse';
 
   @override
   String adminSupportRegistrationIdValue(Object registrationId) {
