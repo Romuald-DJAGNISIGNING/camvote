@@ -56,6 +56,7 @@ npx wrangler deploy
 ```
 
 ## API surface (high level)
+- `POST /auth/refresh` (refresh token exchange via Firebase Secure Token API)
 - `POST /v1/registration/submit`, `/v1/device/register`, `/v1/vote/nonce`, `/v1/vote/cast`, `/v1/account/delete`, `/v1/admin/registration/decide`, `/v1/user/bootstrap`
 - Admin role control: `GET /v1/admin/observers`, `POST /v1/admin/observers/assign`, `POST /v1/admin/observers/create`, `POST /v1/admin/observers/delete`
 - Admin content management: `GET /v1/admin/content`, `POST /v1/admin/content/upsert`, `POST /v1/admin/content/delete`, `POST /v1/admin/content/seed`

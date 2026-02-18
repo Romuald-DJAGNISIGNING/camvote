@@ -80,6 +80,10 @@ export default {
     }
 
     try {
+      if (request.method === 'POST' && url.pathname === '/auth/refresh') {
+        return await handleAuthRefresh(request, env, corsHeaders);
+      }
+
       if (request.method === 'GET' && url.pathname === '/v1/storage/file') {
         return await handleStorageFile(request, env, corsHeaders);
       }
@@ -1115,6 +1119,80 @@ async function handleAuthResolveIdentifier(
   }
 
   throw new HttpError(404, 'Account not found.');
+}
+
+async function handleAuthRefresh(
+  request: Request,
+  env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const refreshToken = pickString(body, ['refresh_token', 'refreshToken']).trim();
+  if (!refreshToken) {
+    throw new HttpError(400, 'refresh_token is required.');
+  }
+
+  const apiKey = (env.FIREBASE_API_KEY || '').trim();
+  if (!apiKey) {
+    throw new HttpError(500, 'Firebase API key is not configured.');
+  }
+
+  const response = await fetch(
+    `https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }).toString(),
+    },
+  );
+
+  if (!response.ok) {
+    let errorCode = '';
+    try {
+      const errorBody = (await response.json()) as {
+        error?: { message?: string };
+      };
+      errorCode = `${errorBody.error?.message ?? ''}`.trim().toUpperCase();
+    } catch {
+      // Ignore non-JSON error bodies.
+    }
+
+    if (
+      errorCode === 'INVALID_REFRESH_TOKEN' ||
+      errorCode === 'TOKEN_EXPIRED' ||
+      errorCode === 'USER_DISABLED' ||
+      errorCode === 'USER_NOT_FOUND'
+    ) {
+      throw new HttpError(401, 'Invalid refresh token.');
+    }
+
+    throw new HttpError(502, 'Unable to refresh session.');
+  }
+
+  const result = (await response.json()) as Record<string, unknown>;
+  const accessToken = `${result.id_token ?? ''}`.trim();
+  const newRefreshToken = `${result.refresh_token ?? ''}`.trim() || refreshToken;
+  const expiresIn = Number(`${result.expires_in ?? ''}`);
+  const expiresAt =
+    Number.isFinite(expiresIn) && expiresIn > 0
+      ? new Date(Date.now() + expiresIn * 1000).toISOString()
+      : null;
+
+  if (!accessToken) {
+    throw new HttpError(502, 'Refresh response missing id_token.');
+  }
+
+  return jsonResponse(
+    {
+      access_token: accessToken,
+      refresh_token: newRefreshToken,
+      expires_at: expiresAt,
+    },
+    corsHeaders,
+  );
 }
 
 async function handlePublicAboutProfile(
