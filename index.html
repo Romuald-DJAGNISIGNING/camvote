@@ -86,12 +86,12 @@
 
   <script>
     (function () {
-      // Release URLs for split APK assets.
+      // Stable download URLs (always point to the latest published release).
       var urls = {
-        arm64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-arm64-v8a-release.apk",
-        armv7: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-armeabi-v7a-release.apk",
-        x86_64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-x86_64-release.apk",
-        universal: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-universal-release.apk"
+        arm64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/latest/download/app-arm64-v8a-release.apk",
+        armv7: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/latest/download/app-armeabi-v7a-release.apk",
+        x86_64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/latest/download/app-x86_64-release.apk",
+        universal: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/latest/download/app-universal-release.apk"
       };
 
       var statusEl = document.getElementById("status");
