@@ -17,11 +17,6 @@ on:
         required: false
         default: "https://camvote.romuald-djagnisigning.workers.dev"
         type: string
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/ios-build-unsigned.yml"
 
 permissions:
   contents: read
