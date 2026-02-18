@@ -1,3 +1,5 @@
+import java.io.File
+
 allprojects {
     repositories {
         google()
@@ -5,14 +7,17 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
-rootProject.layout.buildDirectory.value(newBuildDir)
+// Keep Gradle outputs outside OneDrive-synced project folders to avoid file locks
+// during release merges/cleanup on Windows.
+val localBuildRoot =
+    File(
+        System.getenv("LOCALAPPDATA") ?: System.getProperty("java.io.tmpdir"),
+        "camvote-android-build",
+    )
+rootProject.layout.buildDirectory.value(rootProject.layout.dir(rootProject.provider { localBuildRoot }).get())
 
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    val newSubprojectBuildDir: Directory = rootProject.layout.buildDirectory.dir(project.name).get()
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 subprojects {

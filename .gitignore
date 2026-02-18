@@ -48,6 +48,9 @@ app.*.map.json
 /android/app/release
 /android/build/
 /android/.kotlin/
+/android/.gradle-cli-cache/
+/android/*.hprof
+java_pid*.hprof
 .gradle-user-home/
 .tmp_android_tools/
 .env
