@@ -100,6 +100,30 @@ $env:CLOUDFLARE_ACCOUNT_ID="<cloudflare-account-id>"   # optional
 pwsh scripts/deploy-all.ps1 -PagesProject camvote
 ```
 
+## Gmail support sender (optional)
+
+If you want support replies to be sent from `camvoteappassist@gmail.com` and actually deliver to Gmail inboxes,
+use Gmail OAuth (MailChannels will bounce `From: *@gmail.com` due to DMARC).
+
+1. In Google Cloud Console (same project as Firebase), enable Gmail API.
+2. Create an OAuth Client (Web app) with redirect URI `http://localhost:53682/oauth2callback`.
+3. Run the helper to obtain a refresh token:
+
+```
+cd scripts
+node gmail-refresh-token.mjs --clientId "<client-id>" --clientSecret "<client-secret>"
+```
+
+Then set Worker secrets:
+
+```
+cd cf-worker
+npx wrangler secret put GMAIL_CLIENT_ID
+npx wrangler secret put GMAIL_CLIENT_SECRET
+npx wrangler secret put GMAIL_REFRESH_TOKEN
+npx wrangler deploy
+```
+
 ## Android release script arguments
 
 ```

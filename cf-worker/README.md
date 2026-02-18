@@ -44,9 +44,10 @@ wrangler secret put TRELLO_TOKEN
 - `ALLOWED_ORIGINS` (var) - comma-separated origins, default `*`.
 - `R2_PRIMARY`, `R2_BACKUP` (bindings) - primary bucket required; backup optional.
 - Secrets above are required for production deploys.
-- Support reply emails are sent through MailChannels authenticated API calls:
-  - `MAILCHANNELS_API_KEY` must be set as a Worker secret.
-  - `SUPPORT_EMAIL_FROM`/`SUPPORT_EMAIL_REPLY_TO` can stay `camvoteappassist@gmail.com`.
+- Support reply emails:
+  - MailChannels: set `MAILCHANNELS_API_KEY` as a Worker secret.
+  - Gmail sender support: if `SUPPORT_EMAIL_FROM` is a Gmail address, MailChannels will often bounce due to DMARC.
+    In that case set Worker secrets `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN` to send via Gmail API.
 - Optional hardening knobs (vars):
   - `STORAGE_UPLOAD_MAX_BYTES` (default `10485760`) and strict content-type allowlist for uploads.
   - `DEVICE_MAX_PER_USER` (default `1`) for account-level device cap.

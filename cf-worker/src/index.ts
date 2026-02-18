@@ -6195,30 +6195,20 @@ async function notifyAdmins(
   }
 }
 
-async function trySendSupportResponseEmail(
-  env: Env,
-  payload: {
-    to: string;
-    ticketId: string;
-    status: string;
-    responseMessage: string;
-  },
-): Promise<boolean> {
-  const recipient = payload.to.trim().toLowerCase();
-  if (!isValidEmail(recipient)) return false;
+type SupportResponseEmailPayload = {
+  to: string;
+  ticketId: string;
+  status: string;
+  responseMessage: string;
+};
 
-  const mailchannelsApiKey = (env.MAILCHANNELS_API_KEY || '').trim();
-  if (!mailchannelsApiKey) {
-    console.error(
-      'Support email send proceeding without MAILCHANNELS_API_KEY. ' +
-        'If MailChannels requires auth for your account, configure MAILCHANNELS_API_KEY.',
-    );
-  }
+type SupportEmailContent = {
+  subject: string;
+  plainText: string;
+  htmlText: string;
+};
 
-  const from = (env.SUPPORT_EMAIL_FROM || '').trim().toLowerCase();
-  const replyTo = (env.SUPPORT_EMAIL_REPLY_TO || '').trim().toLowerCase();
-  if (!isValidEmail(from)) return false;
-
+function buildSupportResponseEmailContent(payload: SupportResponseEmailPayload): SupportEmailContent {
   const statusLabel = payload.status.trim().toLowerCase() || 'answered';
   const subject = `CamVote support update - ticket ${payload.ticketId}`;
   const plainText = [
@@ -6246,8 +6236,62 @@ async function trySendSupportResponseEmail(
   <p style="margin-top:18px;">CamVote Help Desk</p>
 </div>`;
 
+  return { subject, plainText, htmlText };
+}
+
+function isGmailSenderAddress(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized.endsWith('@gmail.com') || normalized.endsWith('@googlemail.com');
+}
+
+function hasGmailSupportEmailConfig(env: Env): boolean {
+  const clientId = (env.GMAIL_CLIENT_ID || '').trim();
+  const clientSecret = (env.GMAIL_CLIENT_SECRET || '').trim();
+  const refreshToken = (env.GMAIL_REFRESH_TOKEN || '').trim();
+  return clientId.length > 0 && clientSecret.length > 0 && refreshToken.length > 0;
+}
+
+async function trySendSupportResponseEmail(env: Env, payload: SupportResponseEmailPayload): Promise<boolean> {
+  const recipient = payload.to.trim().toLowerCase();
+  if (!isValidEmail(recipient)) return false;
+
+  const from = (env.SUPPORT_EMAIL_FROM || '').trim().toLowerCase();
+  const replyTo = (env.SUPPORT_EMAIL_REPLY_TO || '').trim().toLowerCase();
+  if (!isValidEmail(from)) return false;
+
+  if (isGmailSenderAddress(from)) {
+    if (hasGmailSupportEmailConfig(env)) {
+      return await trySendSupportResponseEmailViaGmail(env, { ...payload, to: recipient }, from, replyTo);
+    }
+
+    console.error(
+      'Support email uses a Gmail FROM address but Gmail API secrets are missing. ' +
+        'MailChannels delivery to Gmail recipients will likely bounce due to DMARC. ' +
+        'Set GMAIL_CLIENT_ID/GMAIL_CLIENT_SECRET/GMAIL_REFRESH_TOKEN or use a non-Gmail SUPPORT_EMAIL_FROM.',
+    );
+  }
+
+  return await trySendSupportResponseEmailViaMailChannels(env, { ...payload, to: recipient }, from, replyTo);
+}
+
+async function trySendSupportResponseEmailViaMailChannels(
+  env: Env,
+  payload: SupportResponseEmailPayload,
+  from: string,
+  replyTo: string,
+): Promise<boolean> {
+  const mailchannelsApiKey = (env.MAILCHANNELS_API_KEY || '').trim();
+  if (!mailchannelsApiKey) {
+    console.error(
+      'Support email send proceeding without MAILCHANNELS_API_KEY. ' +
+        'If MailChannels requires auth for your account, configure MAILCHANNELS_API_KEY.',
+    );
+  }
+
+  const { subject, plainText, htmlText } = buildSupportResponseEmailContent(payload);
+
   const requestBody: JsonObject = {
-    personalizations: [{ to: [{ email: recipient }] }],
+    personalizations: [{ to: [{ email: payload.to.trim().toLowerCase() }] }],
     from: { email: from, name: 'CamVote Help Desk' },
     subject,
     content: [{ type: 'text/plain', value: plainText }],
@@ -6286,6 +6330,133 @@ async function trySendSupportResponseEmail(
     return true;
   } catch (error) {
     console.error('Support email send exception', (error as Error).message);
+    return false;
+  }
+}
+
+async function getGmailAccessToken(env: Env): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedGmailAccessToken && cachedGmailAccessTokenExp - 60 > now) {
+    return cachedGmailAccessToken;
+  }
+
+  const clientId = (env.GMAIL_CLIENT_ID || '').trim();
+  const clientSecret = (env.GMAIL_CLIENT_SECRET || '').trim();
+  const refreshToken = (env.GMAIL_REFRESH_TOKEN || '').trim();
+  if (!clientId || !clientSecret || !refreshToken) {
+    return '';
+  }
+
+  try {
+    const response = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }).toString(),
+    });
+    if (!response.ok) {
+      console.error('Gmail token refresh failed', response.status, await response.text());
+      return '';
+    }
+
+    const data = (await response.json()) as { access_token?: string; expires_in?: number };
+    const accessToken = `${data.access_token || ''}`.trim();
+    if (!accessToken) return '';
+
+    cachedGmailAccessToken = accessToken;
+    cachedGmailAccessTokenExp = now + (data.expires_in || 3600);
+    return cachedGmailAccessToken;
+  } catch (error) {
+    console.error('Gmail token refresh exception', (error as Error).message);
+    return '';
+  }
+}
+
+function base64EncodeUtf8(input: string): string {
+  const bytes = textEncoder.encode(input);
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
+
+function wrapBase64Lines(input: string, width = 76): string {
+  const value = input.replace(/\r?\n/g, '');
+  const lines: string[] = [];
+  for (let i = 0; i < value.length; i += width) {
+    lines.push(value.slice(i, i + width));
+  }
+  return lines.join('\r\n');
+}
+
+async function trySendSupportResponseEmailViaGmail(
+  env: Env,
+  payload: SupportResponseEmailPayload,
+  from: string,
+  replyTo: string,
+): Promise<boolean> {
+  const accessToken = await getGmailAccessToken(env);
+  if (!accessToken) {
+    console.error('Gmail support email send skipped: missing/invalid Gmail OAuth configuration.');
+    return false;
+  }
+
+  const { subject, plainText, htmlText } = buildSupportResponseEmailContent(payload);
+  const boundary = `camvote_${crypto.randomUUID().replace(/-/g, '')}`;
+
+  const headerLines: string[] = [
+    `To: ${payload.to.trim().toLowerCase()}`,
+    `From: CamVote Help Desk <${from}>`,
+    `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+  ];
+  if (replyTo && isValidEmail(replyTo)) {
+    headerLines.splice(2, 0, `Reply-To: ${replyTo}`);
+  }
+
+  const mime = [
+    ...headerLines,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    wrapBase64Lines(base64EncodeUtf8(plainText)),
+    '',
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    'Content-Transfer-Encoding: base64',
+    '',
+    wrapBase64Lines(base64EncodeUtf8(htmlText)),
+    '',
+    `--${boundary}--`,
+    '',
+  ].join('\r\n');
+
+  try {
+    const response = await fetch(GMAIL_SEND_URL, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ raw: base64UrlEncode(mime) }),
+    });
+
+    if (!response.ok) {
+      console.error('Gmail support email send failed', response.status, await response.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Gmail support email send exception', (error as Error).message);
     return false;
   }
 }
