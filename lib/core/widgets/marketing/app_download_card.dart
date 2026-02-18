@@ -41,16 +41,21 @@ class AppDownloadCard extends StatelessWidget {
     final learnMoreUrl = showLearnMore
         ? _buildLearnMoreUrl(mobileFeaturesUrl, languageCode, playUrl, appUrl)
         : '';
+    // QR code should be a single fast link. For Android, we prefer the configured
+    // Play URL (which can be a GitHub Pages smart-link that auto-picks the right
+    // split APK) so scanners jump straight into the download flow.
     final qrUrl = showQr
-        ? buildSmartDownloadUrl(
-            baseUrl: mobileFeaturesUrl,
-            languageCode: languageCode,
-            playUrl: playUrl,
-            appUrl: appUrl,
-            androidDeepLink: AppConfig.androidDeepLink,
-            iosDeepLink: AppConfig.iosDeepLink,
-            iosLive: AppConfig.iosAppLive,
-          )
+        ? (playUrl.isNotEmpty
+              ? playUrl
+              : buildSmartDownloadUrl(
+                  baseUrl: mobileFeaturesUrl,
+                  languageCode: languageCode,
+                  playUrl: playUrl,
+                  appUrl: appUrl,
+                  androidDeepLink: AppConfig.androidDeepLink,
+                  iosDeepLink: AppConfig.iosDeepLink,
+                  iosLive: AppConfig.iosAppLive,
+                ))
         : '';
     return Card(
       clipBehavior: Clip.antiAlias,
