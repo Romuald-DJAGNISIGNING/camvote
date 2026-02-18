@@ -2588,6 +2588,307 @@ async function handleSupportTicket(
   return jsonResponse({ ok: true, ticketId: id, status: 'received' }, corsHeaders, 201);
 }
 
+type CamGuideWebSnippet = {
+  title: string;
+  excerpt: string;
+  url: string;
+  source: string;
+};
+
+async function handleCamGuideChat(
+  request: Request,
+  _env: Env,
+  corsHeaders: Headers,
+): Promise<Response> {
+  const body = await readJson(request);
+  const question = pickString(body, ['question', 'message', 'q']).trim();
+  if (!question) {
+    throw new HttpError(400, 'question is required');
+  }
+  if (question.length > 1000) {
+    throw new HttpError(400, 'question is too long');
+  }
+
+  const locale = pickString(body, ['locale', 'lang']).trim().toLowerCase();
+  const isFrench = locale.startsWith('fr');
+  const role = pickString(body, ['role']).trim().toLowerCase();
+
+  const liveContext = await fetchCamGuideLiveContext(question);
+  const answer = buildCamGuideHumanAnswer({
+    question,
+    role,
+    isFrench,
+    snippets: liveContext.snippets,
+  });
+  const followUps = buildCamGuideFollowUps({
+    question,
+    isFrench,
+    hasLiveContext: liveContext.snippets.length > 0,
+  });
+  const confidence =
+    liveContext.snippets.length > 0
+      ? Math.min(0.95, 0.62 + liveContext.snippets.length * 0.1)
+      : 0.36;
+
+  return jsonResponse(
+    {
+      ok: true,
+      answer,
+      followUps,
+      sourceHints: liveContext.sources,
+      confidence,
+      intentId: liveContext.snippets.length > 0 ? 'web_live_assist' : 'general_conversation',
+    },
+    corsHeaders,
+  );
+}
+
+async function fetchCamGuideLiveContext(
+  question: string,
+): Promise<{ snippets: CamGuideWebSnippet[]; sources: string[] }> {
+  const snippets: CamGuideWebSnippet[] = [];
+  const sourceSet = new Set<string>();
+
+  const pushSnippet = (input: CamGuideWebSnippet): void => {
+    if (snippets.length >= 3) return;
+    if (!input.excerpt.trim()) return;
+    const exists = snippets.some((item) => item.excerpt === input.excerpt);
+    if (exists) return;
+    snippets.push(input);
+    if (input.url.trim()) {
+      sourceSet.add(input.url.trim());
+    } else if (input.source.trim()) {
+      sourceSet.add(input.source.trim());
+    }
+  };
+
+  try {
+    const searchUrl = new URL('https://api.duckduckgo.com/');
+    searchUrl.searchParams.set('q', question);
+    searchUrl.searchParams.set('format', 'json');
+    searchUrl.searchParams.set('no_html', '1');
+    searchUrl.searchParams.set('no_redirect', '1');
+    searchUrl.searchParams.set('skip_disambig', '1');
+
+    const response = await fetch(searchUrl.toString(), {
+      headers: { Accept: 'application/json' },
+    });
+    if (response.ok) {
+      const payload = (await response.json()) as Record<string, unknown>;
+      const abstractText = camGuideTrim(camGuideString(payload['AbstractText']));
+      const abstractUrl = camGuideString(payload['AbstractURL']);
+      const abstractSource =
+        camGuideString(payload['AbstractSource']) || camGuideHostLabel(abstractUrl, 'DuckDuckGo');
+      const heading = camGuideTrim(camGuideString(payload['Heading']), 80) || 'Overview';
+      if (abstractText) {
+        pushSnippet({
+          title: heading,
+          excerpt: abstractText,
+          url: abstractUrl,
+          source: abstractSource,
+        });
+      }
+
+      const definition = camGuideTrim(camGuideString(payload['Definition']));
+      if (definition) {
+        const definitionUrl = camGuideString(payload['DefinitionURL']);
+        pushSnippet({
+          title: 'Definition',
+          excerpt: definition,
+          url: definitionUrl,
+          source:
+            camGuideString(payload['DefinitionSource']) ||
+            camGuideHostLabel(definitionUrl, 'DuckDuckGo'),
+        });
+      }
+
+      const directAnswer = camGuideTrim(camGuideString(payload['Answer']));
+      if (directAnswer) {
+        pushSnippet({
+          title: 'Direct answer',
+          excerpt: directAnswer,
+          url: '',
+          source: 'DuckDuckGo',
+        });
+      }
+
+      const related = extractCamGuideRelatedSnippets(payload['RelatedTopics']);
+      for (const item of related) {
+        pushSnippet(item);
+      }
+    }
+  } catch (error) {
+    console.error('CamGuide live lookup failed', (error as Error).message);
+  }
+
+  return { snippets, sources: Array.from(sourceSet).slice(0, 5) };
+}
+
+function extractCamGuideRelatedSnippets(raw: unknown): CamGuideWebSnippet[] {
+  const out: CamGuideWebSnippet[] = [];
+
+  const visit = (value: unknown): void => {
+    if (!Array.isArray(value)) return;
+    for (const item of value) {
+      if (out.length >= 8) return;
+      const record = camGuideRecord(item);
+      if (!record) continue;
+
+      const text = camGuideString(record['Text']);
+      const url = camGuideString(record['FirstURL']);
+      if (text) {
+        const split = text.split(' - ');
+        const title = camGuideTrim(split[0] || 'Related topic', 80);
+        const excerptRaw = split.length > 1 ? split.slice(1).join(' - ') : text;
+        const excerpt = camGuideTrim(excerptRaw);
+        if (excerpt) {
+          out.push({
+            title,
+            excerpt,
+            url,
+            source: camGuideHostLabel(url, 'DuckDuckGo'),
+          });
+        }
+      }
+
+      if (Array.isArray(record['Topics'])) {
+        visit(record['Topics']);
+      }
+    }
+  };
+
+  visit(raw);
+  return out;
+}
+
+function buildCamGuideHumanAnswer(params: {
+  question: string;
+  role: string;
+  isFrench: boolean;
+  snippets: CamGuideWebSnippet[];
+}): string {
+  const roleLabel = camGuideRoleLabel(params.role, params.isFrench);
+  const lines: string[] = [];
+
+  if (params.isFrench) {
+    lines.push(`Bonne question. Je vous reponds comme un conseiller ${roleLabel}.`);
+    if (params.snippets.length > 0) {
+      lines.push('Je viens de verifier des sources en ligne en temps reel.');
+      lines.push('Voici le plus utile:');
+      params.snippets.forEach((snippet, index) => {
+        lines.push(`${index + 1}. ${snippet.excerpt}`);
+      });
+      lines.push(
+        'Si vous voulez, je peux approfondir un point, comparer les sources, ou vous faire un plan d action.',
+      );
+    } else {
+      lines.push(
+        `Je n ai pas pu recuperer de contexte web en direct pour "${params.question}".`,
+      );
+      lines.push(
+        'Partagez plus de details (pays, periode, objectif) et je vais reformuler une reponse pratique.',
+      );
+    }
+  } else {
+    lines.push(`Great question. I will answer as a ${roleLabel} advisor.`);
+    if (params.snippets.length > 0) {
+      lines.push('I just checked live online sources.');
+      lines.push('Here is the most useful summary:');
+      params.snippets.forEach((snippet, index) => {
+        lines.push(`${index + 1}. ${snippet.excerpt}`);
+      });
+      lines.push(
+        'If you want, I can go deeper, compare sources, or turn this into a practical action plan.',
+      );
+    } else {
+      lines.push(`I could not fetch reliable live web context for "${params.question}" just now.`);
+      lines.push(
+        'Share a bit more detail (country, timeframe, exact goal) and I will refine the answer.',
+      );
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function buildCamGuideFollowUps(params: {
+  question: string;
+  isFrench: boolean;
+  hasLiveContext: boolean;
+}): string[] {
+  if (params.isFrench) {
+    return params.hasLiveContext
+      ? [
+          'Peux-tu citer les sources officielles avec les liens ?',
+          'Donne-moi un plan etape par etape.',
+          'Explique-le en version simple en 5 points.',
+          'Quels risques ou limites dois-je verifier ?',
+        ]
+      : [
+          'Voici mon contexte exact...',
+          'Peux-tu me poser 3 questions pour mieux cadrer ?',
+          'Donne-moi une check-list pratique.',
+        ];
+  }
+
+  return params.hasLiveContext
+    ? [
+        'Can you cite official sources with links?',
+        'Give me a step-by-step plan.',
+        'Explain this in plain language in 5 points.',
+        'What risks or limitations should I verify?',
+      ]
+    : [
+        'Here is my exact context...',
+        'Ask me 3 clarifying questions first.',
+        'Give me a practical checklist.',
+      ];
+}
+
+function camGuideRoleLabel(role: string, isFrench: boolean): string {
+  switch (role) {
+    case 'admin':
+      return isFrench ? 'admin' : 'admin';
+    case 'observer':
+      return isFrench ? 'observateur' : 'observer';
+    case 'voter':
+      return isFrench ? 'electeur' : 'voter';
+    default:
+      return isFrench ? 'public' : 'public';
+  }
+}
+
+function camGuideString(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return `${value}`.trim();
+  }
+  return '';
+}
+
+function camGuideTrim(value: string, maxChars = 240): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxChars) return normalized;
+  return `${normalized.slice(0, maxChars - 1).trimEnd()}…`;
+}
+
+function camGuideHostLabel(url: string, fallback: string): string {
+  const raw = url.trim();
+  if (!raw) return fallback;
+  try {
+    return new URL(raw).host.replace(/^www\./, '') || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function camGuideRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
 async function handleNotificationsList(
   request: Request,
   env: Env,
