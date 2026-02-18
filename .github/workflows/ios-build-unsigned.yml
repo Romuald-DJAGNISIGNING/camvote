@@ -124,6 +124,29 @@ jobs:
         if: steps.firebase_keys.outputs.ok == 'true'
         run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
 
+      - name: Init Build Logs
+        shell: bash
+        run: |
+          # Ensure logs exist even if early steps fail.
+          : > ios-build.log
+          : > pods-install.log
+
+      - name: Install CocoaPods Dependencies
+        id: pods
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+
+          if ! command -v pod >/dev/null 2>&1; then
+            echo "CocoaPods not found; installing..." | tee -a pods-install.log
+            sudo gem install cocoapods -N 2>&1 | tee -a pods-install.log
+          fi
+
+          cd ios
+          pod --version 2>&1 | tee -a ../pods-install.log
+          pod install --repo-update 2>&1 | tee -a ../pods-install.log
+
       - name: Build Unsigned iOS App
         id: build
         shell: bash
@@ -141,38 +164,52 @@ jobs:
         if: always()
         shell: bash
         run: |
-          if [ ! -f ios-build.log ]; then
-            echo "::error::ios-build.log not found."
-            exit 0
-          fi
+          for log in pods-install.log ios-build.log; do
+            if [ ! -f "$log" ]; then
+              echo "::warning::${log} not found."
+              continue
+            fi
 
-          # Prefer the most actionable lines; keep the volume low so annotations remain readable.
-          matches="$(grep -niE '(error:|fatal error:|\\bError \\(Xcode\\)|\\bException\\b|\\bFAILED\\b|\\bCocoaPods\\b|\\bPodfile\\b|No such file or directory)' ios-build.log | tail -n 50 || true)"
-          if [ -n "$matches" ]; then
-            while IFS= read -r line; do
-              # Escape workflow command control characters.
-              msg="$(printf '%s' "$line" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
-              echo "::error::${msg}"
-            done <<< "$matches"
-            exit 0
-          fi
-
-          # Fallback: emit the tail of the log as one annotation so it is visible without downloading artifacts.
-          tail_content="$(tail -n 120 ios-build.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
-          tail_content="${tail_content//$'\n'/%0A}"
-          echo "::error::No obvious error patterns found. Last 120 log lines:%0A${tail_content}"
+            # Prefer the most actionable lines; keep the volume low so annotations remain readable.
+            matches="$(grep -niE '(error:|fatal error:|\\bError \\(Xcode\\)|\\bException\\b|\\bFAILED\\b|\\bCocoaPods\\b|\\bPodfile\\b|No such file or directory|No such module|Command PhaseScriptExecution failed|xcodebuild: error:)' "$log" | tail -n 50 || true)"
+            if [ -n "$matches" ]; then
+              while IFS= read -r line; do
+                # Escape workflow command control characters.
+                msg="$(printf '%s' "$log: $line" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+                echo "::error::${msg}"
+              done <<< "$matches"
+            else
+              # Fallback: emit the tail of the log as one annotation so it is visible without downloading artifacts.
+              tail_content="$(tail -n 120 "$log" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+              tail_content="${tail_content//$'\n'/%0A}"
+              echo "::error::No obvious error patterns found in $log. Last 120 log lines:%0A${tail_content}"
+            fi
+          done
 
       - name: Package iOS Artifacts
         id: package
         shell: bash
         if: always()
+        env:
+          PODS_OUTCOME: ${{ steps.pods.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
         run: |
           set -euo pipefail
           mkdir -p release-artifacts/ios
 
-          if [ -f ios-build.log ]; then
-            cp ios-build.log release-artifacts/ios/ios-build.log
-          fi
+          cat > release-artifacts/ios/ci-info.txt <<EOF
+          workflow=$GITHUB_WORKFLOW
+          run_id=$GITHUB_RUN_ID
+          run_attempt=$GITHUB_RUN_ATTEMPT
+          sha=$GITHUB_SHA
+          ref=$GITHUB_REF
+          actor=$GITHUB_ACTOR
+          pods_outcome=$PODS_OUTCOME
+          build_outcome=$BUILD_OUTCOME
+          EOF
+
+          cp -f pods-install.log release-artifacts/ios/pods-install.log 2>/dev/null || true
+          cp -f ios-build.log release-artifacts/ios/ios-build.log 2>/dev/null || true
 
           if [ -d build/ios/iphoneos/Runner.app ]; then
             runner_app_zip="release-artifacts/ios/Runner.app.zip"
@@ -194,10 +231,6 @@ jobs:
             cd release-artifacts/ios
             shopt -s nullglob
             files=( * )
-            if [ "${#files[@]}" -eq 0 ]; then
-              echo "::error::No iOS artifacts were packaged."
-              exit 1
-            fi
             shasum -a 256 "${files[@]}" > sha256.txt
           )
 
