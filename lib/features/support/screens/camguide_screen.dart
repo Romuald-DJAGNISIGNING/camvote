@@ -14,6 +14,7 @@ import '../../../core/theme/role_theme.dart';
 import '../../../core/widgets/feedback/cam_toast.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
+import '../models/camguide_chat.dart';
 import '../providers/support_providers.dart';
 
 class CamGuideScreen extends ConsumerStatefulWidget {
@@ -78,6 +79,7 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
     final cs = Theme.of(context).colorScheme;
     final viewport = MediaQuery.of(context).size;
     final isNarrow = viewport.width < 760;
+    final useStackedComposer = viewport.width < 560;
     final chatHeight = isNarrow
         ? (viewport.height * 0.46).clamp(280.0, 460.0).toDouble()
         : (viewport.height * 0.52).clamp(320.0, 560.0).toDouble();
@@ -420,30 +422,41 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _inputCtrl,
-                                  focusNode: _inputFocusNode,
-                                  textInputAction: TextInputAction.send,
-                                  onSubmitted: (_) => _askCamGuide(),
-                                  decoration: InputDecoration(
-                                    hintText: t.helpSupportAiInputHint,
-                                    prefixIcon: const Icon(
-                                      Icons.chat_bubble_outline_rounded,
-                                    ),
+                              TextField(
+                                controller: _inputCtrl,
+                                focusNode: _inputFocusNode,
+                                textInputAction: TextInputAction.send,
+                                onSubmitted: (_) => _askCamGuide(),
+                                decoration: InputDecoration(
+                                  hintText: t.helpSupportAiInputHint,
+                                  prefixIcon: const Icon(
+                                    Icons.chat_bubble_outline_rounded,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              FilledButton.icon(
-                                onPressed: _responding
-                                    ? null
-                                    : () => _askCamGuide(),
-                                icon: const Icon(Icons.send_rounded),
-                                label: Text(t.helpSupportAiSend),
-                              ),
+                              const SizedBox(height: 8),
+                              if (useStackedComposer)
+                                FilledButton.icon(
+                                  onPressed: _responding
+                                      ? null
+                                      : () => _askCamGuide(),
+                                  icon: const Icon(Icons.send_rounded),
+                                  label: Text(t.helpSupportAiSend),
+                                )
+                              else
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FilledButton.icon(
+                                    onPressed: _responding
+                                        ? null
+                                        : () => _askCamGuide(),
+                                    icon: const Icon(Icons.send_rounded),
+                                    label: Text(t.helpSupportAiSend),
+                                  ),
+                                ),
                             ],
                           ),
                         ],
@@ -734,21 +747,29 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       final role = ref.read(currentRoleProvider);
       final assistant = ref.read(camGuideAssistantProvider);
       final supportRepo = ref.read(supportRepositoryProvider);
-      final reply = await supportRepo
-          .askCamGuide(
-            question: question,
-            locale: locale,
-            role: role,
-            lastIntentId: _lastIntentId,
-          )
-          .catchError((_) {
-            return assistant.reply(
+      final localReply = assistant.reply(
+        question: question,
+        locale: locale,
+        role: role,
+        lastIntentId: _lastIntentId,
+      );
+      CamGuideReply reply;
+      try {
+        final remoteReply = await supportRepo
+            .askCamGuide(
               question: question,
               locale: locale,
               role: role,
               lastIntentId: _lastIntentId,
-            );
-          });
+            )
+            .timeout(const Duration(seconds: 12));
+        reply = _selectBestReply(
+          remoteReply: remoteReply,
+          localReply: localReply,
+        );
+      } catch (_) {
+        reply = localReply;
+      }
       if (!mounted) return;
 
       setState(() {
@@ -787,6 +808,64 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
         curve: Curves.easeOutCubic,
       );
     });
+  }
+
+  CamGuideReply _selectBestReply({
+    required CamGuideReply remoteReply,
+    required CamGuideReply localReply,
+  }) {
+    final normalizedRemoteAnswer = remoteReply.answer.trim().toLowerCase();
+    final remoteLowSignal =
+        remoteReply.confidence < 0.48 ||
+        normalizedRemoteAnswer.contains(
+          'i could not fetch reliable live web context',
+        ) ||
+        normalizedRemoteAnswer.contains(
+          'je n ai pas pu recuperer de contexte web',
+        );
+    if (remoteLowSignal && localReply.confidence >= remoteReply.confidence) {
+      return _mergeReplies(primary: localReply, secondary: remoteReply);
+    }
+    return _mergeReplies(primary: remoteReply, secondary: localReply);
+  }
+
+  CamGuideReply _mergeReplies({
+    required CamGuideReply primary,
+    required CamGuideReply secondary,
+  }) {
+    final answer = primary.answer.trim().isNotEmpty
+        ? primary.answer
+        : secondary.answer;
+    final followUps = _dedupeStrings(<String>[
+      ...primary.followUps,
+      ...secondary.followUps,
+    ]).take(6).toList();
+    final sourceHints = _dedupeStrings(<String>[
+      ...primary.sourceHints,
+      ...secondary.sourceHints,
+    ]).take(6).toList();
+    final primaryIntentId = primary.intentId.trim();
+    final secondaryIntentId = secondary.intentId.trim();
+    return CamGuideReply(
+      answer: answer,
+      followUps: followUps,
+      sourceHints: sourceHints,
+      confidence: math.max(primary.confidence, secondary.confidence * 0.94),
+      intentId: primaryIntentId.isNotEmpty
+          ? primaryIntentId
+          : secondaryIntentId,
+    );
+  }
+
+  Iterable<String> _dedupeStrings(List<String> values) sync* {
+    final seen = <String>{};
+    for (final value in values) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) continue;
+      final key = trimmed.toLowerCase();
+      if (!seen.add(key)) continue;
+      yield trimmed;
+    }
   }
 }
 

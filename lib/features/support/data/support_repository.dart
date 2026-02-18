@@ -20,19 +20,35 @@ class SupportRepository {
   final FirebaseAuth _auth;
 
   Future<SupportTicketResult> submitTicket(SupportTicket ticket) async {
-    final response = await _workerClient.post(
-      '/v1/support/ticket',
-      data: {
-        'name': ticket.name,
-        'email': ticket.email,
-        'registrationId': ticket.registrationId,
-        'category': ticket.category.apiValue,
-        'message': ticket.message,
-      },
-      authRequired: _hasSignedInUser,
-      allowOfflineQueue: true,
-      queueType: 'support_ticket',
-    );
+    final payload = <String, dynamic>{
+      'name': ticket.name,
+      'email': ticket.email,
+      'registrationId': ticket.registrationId,
+      'category': ticket.category.apiValue,
+      'message': ticket.message,
+    };
+    Map<String, dynamic> response;
+    try {
+      response = await _workerClient.post(
+        '/v1/support/ticket',
+        data: payload,
+        authRequired: _hasSignedInUser,
+        allowOfflineQueue: true,
+        queueType: 'support_ticket',
+      );
+    } on WorkerException catch (error) {
+      // Backward compatibility for deployments still exposing plural route only.
+      if (error.statusCode != 404 && error.statusCode != 405) {
+        rethrow;
+      }
+      response = await _workerClient.post(
+        '/v1/support/tickets',
+        data: payload,
+        authRequired: _hasSignedInUser,
+        allowOfflineQueue: true,
+        queueType: 'support_ticket',
+      );
+    }
     final queued = response['queued'] == true;
     final queueId = response['offlineQueueId']?.toString() ?? '';
     return SupportTicketResult(

@@ -532,11 +532,8 @@ _RouteContext _mergeRouteContext(
 
 bool _isOnboardingOverlayContext(_RouteContext route) {
   final normalized = route.path.isEmpty ? RoutePaths.gateway : route.path;
-  if (normalized == RoutePaths.onboarding ||
-      normalized.startsWith('${RoutePaths.onboarding}/')) {
-    return true;
-  }
-  return route.revisit == '1' && normalized == RoutePaths.gateway;
+  return normalized == RoutePaths.onboarding ||
+      normalized.startsWith('${RoutePaths.onboarding}/');
 }
 
 class _RouteContext {
