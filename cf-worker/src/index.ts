@@ -4,6 +4,20 @@ export interface Env {
   FIREBASE_PRIVATE_KEY: string;
   FIREBASE_API_KEY: string;
   ALLOWED_ORIGINS?: string;
+  DEVICE_MAX_PER_USER?: string;
+  STORAGE_UPLOAD_MAX_BYTES?: string;
+  CAMGUIDE_RATE_LIMIT_WINDOW_SECONDS?: string;
+  CAMGUIDE_RATE_LIMIT_MAX_REQUESTS?: string;
+  SUPPORT_TICKET_RATE_LIMIT_WINDOW_SECONDS?: string;
+  SUPPORT_TICKET_RATE_LIMIT_MAX_REQUESTS?: string;
+  DEVICE_REGISTER_RATE_LIMIT_WINDOW_SECONDS?: string;
+  DEVICE_REGISTER_RATE_LIMIT_MAX_REQUESTS?: string;
+  VOTE_NONCE_RATE_LIMIT_WINDOW_SECONDS?: string;
+  VOTE_NONCE_RATE_LIMIT_MAX_REQUESTS?: string;
+  VOTE_CAST_RATE_LIMIT_WINDOW_SECONDS?: string;
+  VOTE_CAST_RATE_LIMIT_MAX_REQUESTS?: string;
+  REGISTRATION_RATE_LIMIT_WINDOW_SECONDS?: string;
+  REGISTRATION_RATE_LIMIT_MAX_REQUESTS?: string;
   TRELLO_KEY?: string;
   TRELLO_TOKEN?: string;
   TRELLO_BOARD_ID?: string;
@@ -25,6 +39,7 @@ export interface Env {
   TIP_MAX_AMOUNT?: string;
   SUPPORT_EMAIL_FROM?: string;
   SUPPORT_EMAIL_REPLY_TO?: string;
+  MAILCHANNELS_API_KEY?: string;
   R2_PRIMARY: R2Bucket;
   R2_BACKUP?: R2Bucket;
   STORAGE_SIGNING_SECRET: string;
@@ -51,8 +66,35 @@ type StoragePath = { key: string; category: StorageCategory; ownerUid?: string }
 
 const TOKEN_SCOPE = 'https://www.googleapis.com/auth/datastore';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const MAILCHANNELS_SEND_URL = 'https://api.mailchannels.net/tx/v1/send';
 const textEncoder = new TextEncoder();
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year by default
+
+const DEVICE_DEFAULT_MAX_PER_USER = 1;
+const STORAGE_DEFAULT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
+const STORAGE_ALLOWED_CONTENT_TYPES = new Set([
+  'application/octet-stream',
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+]);
+
+const CAMGUIDE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 60 * 60; // 1 hour
+const CAMGUIDE_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 40;
+const SUPPORT_TICKET_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 60 * 60; // 1 hour
+const SUPPORT_TICKET_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 8;
+const DEVICE_REGISTER_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 60 * 60; // 1 hour
+const DEVICE_REGISTER_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 25;
+const VOTE_NONCE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60; // 10 minutes
+const VOTE_NONCE_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 15;
+const VOTE_CAST_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10 * 60; // 10 minutes
+const VOTE_CAST_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 8;
+const REGISTRATION_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 24 * 60 * 60; // 1 day
+const REGISTRATION_DEFAULT_RATE_LIMIT_MAX_REQUESTS = 3;
 
 let cachedAccessToken = '';
 let cachedAccessTokenExp = 0;
@@ -273,6 +315,29 @@ async function handleDeviceRegister(
   corsHeaders: Headers,
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
+  const auth: RateLimitAuth = { uid };
+  const windowSeconds = parseIntEnv(
+    env.DEVICE_REGISTER_RATE_LIMIT_WINDOW_SECONDS,
+    DEVICE_REGISTER_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.DEVICE_REGISTER_RATE_LIMIT_MAX_REQUESTS,
+    DEVICE_REGISTER_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    1000,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'device_register',
+    key: 'register',
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many device registration attempts. Please wait and try again.',
+  });
   const body = await readJson(request);
   const deviceHash = stringField(body, 'deviceHash');
   const publicKey = stringField(body, 'publicKey');
@@ -322,6 +387,30 @@ async function handleDeviceRegister(
       throw new HttpError(409, 'Device already registered to another account.');
     }
   }
+  const deviceMaxPerUser = parseIntEnv(env.DEVICE_MAX_PER_USER, DEVICE_DEFAULT_MAX_PER_USER, 1, 10);
+  if (!deviceDoc) {
+    const deviceDocs = await firestoreRunQuery(env, {
+      from: [{ collectionId: 'device_hashes' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'uid' },
+          op: 'EQUAL',
+          value: { stringValue: uid },
+        },
+      },
+      limit: Math.min(100, deviceMaxPerUser + 1),
+    });
+    if (deviceDocs.length >= deviceMaxPerUser) {
+      await logDeviceRisk(env, {
+        uid,
+        deviceHash,
+        type: 'DEVICE_LIMIT_EXCEEDED',
+        severity: 'high',
+        note: `Device limit exceeded (max ${deviceMaxPerUser}).`,
+      });
+      throw new HttpError(409, 'Maximum number of devices reached for this account.');
+    }
+  }
 
   const userFields = {
     deviceHash,
@@ -356,6 +445,7 @@ async function handleVoteNonce(
   corsHeaders: Headers,
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
+  const auth: RateLimitAuth = { uid };
   const body = await readJson(request);
   const electionId = pickString(body, ['electionId', 'election_id']);
   const deviceHash = pickString(body, ['deviceHash', 'device_hash']);
@@ -363,6 +453,28 @@ async function handleVoteNonce(
   if (!electionId || !deviceHash) {
     throw new HttpError(400, 'electionId and deviceHash are required');
   }
+  const windowSeconds = parseIntEnv(
+    env.VOTE_NONCE_RATE_LIMIT_WINDOW_SECONDS,
+    VOTE_NONCE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.VOTE_NONCE_RATE_LIMIT_MAX_REQUESTS,
+    VOTE_NONCE_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    500,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'vote_nonce',
+    key: electionId.toLowerCase(),
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many nonce requests. Please wait before trying again.',
+  });
 
   const userDoc = await requireUserDoc(env, uid);
   enforceVoterStatus(userDoc);
@@ -410,6 +522,7 @@ async function handleVoteCast(
   corsHeaders: Headers,
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
+  const auth: RateLimitAuth = { uid };
   const body = await readJson(request);
   const electionId = pickString(body, ['electionId', 'election_id']);
   const candidateId = pickString(body, ['candidateId', 'candidate_id']);
@@ -426,6 +539,28 @@ async function handleVoteCast(
   if (!biometricVerified || !livenessVerified) {
     throw new HttpError(403, 'Biometrics and liveness are required.');
   }
+  const windowSeconds = parseIntEnv(
+    env.VOTE_CAST_RATE_LIMIT_WINDOW_SECONDS,
+    VOTE_CAST_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.VOTE_CAST_RATE_LIMIT_MAX_REQUESTS,
+    VOTE_CAST_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    200,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'vote_cast',
+    key: electionId.toLowerCase(),
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many vote attempts. Please wait before trying again.',
+  });
 
   const userDoc = await requireUserDoc(env, uid);
   enforceVoterStatus(userDoc);
@@ -591,12 +726,35 @@ async function handleRegistrationSubmit(
   corsHeaders: Headers,
 ): Promise<Response> {
   const { uid } = await requireAuth(request, env);
+  const auth: RateLimitAuth = { uid };
   const payload = (await readJson(request)) as JsonObject;
 
   const dob = pickString(payload, ['dateOfBirth', 'date_of_birth', 'dob']);
   if (!dob || !isAdult(dob)) {
     throw new HttpError(403, 'Registrant must be at least 18 years old.');
   }
+  const windowSeconds = parseIntEnv(
+    env.REGISTRATION_RATE_LIMIT_WINDOW_SECONDS,
+    REGISTRATION_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    60,
+    7 * 24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.REGISTRATION_RATE_LIMIT_MAX_REQUESTS,
+    REGISTRATION_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    20,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'registration_submit',
+    key: 'submit',
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many registration submissions. Please wait and try again.',
+  });
 
   const deviceHash =
     pickString(payload, ['deviceHash', 'device_hash']) ||
@@ -1419,21 +1577,53 @@ async function handleAdminCreateElection(
 ): Promise<Response> {
   const { uid } = await requireAdmin(request, env);
   const body = await readJson(request);
+  const title = sanitizePlainText(stringField(body, 'title'), 160);
+  if (!title) {
+    throw new HttpError(400, 'title is required');
+  }
+  const startAt = stringField(body, 'startAt').trim();
+  const endAt = stringField(body, 'endAt').trim();
+  if (!startAt || !endAt) {
+    throw new HttpError(400, 'startAt and endAt are required');
+  }
+  const startTs = Date.parse(startAt);
+  const endTs = Date.parse(endAt);
+  if (Number.isNaN(startTs) || Number.isNaN(endTs)) {
+    throw new HttpError(400, 'startAt and endAt must be valid ISO dates');
+  }
+  if (endTs <= startTs) {
+    throw new HttpError(400, 'endAt must be after startAt');
+  }
+  const registrationDeadline = stringField(body, 'registrationDeadline').trim();
+  if (registrationDeadline) {
+    const deadlineTs = Date.parse(registrationDeadline);
+    if (Number.isNaN(deadlineTs)) {
+      throw new HttpError(400, 'registrationDeadline must be a valid ISO date');
+    }
+    if (deadlineTs > startTs) {
+      throw new HttpError(400, 'registrationDeadline must be on or before startAt');
+    }
+  }
+  const statusRaw = stringField(body, 'status').trim().toLowerCase();
+  const status = statusRaw || 'draft';
+  if (!['draft', 'scheduled', 'open', 'closed', 'archived'].includes(status)) {
+    throw new HttpError(400, 'status must be one of draft, scheduled, open, closed, archived');
+  }
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const payload: Record<string, unknown> = {
-    title: stringField(body, 'title'),
-    type: stringField(body, 'type') || 'presidential',
-    startAt: stringField(body, 'startAt'),
-    endAt: stringField(body, 'endAt'),
-    status: stringField(body, 'status') || 'draft',
-    registrationDeadline: stringField(body, 'registrationDeadline'),
-    description: stringField(body, 'description'),
-    scope: stringField(body, 'scope'),
-    location: stringField(body, 'location'),
-    timezone: stringField(body, 'timezone'),
-    ballotType: stringField(body, 'ballotType'),
-    eligibility: stringField(body, 'eligibility'),
+    title,
+    type: sanitizePlainText(stringField(body, 'type'), 80).toLowerCase() || 'presidential',
+    startAt,
+    endAt,
+    status,
+    registrationDeadline: registrationDeadline || null,
+    description: sanitizePlainText(stringField(body, 'description'), 4000),
+    scope: sanitizePlainText(stringField(body, 'scope'), 120),
+    location: sanitizePlainText(stringField(body, 'location'), 160),
+    timezone: sanitizePlainText(stringField(body, 'timezone'), 60),
+    ballotType: sanitizePlainText(stringField(body, 'ballotType'), 60),
+    eligibility: sanitizePlainText(stringField(body, 'eligibility'), 500),
     createdAt: now,
     createdBy: uid,
     updatedAt: now,
@@ -2227,7 +2417,7 @@ async function handleToolsDeviceRisks(
   await requireAdmin(request, env);
   const docs = await firestoreRunQuery(env, {
     from: [{ collectionId: 'device_risks' }],
-    orderBy: [{ field: { fieldPath: 'lastSeen' }, direction: 'DESCENDING' }],
+    orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'DESCENDING' }],
     limit: 200,
   });
   const risks = docs.map((doc) => ({
@@ -2614,6 +2804,28 @@ async function handleSupportTicket(
   if (!message) {
     throw new HttpError(400, 'message is required');
   }
+  const windowSeconds = parseIntEnv(
+    env.SUPPORT_TICKET_RATE_LIMIT_WINDOW_SECONDS,
+    SUPPORT_TICKET_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.SUPPORT_TICKET_RATE_LIMIT_MAX_REQUESTS,
+    SUPPORT_TICKET_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    100,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'support_ticket',
+    key: 'submit',
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many support requests. Please wait and try again.',
+  });
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -2680,9 +2892,10 @@ type CamGuideWebSnippet = {
 
 async function handleCamGuideChat(
   request: Request,
-  _env: Env,
+  env: Env,
   corsHeaders: Headers,
 ): Promise<Response> {
+  const auth = await maybeAuthWithRole(request, env);
   const body = await readJson(request);
   const question = pickString(body, ['question', 'message', 'q']).trim();
   if (!question) {
@@ -2691,6 +2904,28 @@ async function handleCamGuideChat(
   if (question.length > 1000) {
     throw new HttpError(400, 'question is too long');
   }
+  const windowSeconds = parseIntEnv(
+    env.CAMGUIDE_RATE_LIMIT_WINDOW_SECONDS,
+    CAMGUIDE_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    30,
+    24 * 60 * 60,
+  );
+  const maxRequests = parseIntEnv(
+    env.CAMGUIDE_RATE_LIMIT_MAX_REQUESTS,
+    CAMGUIDE_DEFAULT_RATE_LIMIT_MAX_REQUESTS,
+    1,
+    300,
+  );
+  await enforceRateLimit({
+    request,
+    env,
+    namespace: 'camguide_chat',
+    key: 'ask',
+    auth,
+    windowSeconds,
+    maxRequests,
+    message: 'Too many CamGuide requests. Please wait before trying again.',
+  });
 
   const locale = pickString(body, ['locale', 'lang']).trim().toLowerCase();
   const isFrench = locale.startsWith('fr');
@@ -4023,12 +4258,15 @@ async function handleTipWebhookTipQr(
       throw new HttpError(401, 'Missing tip webhook signature.');
     }
     const expectedHmac = await hmacSha256Hex(secret, rawBody);
-    const directMatch = constantTimeEqual(providedSignature, secret);
+    const normalizedSignature = providedSignature.replace(/^sha256=/i, '').trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(normalizedSignature)) {
+      throw new HttpError(401, 'Invalid tip webhook signature.');
+    }
     const hmacMatch = constantTimeEqual(
-      providedSignature.toLowerCase(),
+      normalizedSignature,
       expectedHmac.toLowerCase(),
     );
-    if (!directMatch && !hmacMatch) {
+    if (!hmacMatch) {
       throw new HttpError(401, 'Invalid tip webhook signature.');
     }
   }
@@ -4198,13 +4436,28 @@ async function handleStorageUpload(
   const body = await readJson(request);
   const pathRaw = stringField(body, 'path').replace(/^\/+/, '');
   const contentBase64 = stringField(body, 'contentBase64');
-  const contentType = stringField(body, 'contentType') || 'application/octet-stream';
+  const contentTypeInput = stringField(body, 'contentType') || 'application/octet-stream';
+  const contentType = contentTypeInput.split(';')[0]?.trim().toLowerCase() || 'application/octet-stream';
 
   if (!pathRaw) {
     throw new HttpError(400, 'path is required');
   }
   if (!contentBase64) {
     throw new HttpError(400, 'contentBase64 is required');
+  }
+
+  const maxBytes = parseIntEnv(
+    env.STORAGE_UPLOAD_MAX_BYTES,
+    STORAGE_DEFAULT_MAX_UPLOAD_BYTES,
+    64 * 1024,
+    50 * 1024 * 1024,
+  );
+  const estimatedBytes = base64ByteLength(contentBase64);
+  if (estimatedBytes > maxBytes) {
+    throw new HttpError(413, 'Upload is too large.');
+  }
+  if (!STORAGE_ALLOWED_CONTENT_TYPES.has(contentType)) {
+    throw new HttpError(400, 'Unsupported content type.');
   }
 
   const storagePath = parseStoragePath(pathRaw);
@@ -4303,12 +4556,22 @@ function buildVoteMessage({
 function buildCorsHeaders(origin: string, env: Env): Headers {
   const headers = new Headers();
   const allowed = (env.ALLOWED_ORIGINS || '*').split(',').map((item) => item.trim());
-  const allowOrigin = allowed.includes('*') || allowed.includes(origin) ? origin : allowed[0] || '*';
+  const allowAnyOrigin = allowed.includes('*');
+  const allowOrigin = allowAnyOrigin
+    ? origin === '*' ? '*' : origin
+    : allowed.includes(origin)
+      ? origin
+      : allowed[0] || '*';
   headers.set('Access-Control-Allow-Origin', allowOrigin);
   headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  headers.set(
+    'Access-Control-Allow-Headers',
+    'Authorization, Content-Type, X-Tip-QR-Signature',
+  );
   headers.set('Access-Control-Max-Age', '86400');
   headers.set('Vary', 'Origin');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'no-referrer');
   return headers;
 }
 
@@ -4635,7 +4898,7 @@ async function verifyStorageSignature(
   if (exp <= Math.floor(Date.now() / 1000)) return false;
   const payload = storageSignaturePayload(path, uid, exp);
   const expected = await hmacSha256Hex(env.STORAGE_SIGNING_SECRET, payload);
-  return expected === sig;
+  return constantTimeEqual(expected, sig);
 }
 
 async function buildStorageSignedUrl(
@@ -5219,6 +5482,84 @@ function parseIntEnv(
   return Math.min(maxValue, Math.max(minValue, normalized));
 }
 
+type RateLimitAuth = { uid: string; role?: string } | null;
+
+function resolveRateLimitRequesterSeed(request: Request, auth: RateLimitAuth): string {
+  if (auth?.uid) {
+    return `uid:${auth.uid}`;
+  }
+  const cfIp = (request.headers.get('CF-Connecting-IP') || '').trim();
+  if (cfIp) {
+    return `ip:${cfIp}`;
+  }
+  const forwarded = (request.headers.get('X-Forwarded-For') || '')
+    .split(',')[0]
+    ?.trim();
+  if (forwarded) {
+    return `ip:${forwarded}`;
+  }
+  const userAgent = sanitizePlainText(request.headers.get('User-Agent') || '', 160);
+  if (userAgent) {
+    return `ua:${userAgent}`;
+  }
+  return 'anonymous';
+}
+
+async function enforceRateLimit(params: {
+  request: Request;
+  env: Env;
+  namespace: string;
+  key: string;
+  auth: RateLimitAuth;
+  windowSeconds: number;
+  maxRequests: number;
+  message: string;
+}): Promise<void> {
+  const { request, env, namespace, key, auth, windowSeconds, maxRequests, message } = params;
+  const requesterSeed = resolveRateLimitRequesterSeed(request, auth);
+  const requesterHash = (await sha256Hex(`${namespace}|${key}|${requesterSeed}`)).slice(0, 48);
+  const docId = `${namespace}_${requesterHash}`;
+  const nowEpoch = Math.floor(Date.now() / 1000);
+  const nowIso = new Date().toISOString();
+  const path = `rate_limits/${docId}`;
+
+  const existing = await firestoreGet(env, path);
+  const existingWindowEnd = existing ? docInt(existing, 'windowEnd') : null;
+  const existingWindowStart = existing ? docInt(existing, 'windowStart') : null;
+  const existingCount = existing ? Number(docInt(existing, 'count') || 0) : 0;
+  const inWindow =
+    existingWindowStart !== null &&
+    existingWindowEnd !== null &&
+    nowEpoch >= existingWindowStart &&
+    nowEpoch <= existingWindowEnd;
+
+  const count = inWindow ? existingCount + 1 : 1;
+  const windowStart = inWindow ? existingWindowStart! : nowEpoch;
+  const windowEnd = inWindow ? existingWindowEnd! : nowEpoch + windowSeconds;
+
+  const payload = {
+    namespace,
+    key,
+    requesterHash,
+    requesterType: auth?.uid ? 'auth_user' : 'anonymous',
+    count,
+    windowStart,
+    windowEnd,
+    lastAttemptAt: nowIso,
+    updatedAt: nowIso,
+    ...(existing ? {} : { createdAt: nowIso }),
+  };
+  if (existing) {
+    await firestorePatch(env, path, payload, Object.keys(payload));
+  } else {
+    await firestoreCreate(env, path, payload);
+  }
+
+  if (count > maxRequests) {
+    throw new HttpError(429, message);
+  }
+}
+
 async function enforceTipIntentRateLimit(params: {
   request: Request;
   env: Env;
@@ -5412,17 +5753,6 @@ function normalizeTipWebhookEventId(
   return `tip_${tipId.trim().toLowerCase()}_${payloadHash.slice(0, 24)}`;
 }
 
-function constantTimeEqual(left: string, right: string): boolean {
-  if (left.length !== right.length) {
-    return false;
-  }
-  let diff = 0;
-  for (let i = 0; i < left.length; i += 1) {
-    diff |= left.charCodeAt(i) ^ right.charCodeAt(i);
-  }
-  return diff === 0;
-}
-
 function toSafeInt(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.trunc(value);
@@ -5570,12 +5900,20 @@ async function trySendSupportResponseEmail(
   const recipient = payload.to.trim().toLowerCase();
   if (!isValidEmail(recipient)) return false;
 
+  const mailchannelsApiKey = (env.MAILCHANNELS_API_KEY || '').trim();
+  if (!mailchannelsApiKey) {
+    console.error(
+      'Support email send proceeding without MAILCHANNELS_API_KEY. ' +
+        'If MailChannels requires auth for your account, configure MAILCHANNELS_API_KEY.',
+    );
+  }
+
   const from = (env.SUPPORT_EMAIL_FROM || '').trim().toLowerCase();
   const replyTo = (env.SUPPORT_EMAIL_REPLY_TO || '').trim().toLowerCase();
   if (!isValidEmail(from)) return false;
 
   const statusLabel = payload.status.trim().toLowerCase() || 'answered';
-  const subject = `CamVote support update • ticket ${payload.ticketId}`;
+  const subject = `CamVote support update - ticket ${payload.ticketId}`;
   const plainText = [
     `Hello,`,
     ``,
@@ -5616,14 +5954,27 @@ async function trySendSupportResponseEmail(
   ];
 
   try {
-    const response = await fetch('https://api.mailchannels.net/tx/v1/send', {
+    const headers: Record<string, string> = { 'content-type': 'application/json' };
+    if (mailchannelsApiKey) {
+      headers['x-api-key'] = mailchannelsApiKey;
+    }
+    const response = await fetch(MAILCHANNELS_SEND_URL, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers,
       body: JSON.stringify(requestBody),
     });
     if (!response.ok) {
       const details = await response.text();
-      console.error('Support email send failed', response.status, details);
+      if (response.status === 401) {
+        console.error(
+          `Support email send failed ${response.status}. ` +
+            `Check MAILCHANNELS_API_KEY and MailChannels sender-domain setup for ${emailDomain(
+              from,
+            )}. Response: ${details}`,
+        );
+      } else {
+        console.error('Support email send failed', response.status, details);
+      }
       return false;
     }
     return true;
@@ -5742,6 +6093,12 @@ function stringField(body: JsonObject, key: string): string {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function emailDomain(value: string): string {
+  const atIndex = value.lastIndexOf('@');
+  if (atIndex < 0) return '';
+  return value.slice(atIndex + 1).trim().toLowerCase();
 }
 
 function booleanField(body: JsonObject, key: string): boolean {
@@ -5948,6 +6305,22 @@ function bufferToHex(buffer: ArrayBuffer): string {
     .join('');
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a === b) return true;
+  const aBytes = textEncoder.encode(a);
+  const bBytes = textEncoder.encode(b);
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  if (maxLen === 0) return true;
+
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < maxLen; i += 1) {
+    const aValue = i < aBytes.length ? aBytes[i] : 0;
+    const bValue = i < bBytes.length ? bBytes[i] : 0;
+    diff |= aValue ^ bValue;
+  }
+  return diff === 0;
+}
+
 function base64ToBytes(value: string): Uint8Array {
   const binary = atob(value);
   const bytes = new Uint8Array(binary.length);
@@ -5955,6 +6328,13 @@ function base64ToBytes(value: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+function base64ByteLength(input: string): number {
+  const trimmed = input.trim().replace(/\s+/g, '');
+  if (!trimmed) return 0;
+  const padding = trimmed.endsWith('==') ? 2 : trimmed.endsWith('=') ? 1 : 0;
+  return Math.max(0, Math.floor((trimmed.length * 3) / 4) - padding);
 }
 
 function base64UrlEncode(input: string | ArrayBuffer): string {
