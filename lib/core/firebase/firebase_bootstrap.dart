@@ -24,6 +24,16 @@ Future<void> ensureFirebaseInitialized({
 
 Future<void> _initialize(Duration timeout) async {
   try {
+    if (!DefaultFirebaseOptions.hasRequiredApiKeys) {
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print(
+          'Firebase init skipped: missing CAMVOTE_FIREBASE_*_API_KEY configuration.',
+        );
+      }
+      return;
+    }
+
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,

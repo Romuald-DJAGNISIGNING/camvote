@@ -125,6 +125,8 @@ cd cf-worker && npm ci && npm run lint
 
 ## Environment Keys (client)
 - `CAMVOTE_API_BASE_URL`, `CAMVOTE_TRELLO_KEY`, `CAMVOTE_TRELLO_TOKEN`, `CAMVOTE_TRELLO_BOARD_ID`
+- Firebase API keys (required at runtime; do not hardcode in source):
+  `CAMVOTE_FIREBASE_WEB_API_KEY`, `CAMVOTE_FIREBASE_ANDROID_API_KEY`, `CAMVOTE_FIREBASE_IOS_API_KEY`
 - Support + map settings: `CAMVOTE_SUPPORT_EMAIL`, `CAMVOTE_SUPPORT_HOTLINE`, `CAMVOTE_MAP_TILE_URL`, `CAMVOTE_MAP_TILE_KEY`
 - Store links: `CAMVOTE_PLAY_STORE_URL`, `CAMVOTE_APP_STORE_URL`, `CAMVOTE_MOBILE_FEATURES_URL`, `CAMVOTE_IOS_APP_LIVE`
   - Keep `CAMVOTE_IOS_APP_LIVE=false` while iOS is pending review so App Store buttons open the local `/mobile/app-store` coming-soon page.
