@@ -93,6 +93,7 @@ Run this before any production push/deploy:
 ```bash
 flutter analyze
 flutter test
+dart run tools/validate_firebase_mobile_config.dart
 cd cf-worker && npm ci && npm run lint
 ```
 - Confirm no secrets are staged:
