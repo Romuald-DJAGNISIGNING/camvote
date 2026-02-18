@@ -60,7 +60,8 @@ class CamVoteApp extends ConsumerWidget {
       theme: theme.light,
       darkTheme: theme.dark,
       themeMode: settings.themeMode,
-      locale: settings.locale,
+      locale: AppLocales.resolve(settings.locale),
+      localeResolutionCallback: AppLocales.resolveFromPlatform,
       supportedLocales: AppLocales.supported,
       localizationsDelegates: [
         AppLocalizations.delegate,
@@ -112,8 +113,13 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
         final t = AppLocalizations.of(context);
         final entry = _resolveActionEntryForRoute(route: route, auth: auth);
         final target = _routeWithEntry(RoutePaths.camGuide, entry);
-        final metrics = _CamGuideLauncherMetrics.fromWidth(
-          MediaQuery.of(context).size.width,
+        final viewport = MediaQuery.of(context).size;
+        final dockMetrics = kIsWeb
+            ? _WebDockMetrics.fromWidth(viewport.width)
+            : null;
+        final metrics = _CamGuideLauncherMetrics.fromViewport(
+          viewport: viewport,
+          webDockMetrics: dockMetrics,
         );
 
         return Stack(
@@ -339,12 +345,14 @@ class _WebDockMetrics {
     required this.contentTopInset,
     required this.safeAreaInsets,
     required this.innerPadding,
+    required this.estimatedOuterHeight,
   });
 
   final bool compact;
   final double contentTopInset;
   final EdgeInsets safeAreaInsets;
   final EdgeInsets innerPadding;
+  final double estimatedOuterHeight;
 
   factory _WebDockMetrics.fromWidth(double width) {
     if (width < 760) {
@@ -353,6 +361,7 @@ class _WebDockMetrics {
         contentTopInset: 54,
         safeAreaInsets: EdgeInsets.fromLTRB(8, 8, 8, 10),
         innerPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+        estimatedOuterHeight: 58,
       );
     }
     if (width < 1280) {
@@ -361,6 +370,7 @@ class _WebDockMetrics {
         contentTopInset: 50,
         safeAreaInsets: EdgeInsets.fromLTRB(8, 8, 8, 8),
         innerPadding: EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+        estimatedOuterHeight: 56,
       );
     }
     return const _WebDockMetrics(
@@ -368,6 +378,7 @@ class _WebDockMetrics {
       contentTopInset: 0,
       safeAreaInsets: EdgeInsets.fromLTRB(8, 8, 8, 8),
       innerPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      estimatedOuterHeight: 58,
     );
   }
 }
@@ -393,19 +404,29 @@ class _CamGuideLauncherMetrics {
   final double? right;
   final double bottom;
 
-  factory _CamGuideLauncherMetrics.fromWidth(double width) {
+  factory _CamGuideLauncherMetrics.fromViewport({
+    required Size viewport,
+    _WebDockMetrics? webDockMetrics,
+  }) {
+    final width = viewport.width;
     if (kIsWeb) {
-      final compact = width < 820;
+      final compact = width < 940;
+      final dockMetrics = webDockMetrics ?? _WebDockMetrics.fromWidth(width);
+      final moveToLeft =
+          width < 620 ||
+          _isVerticalSpaceTight(viewport: viewport, dockMetrics: dockMetrics);
       return _CamGuideLauncherMetrics(
         compact: compact,
-        alignment: Alignment.bottomRight,
-        safeAreaInsets: const EdgeInsets.fromLTRB(8, 8, 10, 10),
+        alignment: moveToLeft ? Alignment.bottomLeft : Alignment.bottomRight,
+        safeAreaInsets: moveToLeft
+            ? const EdgeInsets.fromLTRB(10, 8, 8, 10)
+            : const EdgeInsets.fromLTRB(8, 8, 10, 10),
         padding: compact
             ? const EdgeInsets.all(8)
             : const EdgeInsets.fromLTRB(8, 6, 14, 6),
         logoSize: compact ? 24 : 26,
-        left: null,
-        right: 0,
+        left: moveToLeft ? 0 : null,
+        right: moveToLeft ? null : 0,
         bottom: 0,
       );
     }
@@ -422,6 +443,17 @@ class _CamGuideLauncherMetrics {
       right: null,
       bottom: 0,
     );
+  }
+
+  static bool _isVerticalSpaceTight({
+    required Size viewport,
+    required _WebDockMetrics dockMetrics,
+  }) {
+    const launcherHeight = 52.0;
+    const minGap = 24.0;
+    final availableGap =
+        viewport.height - dockMetrics.estimatedOuterHeight - launcherHeight;
+    return availableGap < minGap;
   }
 }
 
