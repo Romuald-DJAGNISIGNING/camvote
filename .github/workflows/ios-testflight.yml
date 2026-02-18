@@ -146,10 +146,28 @@ jobs:
       - name: Validate Firebase Mobile Config
         run: dart run tools/validate_firebase_mobile_config.dart
 
-      - name: Install CocoaPods Dependencies
+      - name: Init Build Logs
+        shell: bash
         run: |
+          # Ensure logs exist even if early steps fail.
+          : > ios-build.log
+          : > pods-install.log
+
+      - name: Install CocoaPods Dependencies
+        id: pods
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+
+          if ! command -v pod >/dev/null 2>&1; then
+            echo "CocoaPods not found; installing..." | tee -a pods-install.log
+            sudo gem install cocoapods -N 2>&1 | tee -a pods-install.log
+          fi
+
           cd ios
-          pod install --repo-update
+          pod --version 2>&1 | tee -a ../pods-install.log
+          pod install --repo-update 2>&1 | tee -a ../pods-install.log
 
       - name: Create Export Options
         shell: bash
@@ -175,17 +193,34 @@ jobs:
           EOF
 
       - name: Build Signed IPA
-        run: >
-          flutter build ipa --release
-          --export-options-plist=ios/ExportOptions.plist
-          --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }}
-          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }}
-          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
-          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        id: build
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }} \
+            --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }} \
+            --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }} \
+            --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }} \
+            -v 2>&1 | tee ios-build.log
+
+      - name: Upload iOS Build Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-testflight-logs
+          path: |
+            ios-build.log
+            pods-install.log
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Locate IPA
         id: ipa
         shell: bash
+        if: steps.build.outcome == 'success'
         run: |
           ipa_path=$(find build/ios/ipa -maxdepth 1 -name "*.ipa" | head -n 1)
           if [ -z "$ipa_path" ]; then
@@ -196,6 +231,7 @@ jobs:
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
+        if: steps.build.outcome == 'success'
         with:
           name: ios-ipa
           path: ${{ steps.ipa.outputs.path }}
@@ -204,8 +240,13 @@ jobs:
 
       - name: Upload Build to TestFlight
         uses: apple-actions/upload-testflight-build@v4
+        if: steps.build.outcome == 'success'
         with:
           app-path: ${{ steps.ipa.outputs.path }}
           issuer-id: ${{ env.APP_STORE_CONNECT_ISSUER_ID }}
           api-key-id: ${{ env.APP_STORE_CONNECT_KEY_ID }}
           api-private-key: ${{ steps.appstore.outputs.private_key }}
+
+      - name: Fail If Pods Or Build Failed
+        if: steps.pods.outcome != 'success' || steps.build.outcome != 'success'
+        run: exit 1
