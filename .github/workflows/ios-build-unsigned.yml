@@ -147,16 +147,25 @@ jobs:
         shell: bash
         run: |
           if [ ! -f ios-build.log ]; then
-            echo "::warning::ios-build.log not found."
+            echo "::error::ios-build.log not found."
             exit 0
           fi
 
           # Prefer the most actionable lines; keep the volume low so annotations remain readable.
-          grep -nE '(^|\\b)(error:|fatal error:)' ios-build.log | tail -n 50 | while IFS= read -r line; do
-            # Escape workflow command control characters.
-            msg="$(printf '%s' "$line" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
-            echo "::error::${msg}"
-          done || true
+          matches="$(grep -niE '(error:|fatal error:|\\bError \\(Xcode\\)|\\bException\\b|\\bFAILED\\b|\\bCocoaPods\\b|\\bPodfile\\b|No such file or directory)' ios-build.log | tail -n 50 || true)"
+          if [ -n "$matches" ]; then
+            while IFS= read -r line; do
+              # Escape workflow command control characters.
+              msg="$(printf '%s' "$line" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+              echo "::error::${msg}"
+            done <<< "$matches"
+            exit 0
+          fi
+
+          # Fallback: emit the tail of the log as one annotation so it is visible without downloading artifacts.
+          tail_content="$(tail -n 120 ios-build.log | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+          tail_content="${tail_content//$'\n'/%0A}"
+          echo "::error::No obvious error patterns found. Last 120 log lines:%0A${tail_content}"
 
       - name: Package iOS Artifacts
         id: package
