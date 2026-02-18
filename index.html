@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CamVote APK Download</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #12213a;
+      --muted: #4e5d79;
+      --accent: #0a66c2;
+      --border: #d8e2f0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 10%, #ebf4ff 0, var(--bg) 40%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: min(640px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(18, 33, 58, 0.08);
+      padding: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.25rem, 3.5vw, 1.6rem);
+      line-height: 1.2;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    ul {
+      margin: 16px 0 0;
+      padding-left: 20px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .small {
+      margin-top: 14px;
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Preparing your CamVote download</h1>
+    <p id="status">Detecting your device architecture and choosing the best APK...</p>
+    <p class="small">If auto-redirect does not start, pick your APK below:</p>
+    <ul>
+      <li><a id="link-arm64" href="#">Android ARM64 (recommended for most phones)</a></li>
+      <li><a id="link-armv7" href="#">Android ARMv7 (32-bit)</a></li>
+      <li><a id="link-x86_64" href="#">Android x86_64 (Chromebook/emulator)</a></li>
+      <li><a id="link-universal" href="#">Universal APK (fallback)</a></li>
+    </ul>
+  </main>
+
+  <script>
+    (function () {
+      // Release URLs for split APK assets.
+      var urls = {
+        arm64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-arm64-v8a-release.apk",
+        armv7: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-armeabi-v7a-release.apk",
+        x86_64: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-x86_64-release.apk",
+        universal: "https://github.com/Romuald-DJAGNISIGNING/camvote/releases/download/v2026.02.18-android-apk-splits/app-universal-release.apk"
+      };
+
+      var statusEl = document.getElementById("status");
+      var ua = (navigator.userAgent || "").toLowerCase();
+      var platform = (navigator.platform || "").toLowerCase();
+      var maxTouchPoints = navigator.maxTouchPoints || 0;
+
+      function setManualLinks() {
+        document.getElementById("link-arm64").href = urls.arm64;
+        document.getElementById("link-armv7").href = urls.armv7;
+        document.getElementById("link-x86_64").href = urls.x86_64;
+        document.getElementById("link-universal").href = urls.universal;
+      }
+
+      function pickUrl() {
+        var looksLikeAndroid = ua.indexOf("android") !== -1;
+        var hasArm64 = ua.indexOf("arm64") !== -1 || ua.indexOf("aarch64") !== -1;
+        var hasArmv7 = ua.indexOf("armeabi-v7a") !== -1 || ua.indexOf("armv7") !== -1;
+        var hasX64 = ua.indexOf("x86_64") !== -1 || ua.indexOf("amd64") !== -1;
+        var iOSLike = /iphone|ipad|ipod/.test(ua) || (platform === "macintel" && maxTouchPoints > 1);
+
+        if (iOSLike) {
+          return { url: urls.universal, note: "iOS detected. Redirecting to universal APK fallback." };
+        }
+        if (hasArm64) {
+          return { url: urls.arm64, note: "ARM64 Android detected. Redirecting..." };
+        }
+        if (hasArmv7) {
+          return { url: urls.armv7, note: "ARMv7 Android detected. Redirecting..." };
+        }
+        if (hasX64) {
+          return { url: urls.x86_64, note: "x86_64 Android environment detected. Redirecting..." };
+        }
+        if (looksLikeAndroid) {
+          return { url: urls.universal, note: "Android detected. Using universal fallback APK." };
+        }
+        return { url: urls.universal, note: "Unknown architecture. Using universal fallback APK." };
+      }
+
+      setManualLinks();
+      var choice = pickUrl();
+      statusEl.textContent = choice.note;
+
+      // Delay slightly so users see status text before redirect starts.
+      setTimeout(function () {
+        window.location.href = choice.url;
+      }, 700);
+    })();
+  </script>
+</body>
+</html>
