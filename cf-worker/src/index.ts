@@ -46,6 +46,11 @@ export interface Env {
   SUPPORT_EMAIL_FROM?: string;
   SUPPORT_EMAIL_REPLY_TO?: string;
   MAILCHANNELS_API_KEY?: string;
+  // Optional: send support emails through Gmail API when SUPPORT_EMAIL_FROM is a Gmail address.
+  // This avoids DMARC bounces that occur when trying to send "From: *@gmail.com" via 3rd parties.
+  GMAIL_CLIENT_ID?: string;
+  GMAIL_CLIENT_SECRET?: string;
+  GMAIL_REFRESH_TOKEN?: string;
   R2_PRIMARY: R2Bucket;
   R2_BACKUP?: R2Bucket;
   STORAGE_SIGNING_SECRET: string;
@@ -73,6 +78,7 @@ type StoragePath = { key: string; category: StorageCategory; ownerUid?: string }
 const TOKEN_SCOPE = 'https://www.googleapis.com/auth/datastore';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const MAILCHANNELS_SEND_URL = 'https://api.mailchannels.net/tx/v1/send';
+const GMAIL_SEND_URL = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send';
 const textEncoder = new TextEncoder();
 const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year by default
 
@@ -112,6 +118,8 @@ const INCIDENT_MAX_ATTACHMENTS = 8;
 let cachedAccessToken = '';
 let cachedAccessTokenExp = 0;
 let cachedPrivateKey: CryptoKey | null = null;
+let cachedGmailAccessToken = '';
+let cachedGmailAccessTokenExp = 0;
 
 class HttpError extends Error {
   status: number;
