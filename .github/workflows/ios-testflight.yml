@@ -151,7 +151,8 @@ jobs:
         run: flutter pub get
 
       - name: Validate Firebase Mobile Config
-        run: dart run tools/validate_firebase_mobile_config.dart
+        # iOS builds do not require Android native Firebase files; allow them to be missing.
+        run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
 
       - name: Install CocoaPods Dependencies
         id: pods
