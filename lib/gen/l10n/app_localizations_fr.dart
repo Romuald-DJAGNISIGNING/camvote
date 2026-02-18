@@ -1349,13 +1349,31 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aboutCopyBoardUrl => 'Copier l\'URL du tableau';
 
   @override
+  String get aboutTrelloOpenBoard => 'Ouvrir le tableau';
+
+  @override
   String get aboutBoardUrlLabel => 'URL du tableau';
 
   @override
   String get aboutLastActivityLabel => 'Dernière activité';
 
   @override
+  String get aboutTrelloListsLabel => 'Listes';
+
+  @override
+  String get aboutTrelloProgressTitle => 'Progression';
+
+  @override
+  String get aboutTrelloCompletionLabel => 'Complété';
+
+  @override
   String get aboutTopListsLabel => 'Listes principales';
+
+  @override
+  String get aboutTrelloShowAllLists => 'Tout afficher';
+
+  @override
+  String get aboutTrelloShowTopLists => 'Top listes';
 
   @override
   String get aboutStatTotal => 'Total';

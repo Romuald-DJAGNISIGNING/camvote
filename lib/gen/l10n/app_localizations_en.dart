@@ -1336,13 +1336,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutCopyBoardUrl => 'Copy board URL';
 
   @override
+  String get aboutTrelloOpenBoard => 'Open board';
+
+  @override
   String get aboutBoardUrlLabel => 'Board URL';
 
   @override
   String get aboutLastActivityLabel => 'Last activity';
 
   @override
+  String get aboutTrelloListsLabel => 'Lists';
+
+  @override
+  String get aboutTrelloProgressTitle => 'Delivery progress';
+
+  @override
+  String get aboutTrelloCompletionLabel => 'Completed';
+
+  @override
   String get aboutTopListsLabel => 'Top lists';
+
+  @override
+  String get aboutTrelloShowAllLists => 'Show all';
+
+  @override
+  String get aboutTrelloShowTopLists => 'Show top';
 
   @override
   String get aboutStatTotal => 'Total';

@@ -2534,6 +2534,12 @@ abstract class AppLocalizations {
   /// **'Copy board URL'**
   String get aboutCopyBoardUrl;
 
+  /// No description provided for @aboutTrelloOpenBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Open board'**
+  String get aboutTrelloOpenBoard;
+
   /// No description provided for @aboutBoardUrlLabel.
   ///
   /// In en, this message translates to:
@@ -2546,11 +2552,41 @@ abstract class AppLocalizations {
   /// **'Last activity'**
   String get aboutLastActivityLabel;
 
+  /// No description provided for @aboutTrelloListsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lists'**
+  String get aboutTrelloListsLabel;
+
+  /// No description provided for @aboutTrelloProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery progress'**
+  String get aboutTrelloProgressTitle;
+
+  /// No description provided for @aboutTrelloCompletionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get aboutTrelloCompletionLabel;
+
   /// No description provided for @aboutTopListsLabel.
   ///
   /// In en, this message translates to:
   /// **'Top lists'**
   String get aboutTopListsLabel;
+
+  /// No description provided for @aboutTrelloShowAllLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get aboutTrelloShowAllLists;
+
+  /// No description provided for @aboutTrelloShowTopLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Show top'**
+  String get aboutTrelloShowTopLists;
 
   /// No description provided for @aboutStatTotal.
   ///

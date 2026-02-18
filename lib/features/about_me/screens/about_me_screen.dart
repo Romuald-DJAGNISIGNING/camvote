@@ -16,9 +16,9 @@ import '../../../core/branding/brand_palette.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/routing/route_paths.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
+import '../widgets/trello_dashboard_card.dart';
 import '../providers/about_me_providers.dart';
 import '../models/about_profile.dart';
-import '../models/trello_stats.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 
 const _aboutProfileVideoAsset = 'assets/videos/DJAGNI_SIGNING_ROMUALD.mp4';
@@ -127,6 +127,15 @@ class AboutMeScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Expanded(child: _SectionTitle(title: t.aboutTrelloTitle)),
+                      if (trelloAsync.isRefreshing)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
                       IconButton(
                         tooltip: t.refresh,
                         onPressed: () => ref.invalidate(trelloStatsProvider),
@@ -135,27 +144,61 @@ class AboutMeScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  trelloAsync.when(
-                    loading: () => _LoadingInfoCard(
-                      title: t.aboutTrelloLoadingTitle,
-                      body: t.aboutTrelloLoadingBody,
-                      icon: Icons.sync,
-                    ),
-                    error: (_, _) => _InfoCard(
-                      title: t.aboutTrelloUnavailableTitle,
-                      body: t.genericErrorLabel,
-                      icon: Icons.warning_amber,
-                    ),
-                    data: (stats) {
-                      if (stats == null) {
-                        return _InfoCard(
-                          title: t.aboutTrelloNotConfiguredTitle,
-                          body: t.aboutTrelloNotConfiguredBody,
-                          icon: Icons.link_off,
-                        );
-                      }
-                      return _TrelloStatsCard(stats: stats);
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 420),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, anim) {
+                      final fade = FadeTransition(opacity: anim, child: child);
+                      return ScaleTransition(
+                        scale: Tween<double>(
+                          begin: 0.985,
+                          end: 1,
+                        ).animate(anim),
+                        child: fade,
+                      );
                     },
+                    child: trelloAsync.when(
+                      skipLoadingOnRefresh: true,
+                      skipLoadingOnReload: true,
+                      loading: () => KeyedSubtree(
+                        key: const ValueKey('trello_loading'),
+                        child: _LoadingInfoCard(
+                          title: t.aboutTrelloLoadingTitle,
+                          body: t.aboutTrelloLoadingBody,
+                          icon: Icons.sync,
+                        ),
+                      ),
+                      error: (err, _) => KeyedSubtree(
+                        key: const ValueKey('trello_error'),
+                        child: _InfoCard(
+                          title: t.aboutTrelloUnavailableTitle,
+                          body: t.aboutTrelloUnavailableBody(
+                            safeErrorMessage(context, err),
+                          ),
+                          icon: Icons.warning_amber,
+                        ),
+                      ),
+                      data: (stats) {
+                        if (stats == null) {
+                          return KeyedSubtree(
+                            key: const ValueKey('trello_not_configured'),
+                            child: _InfoCard(
+                              title: t.aboutTrelloNotConfiguredTitle,
+                              body: t.aboutTrelloNotConfiguredBody,
+                              icon: Icons.link_off,
+                            ),
+                          );
+                        }
+                        return KeyedSubtree(
+                          key: const ValueKey('trello_data'),
+                          child: TrelloDashboardCard(
+                            stats: stats,
+                            isRefreshing: trelloAsync.isRefreshing,
+                          ),
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _InfoCard(
@@ -525,173 +568,6 @@ class _Tag extends StatelessWidget {
   }
 }
 
-class _TrelloStatsCard extends StatelessWidget {
-  final TrelloStats stats;
-
-  const _TrelloStatsCard({required this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.dashboard_outlined, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    stats.boardName,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                IconButton(
-                  tooltip: t.aboutCopyBoardUrl,
-                  onPressed: () =>
-                      _copy(context, t.aboutBoardUrlLabel, stats.boardUrl),
-                  icon: const Icon(Icons.link),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            _StatsRow(stats: stats),
-            if (stats.lastActivityAt != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                '${t.aboutLastActivityLabel}: ${_formatDate(stats.lastActivityAt!)}',
-              ),
-            ],
-            const SizedBox(height: 12),
-            Text(
-              t.aboutTopListsLabel,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 6),
-            ...stats.lists.take(5).map((l) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Expanded(child: Text(l.name)),
-                    Text('${l.openCards}/${l.totalCards}'),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.stats});
-
-  final TrelloStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 420;
-        if (isNarrow) {
-          return Column(
-            children: [
-              _StatPill(
-                label: t.aboutStatTotal,
-                value: stats.totalCards.toString(),
-                color: BrandPalette.ocean,
-              ),
-              const SizedBox(height: 8),
-              _StatPill(
-                label: t.aboutStatOpen,
-                value: stats.openCards.toString(),
-                color: BrandPalette.sunrise,
-              ),
-              const SizedBox(height: 8),
-              _StatPill(
-                label: t.aboutStatDone,
-                value: stats.doneCards.toString(),
-                color: BrandPalette.forest,
-              ),
-            ],
-          );
-        }
-        return Row(
-          children: [
-            Expanded(
-              child: _StatPill(
-                label: t.aboutStatTotal,
-                value: stats.totalCards.toString(),
-                color: BrandPalette.ocean,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatPill(
-                label: t.aboutStatOpen,
-                value: stats.openCards.toString(),
-                color: BrandPalette.sunrise,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatPill(
-                label: t.aboutStatDone,
-                value: stats.doneCards.toString(),
-                color: BrandPalette.forest,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _StatPill extends StatelessWidget {
-  const _StatPill({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withAlpha(90)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: theme.textTheme.labelSmall),
-        ],
-      ),
-    );
-  }
-}
-
 class _ActionChip extends StatelessWidget {
   const _ActionChip({
     required this.icon,
@@ -866,13 +742,4 @@ Future<void> _copy(BuildContext context, String label, String value) async {
   ScaffoldMessenger.of(
     context,
   ).showSnackBar(SnackBar(content: Text(t.copiedMessage(label))));
-}
-
-String _formatDate(DateTime dt) {
-  final y = dt.year.toString().padLeft(4, '0');
-  final m = dt.month.toString().padLeft(2, '0');
-  final d = dt.day.toString().padLeft(2, '0');
-  final h = dt.hour.toString().padLeft(2, '0');
-  final min = dt.minute.toString().padLeft(2, '0');
-  return '$y-$m-$d $h:$min';
 }
