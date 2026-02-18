@@ -80,6 +80,27 @@ pwsh scripts/validate-mobile-config.ps1
 pwsh scripts/release-android.ps1
 ```
 
+## GitHub Actions secrets bootstrap (recommended)
+
+This helper reads your local (gitignored) Firebase + Android signing files and upserts the corresponding GitHub Actions
+repository secrets so CI releases work without committing credentials:
+
+```
+$env:CAMVOTE_GITHUB_PAT="<your_pat_with_repo_actions_secrets_write>"
+node scripts/bootstrap-actions-secrets.mjs
+```
+
+Optional iOS TestFlight secrets:
+- Place Apple signing files in `tmp/ios-signing/` (gitignored):
+  - `dist.p12`
+  - `profile.mobileprovision`
+  - `AuthKey_<KEY_ID>.p8`
+- Set these env vars, then re-run the script:
+  - `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD`
+  - `APPLE_TEAM_ID`
+  - `APP_STORE_CONNECT_ISSUER_ID`
+  - `APP_STORE_CONNECT_KEY_ID` (optional if inferred from `AuthKey_<KEY_ID>.p8`)
+
 Notes:
 - `deploy-web.ps1` builds with `--release` by default.
 - `deploy-all.ps1` also deploys Firestore rules/indexes and the Worker.

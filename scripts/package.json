@@ -5,7 +5,8 @@
   "type": "module",
   "dependencies": {
     "firebase-admin": "^13.6.0",
-    "minimist": "^1.2.8"
+    "minimist": "^1.2.8",
+    "tweetsodium": "^0.0.4"
   },
   "overrides": {
     "fast-xml-parser": "5.3.6"

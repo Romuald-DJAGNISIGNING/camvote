@@ -85,7 +85,6 @@ tmp-*
 tmp_*
 scripts/tmp-*
 scripts/tmp_*
-scripts/bootstrap-actions-secrets.mjs
 firestore_patch_inspect_*.json
 e2e_support_reply_*.json
 bg-test.txt
