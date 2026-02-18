@@ -1558,7 +1558,7 @@ async function handlePublicTrelloStats(
     const cardsRes = await fetch(
       `${baseUrl}/boards/${encodeURIComponent(
         boardId,
-      )}/cards?${authQuery}&fields=idList,closed`,
+      )}/cards?${authQuery}&fields=idList,closed&filter=all`,
     );
     if (!cardsRes.ok) {
       throw new HttpError(502, 'Unable to load Trello cards.');
