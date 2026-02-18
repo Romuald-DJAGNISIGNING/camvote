@@ -44,6 +44,7 @@ From repo root:
 pwsh scripts/deploy-worker.ps1
 pwsh scripts/deploy-web.ps1 -ProjectName camvote
 pwsh scripts/deploy-all.ps1 -PagesProject camvote
+pwsh scripts/validate-mobile-config.ps1
 ```
 
 Notes:
@@ -51,3 +52,4 @@ Notes:
 - `deploy-all.ps1` also deploys Firestore rules/indexes and the Worker.
 - `deploy-all.ps1` prefers `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth and avoids deprecated `FIREBASE_TOKEN` when service-account auth is available.
 - Web deploy commands pass `--commit-dirty=true` so deployment is not blocked/warned by local uncommitted changes.
+- `validate-mobile-config.ps1` checks `lib/firebase_options.dart` against `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist`.
