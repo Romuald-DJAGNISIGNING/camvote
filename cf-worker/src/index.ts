@@ -6267,9 +6267,8 @@ async function trySendSupportResponseEmail(
       if (response.status === 401) {
         console.error(
           `Support email send failed ${response.status}. ` +
-            `Check MAILCHANNELS_API_KEY and MailChannels sender-domain setup for ${emailDomain(
-              from,
-            )}. Response: ${details}`,
+            `Check MAILCHANNELS_API_KEY and sender authorization for ${from}. ` +
+            `Response: ${details}`,
         );
       } else {
         console.error('Support email send failed', response.status, details);
@@ -6392,12 +6391,6 @@ function stringField(body: JsonObject, key: string): string {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function emailDomain(value: string): string {
-  const atIndex = value.lastIndexOf('@');
-  if (atIndex < 0) return '';
-  return value.slice(atIndex + 1).trim().toLowerCase();
 }
 
 function booleanField(body: JsonObject, key: string): boolean {

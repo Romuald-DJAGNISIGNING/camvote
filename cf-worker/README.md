@@ -46,7 +46,7 @@ wrangler secret put TRELLO_TOKEN
 - Secrets above are required for production deploys.
 - Support reply emails are sent through MailChannels authenticated API calls:
   - `MAILCHANNELS_API_KEY` must be set as a Worker secret.
-  - `SUPPORT_EMAIL_FROM`/`SUPPORT_EMAIL_REPLY_TO` should be mailboxes on your own sender domain.
+  - `SUPPORT_EMAIL_FROM`/`SUPPORT_EMAIL_REPLY_TO` can stay `camvoteappassist@gmail.com`.
 - Optional hardening knobs (vars):
   - `STORAGE_UPLOAD_MAX_BYTES` (default `10485760`) and strict content-type allowlist for uploads.
   - `DEVICE_MAX_PER_USER` (default `1`) for account-level device cap.

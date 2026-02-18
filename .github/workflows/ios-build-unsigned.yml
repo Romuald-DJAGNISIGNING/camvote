@@ -1,0 +1,135 @@
+name: iOS Build (Unsigned)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: "CAMVOTE_API_BASE_URL override"
+        required: false
+        default: "https://camvote.romuald-djagnisigning.workers.dev"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios-unsigned:
+    name: Build iOS Unsigned Archive
+    runs-on: macos-latest
+    env:
+      CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+      CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+      CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+      IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.9"
+          channel: stable
+          cache: true
+
+      - name: Resolve API Base URL
+        id: api
+        shell: bash
+        run: |
+          api="${{ inputs.api_base_url }}"
+          if [ -z "$api" ]; then
+            api="https://camvote.romuald-djagnisigning.workers.dev"
+          fi
+          echo "value=$api" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Required Secrets
+        shell: bash
+        run: |
+          missing=0
+          for key in \
+            CAMVOTE_FIREBASE_WEB_API_KEY \
+            CAMVOTE_FIREBASE_ANDROID_API_KEY \
+            CAMVOTE_FIREBASE_IOS_API_KEY
+          do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required repository secret: $key"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Restore GoogleService-Info.plist
+        shell: bash
+        run: |
+          if [ -f ios/Runner/GoogleService-Info.plist ]; then
+            exit 0
+          fi
+          if [ -z "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "::error::ios/Runner/GoogleService-Info.plist is missing and IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 was not provided."
+            exit 1
+          fi
+          mkdir -p ios/Runner
+          printf '%s' "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Validate Firebase Mobile Config
+        run: dart run tools/validate_firebase_mobile_config.dart
+
+      - name: Install CocoaPods Dependencies
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build Unsigned iOS Archive
+        run: >
+          flutter build ipa --release --no-codesign
+          --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }}
+          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }}
+
+      - name: Package iOS Artifacts
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-artifacts/ios
+
+          archive_path=$(find build/ios/archive -maxdepth 1 -name "*.xcarchive" | head -n 1)
+          if [ -z "$archive_path" ]; then
+            echo "::error::No .xcarchive generated in build/ios/archive."
+            exit 1
+          fi
+
+          archive_zip="release-artifacts/ios/$(basename "$archive_path").zip"
+          ditto -c -k --sequesterRsrc --keepParent "$archive_path" "$archive_zip"
+
+          ipa_path=$(find build/ios/ipa -maxdepth 1 -name "*.ipa" | head -n 1 || true)
+          if [ -n "$ipa_path" ]; then
+            cp "$ipa_path" release-artifacts/ios/
+          fi
+
+          (
+            cd release-artifacts/ios
+            shopt -s nullglob
+            files=( *.zip *.ipa )
+            if [ "${#files[@]}" -eq 0 ]; then
+              echo "::error::No iOS artifacts were packaged."
+              exit 1
+            fi
+            shasum -a 256 "${files[@]}" > sha256.txt
+          )
+
+          echo "path=release-artifacts/ios" >> "$GITHUB_OUTPUT"
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-artifacts
+          path: ${{ steps.package.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14

@@ -104,6 +104,9 @@
 - **GitHub Actions iOS TestFlight**: `.github/workflows/ios-testflight.yml`
   - Manual dispatch on macOS runner.
   - Builds signed IPA and uploads to TestFlight.
+- **GitHub Actions iOS unsigned build**: `.github/workflows/ios-build-unsigned.yml`
+  - Manual dispatch on macOS runner.
+  - Builds unsigned iOS archive and uploads artifacts (`.xcarchive.zip`, optional `.ipa`, checksums).
 
 ### Mobile CI Secrets
 Set these in GitHub repository settings:
@@ -127,6 +130,9 @@ Set these in GitHub repository settings:
   - `APP_STORE_CONNECT_ISSUER_ID`
   - `APP_STORE_CONNECT_KEY_ID`
   - `APP_STORE_CONNECT_API_PRIVATE_KEY` (raw `.p8` content) or `APP_STORE_CONNECT_API_PRIVATE_KEY_BASE64`
+- iOS unsigned build:
+  - `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` (base64 of `ios/Runner/GoogleService-Info.plist`, if not committed)
+  - No Apple signing secrets required.
 
 ## Release Preflight
 Run this before any production push/deploy:

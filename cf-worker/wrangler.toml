@@ -51,7 +51,7 @@ TIP_ORANGE_MONEY_NUMBER_PUBLIC = "false"
 MAXIT_TIP_QR_URL = ""
 MAXIT_TIP_DEEP_LINK = ""
 # Required for support response email delivery via MailChannels.
-# Use a sender mailbox on a domain you control.
+# You can keep using camvoteappassist@gmail.com if MailChannels allows it for your account.
 # Set MAILCHANNELS_API_KEY with `wrangler secret put MAILCHANNELS_API_KEY`.
 SUPPORT_EMAIL_FROM = "camvoteappassist@gmail.com"
 SUPPORT_EMAIL_REPLY_TO = "camvoteappassist@gmail.com"
