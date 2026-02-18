@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
+import '../network/worker_client.dart';
 import '../../features/auth/utils/auth_error_utils.dart';
 import '../../features/auth/models/auth_error_codes.dart';
 
@@ -12,6 +13,12 @@ String safeErrorMessage(
   final t = AppLocalizations.of(context);
   final fallbackMessage = fallback ?? t.genericErrorLabel;
   if (error == null) return fallbackMessage;
+
+  // WorkerException messages are already sanitized/user-friendly.
+  if (error is WorkerException) {
+    final message = error.message.trim();
+    return message.isEmpty ? fallbackMessage : message;
+  }
 
   final authCode = authErrorCodeFromException(error);
   if (authCode != AuthErrorCodes.unknown) {
@@ -40,7 +47,7 @@ String safeErrorMessage(
     return fallbackMessage;
   }
   if (lower.contains('not found') || lower.contains('404')) {
-    return t.authAccountNotFound;
+    return fallbackMessage;
   }
   if (lower.contains('network') || lower.contains('timeout')) {
     return t.authNetworkError;
