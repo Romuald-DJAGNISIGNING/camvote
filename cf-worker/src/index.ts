@@ -3937,20 +3937,31 @@ async function handleTipWebhookTipQr(
   env: Env,
   corsHeaders: Headers,
 ): Promise<Response> {
+  const { raw: rawBody, body } = await readJsonWithRaw(request);
+  const providedSignature = (request.headers.get('x-tip-qr-signature') || '').trim();
   const secret = (env.TIP_QR_WEBHOOK_SECRET || '').trim();
   if (secret) {
-    const signature = (request.headers.get('x-tip-qr-signature') || '').trim();
-    if (!signature || signature !== secret) {
+    if (!providedSignature) {
+      throw new HttpError(401, 'Missing tip webhook signature.');
+    }
+    const expectedHmac = await hmacSha256Hex(secret, rawBody);
+    const directMatch = constantTimeEqual(providedSignature, secret);
+    const hmacMatch = constantTimeEqual(
+      providedSignature.toLowerCase(),
+      expectedHmac.toLowerCase(),
+    );
+    if (!directMatch && !hmacMatch) {
       throw new HttpError(401, 'Invalid tip webhook signature.');
     }
   }
 
-  const body = await readJson(request);
   const tipId = stringField(body, 'tipId').trim();
   if (!tipId) {
     throw new HttpError(400, 'tipId is required');
   }
 
+  const payloadHash = await sha256Hex(rawBody.trim() || JSON.stringify(body));
+  const webhookEventId = normalizeTipWebhookEventId(body, tipId, payloadHash);
   const statusRaw = stringField(body, 'status').trim().toLowerCase();
   const normalizedStatus = normalizeTipStatus(statusRaw);
   const now = new Date().toISOString();
@@ -3960,6 +3971,39 @@ async function handleTipWebhookTipQr(
     ? 'Anonymous supporter'
     : senderNameInput || 'Supporter';
   const senderEmail = stringField(body, 'senderEmail').trim().toLowerCase();
+
+  if (webhookEventId) {
+    const webhookEventPath = `tip_webhook_events/${webhookEventId}`;
+    const existingWebhookEvent = await firestoreGet(env, webhookEventPath);
+    if (existingWebhookEvent) {
+      return jsonResponse(
+        { ok: true, tipId, duplicate: true, eventId: webhookEventId },
+        corsHeaders,
+      );
+    }
+    try {
+      await firestoreCreate(env, webhookEventPath, {
+        id: webhookEventId,
+        tipId,
+        status: 'processing',
+        provider: 'maxit_qr',
+        providerStatus: statusRaw || null,
+        normalizedStatus,
+        payloadHash,
+        signaturePresent: providedSignature.length > 0,
+        receivedAt: now,
+        updatedAt: now,
+      });
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 409) {
+        return jsonResponse(
+          { ok: true, tipId, duplicate: true, eventId: webhookEventId },
+          corsHeaders,
+        );
+      }
+      throw error;
+    }
+  }
 
   const existing = await firestoreGet(env, `tips/${tipId}`);
   if (!existing) {
@@ -4049,7 +4093,21 @@ async function handleTipWebhookTipQr(
     }
   }
 
-  return jsonResponse({ ok: true, tipId }, corsHeaders);
+  if (webhookEventId) {
+    await firestorePatch(
+      env,
+      `tip_webhook_events/${webhookEventId}`,
+      {
+        status: 'processed',
+        providerStatus: statusRaw || null,
+        normalizedStatus,
+        updatedAt: now,
+      },
+      ['status', 'providerStatus', 'normalizedStatus', 'updatedAt'],
+    );
+  }
+
+  return jsonResponse({ ok: true, tipId, eventId: webhookEventId || null }, corsHeaders);
 }
 
 async function handleStorageUpload(
@@ -4183,7 +4241,22 @@ function jsonResponse(body: JsonObject, headers: Headers, status = 200): Respons
 }
 
 async function readJson(request: Request): Promise<JsonObject> {
+  const parsed = await readJsonWithRaw(request);
+  return parsed.body;
+}
+
+async function readJsonWithRaw(
+  request: Request,
+): Promise<{ raw: string; body: JsonObject }> {
   const raw = await request.text();
+  const body = parseJsonBodyFromText(
+    raw,
+    request.headers.get('Content-Type') || '',
+  );
+  return { raw, body };
+}
+
+function parseJsonBodyFromText(raw: string, contentTypeRaw: string): JsonObject {
   if (!raw.trim()) {
     return {};
   }
@@ -4191,7 +4264,7 @@ async function readJson(request: Request): Promise<JsonObject> {
   try {
     return JSON.parse(raw) as JsonObject;
   } catch {
-    const contentType = (request.headers.get('Content-Type') || '').toLowerCase();
+    const contentType = contentTypeRaw.toLowerCase();
     if (contentType.includes('application/x-www-form-urlencoded')) {
       const params = new URLSearchParams(raw);
       const parsed: JsonObject = {};
@@ -5236,6 +5309,40 @@ function normalizeTipStatus(statusRaw: string): string {
     return 'failed';
   }
   return 'pending';
+}
+
+function normalizeTipWebhookEventId(
+  body: JsonObject,
+  tipId: string,
+  payloadHash: string,
+): string {
+  const explicitEventId = sanitizePlainText(
+    pickString(body, ['eventId', 'event_id', 'webhookEventId', 'id']),
+    120,
+  ).toLowerCase();
+  if (explicitEventId) {
+    return explicitEventId;
+  }
+
+  const reference = normalizeTipReference(
+    pickString(body, ['reference', 'providerReference', 'txRef', 'transactionId']),
+  ).toLowerCase();
+  if (reference) {
+    return `tip_${tipId.trim().toLowerCase()}_${reference}`;
+  }
+
+  return `tip_${tipId.trim().toLowerCase()}_${payloadHash.slice(0, 24)}`;
+}
+
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < left.length; i += 1) {
+    diff |= left.charCodeAt(i) ^ right.charCodeAt(i);
+  }
+  return diff === 0;
 }
 
 function toSafeInt(value: unknown): number {
