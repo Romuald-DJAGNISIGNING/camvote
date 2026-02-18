@@ -29,8 +29,8 @@
   <script>
     (function () {
       var ua = navigator.userAgent || '';
-      var isIOS = /iPad|iPhone|iPod/.test(ua) || (ua.indexOf('Macintosh') > -1 && 'ontouchend' in document);
-      if (isIOS) {
+      var isMobile = /Android|iPad|iPhone|iPod/.test(ua) || (ua.indexOf('Macintosh') > -1 && 'ontouchend' in document);
+      if (isMobile) {
         window.flutterWebRenderer = 'html';
       }
     })();

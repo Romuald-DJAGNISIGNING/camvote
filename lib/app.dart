@@ -106,10 +106,10 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
         final routeFromRouter = _routeContextFromUri(routeInformation.uri);
         final routeFromBrowser = _routeContextFromUri(Uri.base);
         final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-        final hideForOnboarding =
-            _isOnboardingOverlayContext(route) ||
-            _isOnboardingOverlayContext(routeFromRouter) ||
-            _isOnboardingOverlayContext(routeFromBrowser);
+        // On some mobile browsers, `Uri.base` can lag behind router state after
+        // navigation (especially around onboarding redirects). Only trust the
+        // merged route context so action overlays do not disappear until refresh.
+        final hideForOnboarding = _isOnboardingOverlayContext(route);
         if (hideForOnboarding || _hideLauncherOnRoute(route.path)) {
           return child;
         }
@@ -232,10 +232,8 @@ class _WebActionDock extends ConsumerWidget {
         final routeFromRouter = _routeContextFromUri(routeInformation.uri);
         final routeFromBrowser = _routeContextFromUri(Uri.base);
         final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-        final hideForOnboarding =
-            _isOnboardingOverlayContext(route) ||
-            _isOnboardingOverlayContext(routeFromRouter) ||
-            _isOnboardingOverlayContext(routeFromBrowser);
+        // See _GlobalCamGuideLauncher: keep overlays stable on mobile browsers.
+        final hideForOnboarding = _isOnboardingOverlayContext(route);
         if (hideForOnboarding || _hideDockOnRoute(route.path)) {
           return child;
         }
@@ -523,7 +521,9 @@ _RouteContext _mergeRouteContext(
   final browserPath = routeFromBrowser.path.isEmpty
       ? RoutePaths.gateway
       : routeFromBrowser.path;
-  final path = browserPath != RoutePaths.gateway ? browserPath : routerPath;
+  // Prefer router state whenever available; browser URLs can become stale on
+  // some mobile WebViews/Safari sessions.
+  final path = routerPath != RoutePaths.gateway ? routerPath : browserPath;
   final entry = routeFromRouter.entry ?? routeFromBrowser.entry;
   final role = routeFromRouter.role ?? routeFromBrowser.role;
   final revisit = routeFromRouter.revisit ?? routeFromBrowser.revisit;
