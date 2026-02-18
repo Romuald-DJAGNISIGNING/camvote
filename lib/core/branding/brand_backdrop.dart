@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'brand_palette.dart';
+import '../theme/cam_subtheme.dart';
 
 class BrandBackdrop extends StatelessWidget {
   const BrandBackdrop({super.key, required this.child});
@@ -14,6 +15,7 @@ class BrandBackdrop extends StatelessWidget {
     final profile = _BackdropVisualProfile.resolve(media);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+    final subtheme = CamSubtheme.of(context);
     final surfaceWashAlpha = kIsWeb ? 0 : (isDark ? 70 : 36);
     final gradient = LinearGradient(
       begin: Alignment.topLeft,
@@ -54,7 +56,7 @@ class BrandBackdrop extends StatelessWidget {
                       center: Alignment.topLeft,
                       radius: profile.primaryHighlightRadius,
                       colors: [
-                        Colors.white.withAlpha(isDark ? 20 : 34),
+                        subtheme.roleAccent.withAlpha(isDark ? 38 : 58),
                         Colors.transparent,
                       ],
                     ),
@@ -69,7 +71,7 @@ class BrandBackdrop extends StatelessWidget {
                         center: Alignment.bottomRight,
                         radius: 1.05,
                         colors: [
-                          Colors.white.withAlpha(isDark ? 10 : 22),
+                          subtheme.info.withAlpha(isDark ? 30 : 52),
                           Colors.transparent,
                         ],
                       ),
@@ -81,7 +83,7 @@ class BrandBackdrop extends StatelessWidget {
                 right: -40,
                 child: _Orb(
                   size: 180 * profile.orbScale,
-                  color: Colors.white.withAlpha(isDark ? 30 : 80),
+                  color: subtheme.roleAccentSoft.withAlpha(isDark ? 56 : 105),
                 ),
               ),
               Positioned(
@@ -89,7 +91,7 @@ class BrandBackdrop extends StatelessWidget {
                 left: -20,
                 child: _Orb(
                   size: 200 * profile.orbScale,
-                  color: Colors.black.withAlpha(isDark ? 50 : 20),
+                  color: subtheme.surfaceElevated.withAlpha(isDark ? 120 : 70),
                 ),
               ),
               if (surfaceWashAlpha > 0)
@@ -112,7 +114,7 @@ class BrandBackdrop extends StatelessWidget {
                         repeat: ImageRepeat.repeat,
                         fit: BoxFit.none,
                         filterQuality: FilterQuality.low,
-                        color: Colors.white.withAlpha(isDark ? 44 : 28),
+                        color: cs.onSurface.withAlpha(isDark ? 26 : 18),
                         colorBlendMode: BlendMode.srcATop,
                       ),
                     ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../../motion/cam_motion.dart';
+import '../../theme/cam_subtheme.dart';
 
 enum CamToastType { info, success, warning, error }
 
@@ -12,6 +13,15 @@ class CamToast {
 
   static Color _bgFor(BuildContext context, CamToastType type) {
     final cs = Theme.of(context).colorScheme;
+    final subtheme = Theme.of(context).extension<CamSubtheme>();
+    if (subtheme != null) {
+      return switch (type) {
+        CamToastType.info => subtheme.info,
+        CamToastType.success => subtheme.success,
+        CamToastType.warning => subtheme.warning,
+        CamToastType.error => cs.errorContainer,
+      };
+    }
     return switch (type) {
       CamToastType.info => cs.primaryContainer,
       CamToastType.success => cs.tertiaryContainer,
@@ -22,6 +32,15 @@ class CamToast {
 
   static Color _fgFor(BuildContext context, CamToastType type) {
     final cs = Theme.of(context).colorScheme;
+    final subtheme = Theme.of(context).extension<CamSubtheme>();
+    if (subtheme != null) {
+      return switch (type) {
+        CamToastType.info => subtheme.onInfo,
+        CamToastType.success => subtheme.onSuccess,
+        CamToastType.warning => subtheme.onWarning,
+        CamToastType.error => cs.onErrorContainer,
+      };
+    }
     return switch (type) {
       CamToastType.info => cs.onPrimaryContainer,
       CamToastType.success => cs.onTertiaryContainer,

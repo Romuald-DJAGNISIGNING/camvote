@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import '../routing/route_paths.dart';
+import '../theme/cam_subtheme.dart';
 import '../theme/role_theme.dart';
 import '../widgets/feedback/cam_toast.dart';
 import 'offline_status_providers.dart';
@@ -19,7 +20,8 @@ class GlobalOfflineSyncBanner extends ConsumerStatefulWidget {
       _GlobalOfflineSyncBannerState();
 }
 
-class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanner> {
+class _GlobalOfflineSyncBannerState
+    extends ConsumerState<GlobalOfflineSyncBanner> {
   bool _hiddenForSession = false;
   bool _syncing = false;
 
@@ -32,6 +34,7 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
     final role = ref.watch(currentRoleProvider);
     final pendingCount =
         ref.watch(pendingOfflineQueueTotalProvider).asData?.value ?? 0;
+    final subtheme = CamSubtheme.of(context);
 
     final shouldShow = offline || pendingCount > 0;
     if (!shouldShow) return widget.child;
@@ -42,11 +45,13 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
       return widget.child;
     }
 
-    final title = offline ? t.offlineBannerOfflineTitle : t.offlineBannerPendingTitle;
+    final title = offline
+        ? t.offlineBannerOfflineTitle
+        : t.offlineBannerPendingTitle;
     final body = offline
         ? (pendingCount > 0
-            ? t.offlineBannerOfflineBodyCount(pendingCount)
-            : t.offlineBannerOfflineBody)
+              ? t.offlineBannerOfflineBodyCount(pendingCount)
+              : t.offlineBannerOfflineBody)
         : t.offlineBannerPendingBodyCount(pendingCount);
     final hint = offline ? _hintForRole(t, role) : '';
 
@@ -59,14 +64,12 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
           color: Colors.transparent,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withAlpha(230),
+              color: subtheme.surfaceElevated.withAlpha(238),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outlineVariant.withAlpha(120),
-              ),
+              border: Border.all(color: subtheme.borderStrong.withAlpha(118)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withAlpha(35),
+                  color: Theme.of(context).colorScheme.shadow.withAlpha(46),
                   blurRadius: 24,
                   spreadRadius: 1,
                 ),
@@ -78,7 +81,10 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
-                    offline ? Icons.cloud_off_outlined : Icons.cloud_sync_outlined,
+                    offline
+                        ? Icons.cloud_off_outlined
+                        : Icons.cloud_sync_outlined,
+                    color: offline ? subtheme.warning : subtheme.roleAccent,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -87,21 +93,24 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 2),
-                        Text(body, style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          body,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                         if (hint.trim().isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             hint,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
                                   fontStyle: FontStyle.italic,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                           ),
                         ],
@@ -110,12 +119,16 @@ class _GlobalOfflineSyncBannerState extends ConsumerState<GlobalOfflineSyncBanne
                           Align(
                             alignment: Alignment.centerLeft,
                             child: FilledButton.icon(
-                              onPressed: _syncing ? null : () => _syncNow(context),
+                              onPressed: _syncing
+                                  ? null
+                                  : () => _syncNow(context),
                               icon: _syncing
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
                                     )
                                   : const Icon(Icons.sync),
                               label: Text(t.offlineBannerSyncNow),
