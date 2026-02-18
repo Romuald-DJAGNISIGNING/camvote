@@ -27,6 +27,24 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Validate Firebase Build Secrets
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        run: |
+          missing=0
+          for key in CAMVOTE_FIREBASE_WEB_API_KEY CAMVOTE_FIREBASE_ANDROID_API_KEY CAMVOTE_FIREBASE_IOS_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required repository secret: $key"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Analyze
         id: analyze
         run: |
@@ -62,16 +80,41 @@ jobs:
 
       - name: Build Web Release
         if: steps.analyze.outputs.exit_code == '0'
-        run: flutter build web --release --no-wasm-dry-run
+        env:
+          CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        run: >
+          flutter build web --release --no-wasm-dry-run
+          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=$CAMVOTE_FIREBASE_WEB_API_KEY
+          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=$CAMVOTE_FIREBASE_ANDROID_API_KEY
+          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=$CAMVOTE_FIREBASE_IOS_API_KEY
 
       - name: Ensure sensitive files are not tracked
         if: steps.analyze.outputs.exit_code == '0'
         run: |
-          disallowed=$(git ls-files | grep -E '(^\.env$|^service-account\.json$|^cf-worker/node_modules/|wrangler-account\.json|firebase-tools\.json)') || true
+          disallowed=$(git ls-files | grep -E '(^\.env$|^service-account\.json$|^firebase-service-account\.json$|^android/app/google-services\.json$|^ios/Runner/GoogleService-Info\.plist$|^android/key\.properties$|^android/app/upload-keystore\.jks$|^cf-worker/node_modules/|wrangler-account\.json|firebase-tools\.json)') || true
           if [ -n "$disallowed" ]; then
             echo "Tracked sensitive files detected:"
             echo "$disallowed"
             exit 1
+          fi
+
+      - name: Secret Pattern Scan
+        if: steps.analyze.outputs.exit_code == '0'
+        run: |
+          set +e
+          git grep -nE '(AIza[0-9A-Za-z\-_]{35}|1//[0-9A-Za-z\-_]{30,})' -- lib cf-worker android ios web scripts test > secret-patterns.log
+          secret_exit=$?
+          set -e
+          if [ "$secret_exit" -eq 0 ]; then
+            echo "Potential hardcoded secrets detected:"
+            cat secret-patterns.log
+            exit 1
+          fi
+          if [ "$secret_exit" -gt 1 ]; then
+            echo "Secret scan command failed with exit code $secret_exit"
+            exit "$secret_exit"
           fi
 
   worker-quality:

@@ -100,6 +100,9 @@ cd cf-worker && npm ci && npm run lint
   git ls-files | grep -E '(^\.env$|^service-account\.json$|wrangler-account\.json|firebase-tools\.json)'
   ```
 - If the command returns anything, remove/rotate credentials before pushing.
+- In GitHub repository settings, define these Actions secrets:
+  `CAMVOTE_FIREBASE_WEB_API_KEY`, `CAMVOTE_FIREBASE_ANDROID_API_KEY`, `CAMVOTE_FIREBASE_IOS_API_KEY`.
+  The CI workflow now fails on `main`/`master` pushes if any of these are missing.
 
 ## Web Portal Links
 - General portal: `https://camvote.pages.dev/portal`
