@@ -8,6 +8,8 @@ class OfflineSyncService {
     : _workerClient = workerClient;
 
   final WorkerClient _workerClient;
+  static const _maxRetryAttempts = 7;
+  static const _maxRequestAge = Duration(days: 14);
   Timer? _timer;
   bool _started = false;
   bool _syncInFlight = false;
@@ -36,6 +38,13 @@ class OfflineSyncService {
 
       var flushedCount = 0;
       for (final request in queue.take(maxItems)) {
+        final age = DateTime.now().toUtc().difference(
+          request.createdAt.toUtc(),
+        );
+        if (request.attempts >= _maxRetryAttempts || age > _maxRequestAge) {
+          await OfflineSyncStore.removeQueuedRequest(request.id);
+          continue;
+        }
         try {
           await _workerClient.post(
             request.path,

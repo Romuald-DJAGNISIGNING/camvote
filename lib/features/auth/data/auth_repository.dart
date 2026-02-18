@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/firebase/firebase_auth_scope.dart';
 import '../../../core/theme/role_theme.dart';
 import '../../../core/network/worker_client.dart';
+import '../../../core/offline/offline_sync_store.dart';
 import '../models/auth_error_codes.dart';
 import '../models/auth_session.dart';
 import '../models/auth_tokens.dart';
@@ -94,7 +95,11 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    final uid = _auth.currentUser?.uid.trim() ?? '';
     await _auth.signOut();
+    if (uid.isNotEmpty) {
+      await OfflineSyncStore.clearScope('user_$uid');
+    }
   }
 
   Future<void> requestPasswordReset(String emailOrId) async {
@@ -118,8 +123,12 @@ class AuthRepository {
   Future<void> deleteAccount() async {
     final user = _auth.currentUser;
     if (user == null) return;
+    final uid = user.uid.trim();
     await _workerClient.post('/v1/account/delete');
     await _auth.signOut();
+    if (uid.isNotEmpty) {
+      await OfflineSyncStore.clearScope('user_$uid');
+    }
   }
 
   Future<void> completeFirstLoginPasswordChange() async {
