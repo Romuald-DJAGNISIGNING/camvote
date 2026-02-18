@@ -33,11 +33,14 @@ class DefaultFirebaseOptions {
     return '';
   }
 
-  static bool get hasRequiredApiKeys {
-    return _read('CAMVOTE_FIREBASE_WEB_API_KEY').isNotEmpty &&
-        _read('CAMVOTE_FIREBASE_ANDROID_API_KEY').isNotEmpty &&
-        _read('CAMVOTE_FIREBASE_IOS_API_KEY').isNotEmpty;
-  }
+  static bool get hasWebApiKey =>
+      _read('CAMVOTE_FIREBASE_WEB_API_KEY').trim().isNotEmpty;
+
+  static bool get hasAndroidApiKey =>
+      _read('CAMVOTE_FIREBASE_ANDROID_API_KEY').trim().isNotEmpty;
+
+  static bool get hasIosApiKey =>
+      _read('CAMVOTE_FIREBASE_IOS_API_KEY').trim().isNotEmpty;
 
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {

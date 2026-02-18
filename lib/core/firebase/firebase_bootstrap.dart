@@ -24,20 +24,35 @@ Future<void> ensureFirebaseInitialized({
 
 Future<void> _initialize(Duration timeout) async {
   try {
-    if (!DefaultFirebaseOptions.hasRequiredApiKeys) {
+    if (kIsWeb && !DefaultFirebaseOptions.hasWebApiKey) {
       if (kDebugMode) {
         // ignore: avoid_print
-        print(
-          'Firebase init skipped: missing CAMVOTE_FIREBASE_*_API_KEY configuration.',
-        );
+        print('Firebase init skipped: missing CAMVOTE_FIREBASE_WEB_API_KEY.');
       }
       return;
     }
 
     if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(timeout);
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).timeout(timeout);
+      } else {
+        // On Android/iOS, prefer native GoogleService config files so secrets
+        // do not have to be injected into the Dart bundle.
+        try {
+          await Firebase.initializeApp().timeout(timeout);
+        } catch (error) {
+          // Fallback: allow explicit options for environments without native
+          // config files (CI, local dev with stripped configs).
+          final options = DefaultFirebaseOptions.currentPlatform;
+          final hasKey = options.apiKey.trim().isNotEmpty;
+          if (!hasKey) {
+            rethrow;
+          }
+          await Firebase.initializeApp(options: options).timeout(timeout);
+        }
+      }
     }
 
     if (kIsWeb) {
