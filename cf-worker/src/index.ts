@@ -5893,7 +5893,9 @@ function parseIntEnv(
   minValue: number,
   maxValue: number,
 ): number {
-  const parsed = Number(`${raw ?? ''}`.trim());
+  const cleaned = `${raw ?? ''}`.trim();
+  if (!cleaned) return fallback;
+  const parsed = Number(cleaned);
   if (!Number.isFinite(parsed)) return fallback;
   const normalized = Math.trunc(parsed);
   return Math.min(maxValue, Math.max(minValue, normalized));
