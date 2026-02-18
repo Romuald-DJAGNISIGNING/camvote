@@ -124,7 +124,16 @@ class AboutMeScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 18),
-                  _SectionTitle(title: t.aboutTrelloTitle),
+                  Row(
+                    children: [
+                      Expanded(child: _SectionTitle(title: t.aboutTrelloTitle)),
+                      IconButton(
+                        tooltip: t.refresh,
+                        onPressed: () => ref.invalidate(trelloStatsProvider),
+                        icon: const Icon(Icons.refresh_rounded),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   trelloAsync.when(
                     loading: () => _LoadingInfoCard(

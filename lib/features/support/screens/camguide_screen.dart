@@ -76,6 +76,11 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
     final entry = _entryParam(context);
     final actions = _quickActionsForRole(t, role, entry);
     final cs = Theme.of(context).colorScheme;
+    final viewport = MediaQuery.of(context).size;
+    final isNarrow = viewport.width < 760;
+    final chatHeight = isNarrow
+        ? (viewport.height * 0.46).clamp(280.0, 460.0).toDouble()
+        : (viewport.height * 0.52).clamp(320.0, 560.0).toDouble();
 
     return Scaffold(
       appBar: NotificationAppBar(
@@ -115,7 +120,10 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                               visualDensity: VisualDensity.compact,
                               padding: const EdgeInsets.all(6),
                             ),
-                            icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 18,
+                            ),
                           ),
                           const SizedBox(width: 2),
                           const _CamGuideAvatar(size: 54),
@@ -126,9 +134,7 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                               children: [
                                 Text(
                                   t.helpSupportAiTitle,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
+                                  style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w900,
@@ -137,12 +143,10 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   t.helpSupportAiSubtitle,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(
                                         color: Colors.white.withAlpha(225),
-                                  ),
+                                      ),
                                 ),
                               ],
                             ),
@@ -152,13 +156,18 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                             children: [
                               IconButton(
                                 tooltip: t.clearAll,
-                                onPressed: _responding ? null : _resetConversation,
+                                onPressed: _responding
+                                    ? null
+                                    : _resetConversation,
                                 style: IconButton.styleFrom(
                                   foregroundColor: Colors.white,
                                   visualDensity: VisualDensity.compact,
                                   padding: const EdgeInsets.all(6),
                                 ),
-                                icon: const Icon(Icons.refresh_rounded, size: 18),
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18,
+                                ),
                               ),
                               const SizedBox(width: 4),
                               DecoratedBox(
@@ -207,7 +216,7 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                       child: Column(
                         children: [
                           Container(
-                            height: 380,
+                            height: chatHeight,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -225,7 +234,8 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                             ),
                             child: ListView.builder(
                               controller: _scrollCtrl,
-                              itemCount: _entries.length + (_responding ? 1 : 0),
+                              itemCount:
+                                  _entries.length + (_responding ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (_responding && index == _entries.length) {
                                   return Align(
@@ -240,7 +250,9 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                         color: cs.surfaceContainer,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: cs.outlineVariant.withAlpha(90),
+                                          color: cs.outlineVariant.withAlpha(
+                                            90,
+                                          ),
                                         ),
                                       ),
                                       child: Row(
@@ -271,9 +283,16 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                 return Align(
                                   alignment: align,
                                   child: Container(
-                                    constraints: const BoxConstraints(maxWidth: 640),
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 640,
+                                    ),
                                     margin: const EdgeInsets.only(bottom: 8),
-                                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      12,
+                                      10,
+                                      12,
+                                      10,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: bg,
                                       borderRadius: BorderRadius.circular(12),
@@ -282,7 +301,8 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                       ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         if (!entry.fromUser) ...[
                                           Row(
@@ -304,7 +324,8 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                                     .textTheme
                                                     .labelSmall
                                                     ?.copyWith(
-                                                      fontWeight: FontWeight.w800,
+                                                      fontWeight:
+                                                          FontWeight.w800,
                                                     ),
                                               ),
                                               const Spacer(),
@@ -314,19 +335,21 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                                     color: cs.secondaryContainer
                                                         .withAlpha(130),
                                                     borderRadius:
-                                                        BorderRadius.circular(999),
+                                                        BorderRadius.circular(
+                                                          999,
+                                                        ),
                                                   ),
                                                   child: Padding(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 3,
-                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3,
+                                                        ),
                                                     child: Text(
                                                       '${(entry.confidence * 100).round()}%',
-                                                      style: Theme.of(context)
-                                                          .textTheme
-                                                          .labelSmall,
+                                                      style: Theme.of(
+                                                        context,
+                                                      ).textTheme.labelSmall,
                                                     ),
                                                   ),
                                                 ),
@@ -343,9 +366,9 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                           const SizedBox(height: 8),
                                           Text(
                                             t.helpSupportAiSourcesLabel,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                           ),
                                           const SizedBox(height: 4),
                                           Wrap(
@@ -370,9 +393,9 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                                           const SizedBox(height: 8),
                                           Text(
                                             t.helpSupportAiSuggestionsLabel,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                           ),
                                           const SizedBox(height: 4),
                                           Wrap(
@@ -415,7 +438,9 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
                               ),
                               const SizedBox(width: 8),
                               FilledButton.icon(
-                                onPressed: _responding ? null : () => _askCamGuide(),
+                                onPressed: _responding
+                                    ? null
+                                    : () => _askCamGuide(),
                                 icon: const Icon(Icons.send_rounded),
                                 label: Text(t.helpSupportAiSend),
                               ),
@@ -445,29 +470,6 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       return '$path&entry=$entry';
     }
 
-    final common = <_CamGuideQuickAction>[
-      _CamGuideQuickAction(
-        label: t.notificationsTitle,
-        icon: Icons.notifications_outlined,
-        route: withEntry(RoutePaths.notifications),
-      ),
-      _CamGuideQuickAction(
-        label: t.settings,
-        icon: Icons.settings_outlined,
-        route: withEntry(RoutePaths.settings),
-      ),
-      _CamGuideQuickAction(
-        label: t.helpSupportTitle,
-        icon: Icons.help_outline,
-        route: withEntry(RoutePaths.helpSupport),
-      ),
-      _CamGuideQuickAction(
-        label: t.supportCamVoteTitle,
-        icon: Icons.favorite_outline,
-        route: withEntry(RoutePaths.supportTip),
-      ),
-    ];
-
     switch (role) {
       case AppRole.admin:
         return [
@@ -475,6 +477,11 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             label: t.adminDashboard,
             icon: Icons.admin_panel_settings_outlined,
             route: withEntry(RoutePaths.adminDashboard),
+          ),
+          _CamGuideQuickAction(
+            label: t.adminActionElections,
+            icon: Icons.how_to_vote_outlined,
+            route: withEntry(RoutePaths.adminElections),
           ),
           _CamGuideQuickAction(
             label: t.adminActionVoters,
@@ -492,11 +499,25 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             route: withEntry(RoutePaths.adminIncidents),
           ),
           _CamGuideQuickAction(
+            label: t.adminTipReviewTitle,
+            icon: Icons.volunteer_activism_outlined,
+            route: withEntry(RoutePaths.adminTips),
+          ),
+          _CamGuideQuickAction(
             label: t.adminSupportTitle,
             icon: Icons.support_agent_outlined,
             route: withEntry(RoutePaths.adminSupport),
           ),
-          ...common,
+          _CamGuideQuickAction(
+            label: t.notificationsTitle,
+            icon: Icons.notifications_outlined,
+            route: withEntry(RoutePaths.notifications),
+          ),
+          _CamGuideQuickAction(
+            label: t.settings,
+            icon: Icons.settings_outlined,
+            route: withEntry(RoutePaths.settings),
+          ),
         ];
       case AppRole.observer:
         return [
@@ -521,28 +542,42 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             route: withEntry(RoutePaths.observerChecklist),
           ),
           _CamGuideQuickAction(
+            label: t.observerTransparencyTitle,
+            icon: Icons.visibility_outlined,
+            route: withEntry(RoutePaths.observerTransparency),
+          ),
+          _CamGuideQuickAction(
             label: t.publicResultsTitle,
             icon: Icons.query_stats_outlined,
             route: withEntry(RoutePaths.publicResults),
           ),
           _CamGuideQuickAction(
-            label: t.verifyRegistrationTitle,
-            icon: Icons.verified_user_outlined,
-            route: withEntry(RoutePaths.publicVerifyRegistration),
+            label: t.notificationsTitle,
+            icon: Icons.notifications_outlined,
+            route: withEntry(RoutePaths.notifications),
           ),
-          ...common,
+          _CamGuideQuickAction(
+            label: t.helpSupportTitle,
+            icon: Icons.help_outline,
+            route: withEntry(RoutePaths.helpSupport),
+          ),
+          _CamGuideQuickAction(
+            label: t.settings,
+            icon: Icons.settings_outlined,
+            route: withEntry(RoutePaths.settings),
+          ),
         ];
       case AppRole.voter:
         return [
           _CamGuideQuickAction(
-            label: t.electoralCardTitle,
-            icon: Icons.badge_outlined,
-            route: withEntry(RoutePaths.voterCard),
-          ),
-          _CamGuideQuickAction(
             label: t.registrationHubTitle,
             icon: Icons.how_to_reg_outlined,
             route: withEntry(RoutePaths.register),
+          ),
+          _CamGuideQuickAction(
+            label: t.electoralCardTitle,
+            icon: Icons.badge_outlined,
+            route: withEntry(RoutePaths.voterCard),
           ),
           _CamGuideQuickAction(
             label: t.voteReceiptTitle,
@@ -564,7 +599,21 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             icon: Icons.location_on_outlined,
             route: withEntry(RoutePaths.publicVotingCenters),
           ),
-          ...common,
+          _CamGuideQuickAction(
+            label: t.notificationsTitle,
+            icon: Icons.notifications_outlined,
+            route: withEntry(RoutePaths.notifications),
+          ),
+          _CamGuideQuickAction(
+            label: t.helpSupportTitle,
+            icon: Icons.help_outline,
+            route: withEntry(RoutePaths.helpSupport),
+          ),
+          _CamGuideQuickAction(
+            label: t.supportCamVoteTitle,
+            icon: Icons.favorite_outline,
+            route: withEntry(RoutePaths.supportTip),
+          ),
         ];
       case AppRole.public:
         return [
@@ -577,6 +626,16 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             label: t.publicElectionsInfoTitle,
             icon: Icons.how_to_vote_outlined,
             route: withEntry(RoutePaths.publicElectionsInfo),
+          ),
+          _CamGuideQuickAction(
+            label: t.verifyRegistrationTitle,
+            icon: Icons.verified_user_outlined,
+            route: withEntry(RoutePaths.publicVerifyRegistration),
+          ),
+          _CamGuideQuickAction(
+            label: t.publicElectionCalendarTitle,
+            icon: Icons.event_outlined,
+            route: withEntry(RoutePaths.publicElectionCalendar),
           ),
           _CamGuideQuickAction(
             label: t.votingCentersTitle,
@@ -594,16 +653,15 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
             route: withEntry(RoutePaths.legalLibrary),
           ),
           _CamGuideQuickAction(
-            label: t.verifyRegistrationTitle,
-            icon: Icons.verified_user_outlined,
-            route: withEntry(RoutePaths.publicVerifyRegistration),
+            label: t.helpSupportTitle,
+            icon: Icons.help_outline,
+            route: withEntry(RoutePaths.helpSupport),
           ),
           _CamGuideQuickAction(
             label: t.about,
             icon: Icons.info_outline,
             route: withEntry(RoutePaths.about),
           ),
-          ...common,
         ];
     }
   }
@@ -627,7 +685,9 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       return;
     }
     final entry = _entryParam(context);
-    context.go(entry == 'admin' ? RoutePaths.adminPortal : RoutePaths.webPortal);
+    context.go(
+      entry == 'admin' ? RoutePaths.adminPortal : RoutePaths.webPortal,
+    );
   }
 
   String _entryParam(BuildContext context) {
@@ -700,7 +760,11 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       if (!mounted) return;
       setState(() => _responding = false);
       final t = AppLocalizations.of(context);
-      CamToast.show(context, message: t.genericErrorLabel, type: CamToastType.error);
+      CamToast.show(
+        context,
+        message: t.genericErrorLabel,
+        type: CamToastType.error,
+      );
     }
   }
 

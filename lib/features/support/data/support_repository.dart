@@ -1,3 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+
+import '../../../core/firebase/firebase_auth_scope.dart';
 import '../../../core/network/worker_client.dart';
 import '../../../core/offline/offline_sync_store.dart';
 
@@ -5,10 +9,12 @@ import '../models/admin_support_ticket.dart';
 import '../models/support_ticket.dart';
 
 class SupportRepository {
-  SupportRepository({WorkerClient? workerClient})
-    : _workerClient = workerClient ?? WorkerClient();
+  SupportRepository({WorkerClient? workerClient, FirebaseAuth? auth})
+    : _workerClient = workerClient ?? WorkerClient(),
+      _auth = auth ?? FirebaseAuth.instance;
 
   final WorkerClient _workerClient;
+  final FirebaseAuth _auth;
 
   Future<SupportTicketResult> submitTicket(SupportTicket ticket) async {
     final response = await _workerClient.post(
@@ -20,6 +26,7 @@ class SupportRepository {
         'category': ticket.category.apiValue,
         'message': ticket.message,
       },
+      authRequired: _hasSignedInUser,
       allowOfflineQueue: true,
       queueType: 'support_ticket',
     );
@@ -34,6 +41,18 @@ class SupportRepository {
       queuedOffline: queued,
       offlineQueueId: queueId,
     );
+  }
+
+  bool get _hasSignedInUser {
+    try {
+      if (kIsWeb) {
+        final app = resolveFirebaseAppForScope();
+        return FirebaseAuth.instanceFor(app: app).currentUser != null;
+      }
+      return _auth.currentUser != null;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<int> pendingOfflineTicketCount() {

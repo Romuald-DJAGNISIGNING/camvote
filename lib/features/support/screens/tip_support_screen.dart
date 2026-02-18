@@ -370,10 +370,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                       session: session,
                       t: t,
                       onOpenCheckout:
-                          (session.checkoutUrl?.trim().isNotEmpty ?? false) ||
-                              session.provider.toLowerCase().trim() ==
-                                  'taptap_send' ||
-                              session.provider.toLowerCase().trim() == 'remitly'
+                          (providerKey == 'taptap_send' ||
+                              providerKey == 'remitly')
                           ? () => _openCheckoutForSession(session)
                           : null,
                       onOpenDeepLink:
@@ -643,9 +641,6 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     if (_channel == TipProviderChannel.tapTapSend ||
         _channel == TipProviderChannel.remitly) {
       await _openCheckoutForSession(session);
-    } else if (session.checkoutUrl != null &&
-        session.checkoutUrl!.trim().isNotEmpty) {
-      await _openUrl(session.checkoutUrl!);
     } else if (session.deepLink != null &&
         session.deepLink!.trim().isNotEmpty) {
       await _openUrl(session.deepLink!);
@@ -659,22 +654,44 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
   TipCheckoutSession _normalizeSessionForSelectedChannel(
     TipCheckoutSession session,
   ) {
+    final recipientNumber = session.orangeMoneyNumber?.trim().isNotEmpty == true
+        ? session.orangeMoneyNumber!.trim()
+        : AppConfig.tipOrangeMoneyNumber.trim();
+    final recipientName = session.orangeMoneyOwner?.trim().isNotEmpty == true
+        ? session.orangeMoneyOwner!.trim()
+        : AppConfig.tipOrangeMoneyName.trim();
+    final amount = session.amount > 0
+        ? session.amount
+        : (int.tryParse(_amountCtrl.text.trim()) ?? 0);
+    final currency = session.currency.trim().isNotEmpty
+        ? session.currency.trim().toUpperCase()
+        : _currency.trim().toUpperCase();
     switch (_channel) {
+      case TipProviderChannel.tapTapSend:
+        final checkout = _isTapTapCheckoutUrl(session.checkoutUrl)
+            ? session.checkoutUrl
+            : _buildTapTapWebFallbackUrl(
+                tipId: session.tipId,
+                amount: amount,
+                currency: currency,
+                recipientName: recipientName,
+                recipientNumber: recipientNumber,
+              );
+        final deepLink = _isTapTapDeepLink(session.deepLink)
+            ? session.deepLink
+            : _buildTapTapDeepLinkFallbackUrl(
+                tipId: session.tipId,
+                amount: amount,
+                currency: currency,
+                recipientName: recipientName,
+                recipientNumber: recipientNumber,
+              );
+        return session.copyWith(
+          provider: 'taptap_send',
+          checkoutUrl: checkout,
+          deepLink: deepLink,
+        );
       case TipProviderChannel.remitly:
-        final recipientNumber =
-            session.orangeMoneyNumber?.trim().isNotEmpty == true
-            ? session.orangeMoneyNumber!.trim()
-            : AppConfig.tipOrangeMoneyNumber.trim();
-        final recipientName =
-            session.orangeMoneyOwner?.trim().isNotEmpty == true
-            ? session.orangeMoneyOwner!.trim()
-            : AppConfig.tipOrangeMoneyName.trim();
-        final amount = session.amount > 0
-            ? session.amount
-            : (int.tryParse(_amountCtrl.text.trim()) ?? 0);
-        final currency = session.currency.trim().isNotEmpty
-            ? session.currency.trim().toUpperCase()
-            : _currency.trim().toUpperCase();
         final checkout = _isRemitlyCheckoutUrl(session.checkoutUrl)
             ? session.checkoutUrl
             : _buildRemitlyWebFallbackUrl(
@@ -698,9 +715,11 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
           checkoutUrl: checkout,
           deepLink: deepLink,
         );
-      case TipProviderChannel.tapTapSend:
       case TipProviderChannel.maxItQr:
-        return session;
+        final qrUrl = session.qrUrl?.trim().isNotEmpty == true
+            ? session.qrUrl
+            : AppConfig.maxItTipQrImageUrl.trim();
+        return session.copyWith(provider: 'maxit_qr', qrUrl: qrUrl);
     }
   }
 
@@ -878,8 +897,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       final rawCheckout = session.checkoutUrl?.trim() ?? '';
       final canUseCheckout = rawCheckout.isNotEmpty
           ? isRemitlyProvider
-              ? _isRemitlyCheckoutUrl(rawCheckout)
-              : _isTapTapCheckoutUrl(rawCheckout)
+                ? _isRemitlyCheckoutUrl(rawCheckout)
+                : _isTapTapCheckoutUrl(rawCheckout)
           : false;
       final sanitizedCheckout = canUseCheckout
           ? _maybeUpgradeRecipientNumberInCheckoutUrl(
@@ -911,8 +930,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       final rawDeepLink = session.deepLink?.trim() ?? '';
       final canUseDeepLink = rawDeepLink.isNotEmpty
           ? isRemitlyProvider
-              ? _isRemitlyDeepLink(rawDeepLink)
-              : _isTapTapDeepLink(rawDeepLink)
+                ? _isRemitlyDeepLink(rawDeepLink)
+                : _isTapTapDeepLink(rawDeepLink)
           : false;
       final deepLink = canUseDeepLink
           ? rawDeepLink

@@ -104,9 +104,20 @@ class NotificationsController extends Notifier<NotificationsState> {
 
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+    final interval = _resolvePollInterval();
+    _pollTimer = Timer.periodic(interval, (_) {
+      if (!_isAuthenticated()) return;
       unawaited(syncFromServer());
     });
+  }
+
+  Duration _resolvePollInterval() {
+    if (!kIsWeb) return const Duration(seconds: 12);
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      return const Duration(seconds: 26);
+    }
+    return const Duration(seconds: 16);
   }
 
   String _currentScopeKey() {

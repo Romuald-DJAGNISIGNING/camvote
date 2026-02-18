@@ -12,8 +12,10 @@ class TrelloRepository {
 
   Future<TrelloStats?> _fetchFromWorker() async {
     try {
+      final minuteStamp = DateTime.now().millisecondsSinceEpoch ~/ 60000;
       final response = await _workerClient.get(
         '/v1/public/trello-stats',
+        queryParameters: {'t': minuteStamp.toString()},
         authRequired: false,
       );
       final configured = response['configured'] == true;

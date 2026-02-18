@@ -6,7 +6,39 @@ import '../../../core/theme/role_theme.dart';
 import '../models/camguide_chat.dart';
 
 class CamGuideAssistant {
-  static const double _minimumIntentScore = 1.15;
+  static const double _minimumIntentScore = 0.9;
+  static const Set<String> _camVoteTokens = <String>{
+    'camvote',
+    'camguide',
+    'onboarding',
+    'portal',
+    'login',
+    'password',
+    'register',
+    'registration',
+    'verify',
+    'verification',
+    'vote',
+    'receipt',
+    'observer',
+    'admin',
+    'dashboard',
+    'ticket',
+    'support',
+    'notifications',
+    'settings',
+    'qr',
+    'taptap',
+    'remitly',
+    'maxit',
+    'orange',
+    'money',
+    'offline',
+    'incident',
+    'election',
+    'electoral',
+    'elecam',
+  };
 
   CamGuideReply reply({
     required String question,
@@ -45,6 +77,17 @@ class CamGuideAssistant {
       return followUpReply;
     }
 
+    final generalReply = _generalQuestionReply(
+      normalizedQuestion: normalizedQuestion,
+      questionTokens: questionTokens,
+      role: role,
+      isFrench: isFrench,
+      locale: locale,
+    );
+    if (generalReply != null) {
+      return generalReply;
+    }
+
     CamGuideIntent? bestIntent;
     double bestScore = 0;
     CamGuideIntent? secondIntent;
@@ -67,10 +110,7 @@ class CamGuideAssistant {
     }
 
     if (bestIntent == null || bestScore < _minimumIntentScore) {
-      return _fallbackReply(
-        locale: locale,
-        role: role,
-      );
+      return _fallbackReply(locale: locale, role: role);
     }
 
     final answer = isFrench ? bestIntent.answerFr : bestIntent.answerEn;
@@ -99,6 +139,7 @@ class CamGuideAssistant {
             'Le vote est-il prive ?',
             'Le mode hors ligne synchronise quoi exactement ?',
             'Comment contacter le help desk en direct ?',
+            'Peux-tu m aider a planifier quelque chose etape par etape ?',
           ]
         : <String>[
             'How do I verify my registration?',
@@ -107,6 +148,7 @@ class CamGuideAssistant {
             'Is my vote private?',
             'What is synced in offline mode?',
             'How do I reach live help desk?',
+            'Can you help me plan something step by step?',
           ];
 
     return switch (role) {
@@ -157,8 +199,8 @@ class CamGuideAssistant {
     final roleHint = _roleIntroHint(role: role, isFrench: isFrench);
     return CamGuideReply(
       answer: isFrench
-          ? 'Bonjour. Je suis CamGuide.\n$roleHint\nComment puis-je vous aider aujourd\'hui ?'
-          : 'Hi. I am CamGuide.\n$roleHint\nHow can I help you today?',
+          ? 'Salut, je suis CamGuide. Comment allez-vous aujourd\'hui ?\n$roleHint\nVous pouvez me parler naturellement: CamVote ou une question generale.'
+          : 'Hi, I am CamGuide. How are you today?\n$roleHint\nYou can chat naturally with me about CamVote or a general question.',
       followUps: starterPrompts(locale, role),
       sourceHints: const <String>[
         'ELECAM official channels',
@@ -175,8 +217,8 @@ class CamGuideAssistant {
   }) {
     final isFrench = locale.languageCode.toLowerCase().startsWith('fr');
     final body = isFrench
-        ? 'Je peux vous aider. Est-ce une question sur CamVote, ou un sujet general ?\n\nSi c\'est sur CamVote: dites moi votre role (electeur/observateur/admin) et l\'ecran ou vous etes.\nSi c\'est general: dites moi votre objectif et votre contexte, et je vous propose une demarche claire.\n\nSi vous preferez, choisissez un theme: inscription, verification, vote, observateur, resultats, notifications, support, hors ligne.'
-        : 'I can help. Is this about CamVote, or a general question?\n\nIf it\'s CamVote: tell me your role (voter/observer/admin) and which screen you are on.\nIf it\'s general: tell me your goal and context, and I\'ll propose a clear approach.\n\nIf you prefer, pick a topic: registration, verification, voting, observer, results, notifications, support, offline mode.';
+        ? 'Je peux vous aider. Dites-moi simplement:\n1) votre objectif\n2) votre contexte\n3) ce qui vous bloque.\n\nSi c\'est dans CamVote, ajoutez votre role (electeur/observateur/admin) et l\'ecran actuel.\nSi c\'est general, je vous propose une reponse pratique ou un plan clair.'
+        : 'I can help. Tell me:\n1) your goal\n2) your context\n3) what is blocking you.\n\nIf this is in CamVote, include your role (voter/observer/admin) and current screen.\nIf it is general, I can still give a practical answer or a clear plan.';
     return CamGuideReply(
       answer: body,
       followUps: starterPrompts(locale, role),
@@ -191,18 +233,22 @@ class CamGuideAssistant {
 
   String _roleIntroHint({required AppRole role, required bool isFrench}) {
     return switch (role) {
-      AppRole.admin => isFrench
-          ? 'Vous etes dans le portail Admin. Je peux vous aider a gerer les elections, les electeurs, les observateurs, les incidents, le support, les tips, l audit et la securite.'
-          : 'You are in the Admin portal. I can help you manage elections, voters, observers, incidents, support, tips, audits, and security.',
-      AppRole.observer => isFrench
-          ? 'Vous etes en mode Observateur (lecture seule). Je peux vous aider a signaler des incidents, suivre vos rapports, et utiliser les outils de transparence. Un observateur ne peut pas voter.'
-          : 'You are in Observer mode (read-only). I can help you report incidents, track your reports, and use transparency tools. Observers cannot vote.',
-      AppRole.voter => isFrench
-          ? 'Vous etes en mode Electeur. Je peux vous aider pour l inscription, la verification, le vote securise et les recus.'
-          : 'You are in Voter mode. I can help with registration, verification, secure voting, and receipts.',
-      AppRole.public => isFrench
-          ? 'Vous etes dans le portail Public. Je peux vous aider a explorer les resultats, les centres de vote, l education civique et la verification d inscription.'
-          : 'You are in the Public portal. I can help you explore results, voting centers, civic education, and registration verification.',
+      AppRole.admin =>
+        isFrench
+            ? 'Vous etes dans le portail Admin. Je peux vous aider a gerer les elections, les electeurs, les observateurs, les incidents, le support, les tips, l audit et la securite.'
+            : 'You are in the Admin portal. I can help you manage elections, voters, observers, incidents, support, tips, audits, and security.',
+      AppRole.observer =>
+        isFrench
+            ? 'Vous etes en mode Observateur (lecture seule). Je peux vous aider a signaler des incidents, suivre vos rapports, et utiliser les outils de transparence. Un observateur ne peut pas voter.'
+            : 'You are in Observer mode (read-only). I can help you report incidents, track your reports, and use transparency tools. Observers cannot vote.',
+      AppRole.voter =>
+        isFrench
+            ? 'Vous etes en mode Electeur. Je peux vous aider pour l inscription, la verification, le vote securise et les recus.'
+            : 'You are in Voter mode. I can help with registration, verification, secure voting, and receipts.',
+      AppRole.public =>
+        isFrench
+            ? 'Vous etes dans le portail Public. Je peux vous aider a explorer les resultats, les centres de vote, l education civique et la verification d inscription.'
+            : 'You are in the Public portal. I can help you explore results, voting centers, civic education, and registration verification.',
     };
   }
 
@@ -223,7 +269,14 @@ class CamGuideAssistant {
         normalizedQuestion.contains('explain') ||
         normalizedQuestion.contains('details') ||
         normalizedQuestion.contains('continue') ||
+        normalizedQuestion.contains('what next') ||
+        normalizedQuestion.contains('then what') ||
+        normalizedQuestion.contains('next step') ||
+        normalizedQuestion.contains('after that') ||
         normalizedQuestion.contains('why') ||
+        normalizedQuestion.contains('ensuite') ||
+        normalizedQuestion.contains('apres') ||
+        normalizedQuestion.contains('puis') ||
         normalizedQuestion.contains('encore') ||
         normalizedQuestion.contains('plus') ||
         (questionTokens.length <= 3 &&
@@ -235,6 +288,12 @@ class CamGuideAssistant {
               'why',
               'again',
               'continue',
+              'next',
+              'then',
+              'after',
+              'ensuite',
+              'apres',
+              'puis',
               'plus',
               'encore',
               'pourquoi',
@@ -255,8 +314,8 @@ class CamGuideAssistant {
     final answer = details.trim().isNotEmpty
         ? details
         : (isFrench
-            ? 'Bien sur. Sur quelle partie voulez vous plus de details (etapes, documents, securite, ou probleme precis) ?'
-            : 'Sure. Which part do you want more detail on (steps, documents, security, or a specific problem)?');
+              ? 'Bien sur. Sur quelle partie voulez vous plus de details (etapes, documents, securite, ou probleme precis) ?'
+              : 'Sure. Which part do you want more detail on (steps, documents, security, or a specific problem)?');
 
     final followUps = <String>[
       ...(isFrench ? intent.followUpsFr : intent.followUpsEn),
@@ -278,36 +337,10 @@ class CamGuideAssistant {
     required bool isFrench,
     required Locale locale,
   }) {
-    const camVoteTokens = <String>{
-      'camvote',
-      'onboarding',
-      'portal',
-      'login',
-      'password',
-      'register',
-      'registration',
-      'verify',
-      'verification',
-      'vote',
-      'receipt',
-      'observer',
-      'admin',
-      'dashboard',
-      'ticket',
-      'support',
-      'notifications',
-      'settings',
-      'qr',
-      'taptap',
-      'remitly',
-      'maxit',
-      'orange',
-      'money',
-    };
     final isLikelyChitChat =
         normalizedQuestion.length <= 28 &&
         questionTokens.length <= 4 &&
-        questionTokens.intersection(camVoteTokens).isEmpty;
+        questionTokens.intersection(_camVoteTokens).isEmpty;
     if (_containsAny(questionTokens, const <String>{
       'hello',
       'hi',
@@ -317,8 +350,8 @@ class CamGuideAssistant {
     })) {
       return CamGuideReply(
         answer: isFrench
-            ? 'Salut. Je suis CamGuide.\nComment ca va aujourd\'hui ?\nDites moi ce que vous voulez faire (inscription, vote, observateur, resultats, notifications, support, tips) et je vous guide pas a pas.'
-            : 'Hi. I am CamGuide.\nHow are you today?\nTell me what you want to do (registration, voting, observer, results, notifications, support, tips) and I will guide you step by step.',
+            ? 'Salut, heureux de vous aider.\nComment ca va aujourd\'hui ?\nDites-moi ce que vous voulez faire, je vous accompagne pas a pas.'
+            : 'Hi, glad to help.\nHow are you today?\nTell me what you want to do and I will guide you step by step.',
         followUps: starterPrompts(locale, role),
         sourceHints: const <String>['CamVote guide'],
         confidence: 0.9,
@@ -330,21 +363,21 @@ class CamGuideAssistant {
         normalizedQuestion.contains('comment ca va')) {
       return CamGuideReply(
         answer: isFrench
-            ? 'Merci, je vais bien.\nEt vous ?\nDites moi ce que vous voulez faire dans CamVote et je vous guide etape par etape.'
-            : 'Thanks for asking, I am doing well.\nHow about you?\nTell me what you want to do in CamVote and I will guide you step by step.',
+            ? 'Merci, je vais bien.\nEt vous ?\nDites-moi votre objectif, dans CamVote ou en general, et je vous guide.'
+            : 'Thanks for asking, I am doing well.\nHow about you?\nTell me your goal, in CamVote or in general, and I will guide you.',
         followUps: starterPrompts(locale, role),
         sourceHints: const <String>['CamVote help', 'CamVote guide'],
         confidence: 0.92,
       );
     }
     if (_containsAny(questionTokens, const <String>{
-      'fine',
-      'good',
-      'great',
-      'bien',
-      'nickel',
-      'super',
-    }) &&
+          'fine',
+          'good',
+          'great',
+          'bien',
+          'nickel',
+          'super',
+        }) &&
         isLikelyChitChat) {
       return CamGuideReply(
         answer: isFrench
@@ -356,13 +389,13 @@ class CamGuideAssistant {
       );
     }
     if (_containsAny(questionTokens, const <String>{
-      'bad',
-      'sad',
-      'angry',
-      'upset',
-      'tired',
-      'frustrated',
-    }) &&
+          'bad',
+          'sad',
+          'angry',
+          'upset',
+          'tired',
+          'frustrated',
+        }) &&
         isLikelyChitChat) {
       return CamGuideReply(
         answer: isFrench
@@ -441,6 +474,38 @@ class CamGuideAssistant {
       );
     }
     if (_containsAny(questionTokens, const <String>{
+      'error',
+      'failed',
+      'failure',
+      'problem',
+      'issue',
+      'bug',
+      'crash',
+      'broken',
+      'impossible',
+      'cannot',
+      'cant',
+      'wont',
+      'doesnt',
+      'marche',
+      'echoue',
+      'erreur',
+      'probleme',
+      'panne',
+    })) {
+      return CamGuideReply(
+        answer: isFrench
+            ? 'On va debloquer ca vite. Envoyez ces 4 infos et je vous donne la prochaine action precise:\n1) votre role\n2) l ecran exact\n3) le bouton/action lancee\n4) le message d erreur exact.\n\nSi vous etes bloque, ouvrez Aide et Support et soumettez un ticket avec ces 4 points.'
+            : 'We can unblock this fast. Share these 4 details and I will give the next precise action:\n1) your role\n2) the exact screen\n3) the button/action you triggered\n4) the exact error message.\n\nIf you are blocked, open Help and Support and submit a ticket with those 4 points.',
+        followUps: starterPrompts(locale, role),
+        sourceHints: const <String>[
+          'CamVote troubleshooting flow',
+          'CamVote support workflow',
+        ],
+        confidence: 0.9,
+      );
+    }
+    if (_containsAny(questionTokens, const <String>{
       'ok',
       'okay',
       'cool',
@@ -490,6 +555,143 @@ class CamGuideAssistant {
       }
     }
     return score;
+  }
+
+  CamGuideReply? _generalQuestionReply({
+    required String normalizedQuestion,
+    required Set<String> questionTokens,
+    required AppRole role,
+    required bool isFrench,
+    required Locale locale,
+  }) {
+    if (_isLikelyCamVoteQuestion(
+      normalizedQuestion: normalizedQuestion,
+      questionTokens: questionTokens,
+    )) {
+      return null;
+    }
+    if (normalizedQuestion.trim().length < 5) return null;
+
+    final topic = _extractGeneralTopic(
+      normalizedQuestion: normalizedQuestion,
+      isFrench: isFrench,
+    );
+
+    final startsWithHow =
+        normalizedQuestion.startsWith('how ') ||
+        normalizedQuestion.startsWith('how do ') ||
+        normalizedQuestion.startsWith('how can ') ||
+        normalizedQuestion.startsWith('comment ') ||
+        normalizedQuestion.startsWith('comment faire ');
+    final startsWithWhy =
+        normalizedQuestion.startsWith('why ') ||
+        normalizedQuestion.startsWith('pourquoi ');
+    final startsWithWhat =
+        normalizedQuestion.startsWith('what is ') ||
+        normalizedQuestion.startsWith('what are ') ||
+        normalizedQuestion.startsWith('c est quoi ') ||
+        normalizedQuestion.startsWith('cest quoi ') ||
+        normalizedQuestion.startsWith('qu est ce que ') ||
+        normalizedQuestion.startsWith('que signifie ');
+
+    String answer;
+    if (startsWithHow) {
+      answer = isFrench
+          ? 'Bonne question. Pour "$topic", voici une methode simple:\n'
+                '1) clarifier le resultat attendu,\n'
+                '2) lister contraintes et ressources,\n'
+                '3) choisir une premiere action concrete,\n'
+                '4) tester rapidement,\n'
+                '5) ajuster selon le retour.\n\n'
+                'Si vous me donnez votre contexte exact, je peux vous proposer un plan detaille.'
+          : 'Good question. For "$topic", here is a simple way:\n'
+                '1) define the exact outcome,\n'
+                '2) list constraints and resources,\n'
+                '3) pick one concrete first action,\n'
+                '4) test quickly,\n'
+                '5) adjust from feedback.\n\n'
+                'If you share your exact context, I can draft a detailed plan.';
+    } else if (startsWithWhy) {
+      answer = isFrench
+          ? 'Sur "$topic", la cause est souvent un mix de contexte, contraintes, et execution.\n'
+                'Je vous conseille de verifier:\n'
+                '- ce qui a change,\n'
+                '- ce qui bloque reellement,\n'
+                '- la priorite immediate.\n\n'
+                'Partagez votre cas concret et je vous aide a isoler la cause la plus probable.'
+          : 'For "$topic", the reason is usually a mix of context, constraints, and execution.\n'
+                'Check:\n'
+                '- what changed,\n'
+                '- what is actually blocked,\n'
+                '- what matters most right now.\n\n'
+                'Share your exact case and I can help isolate the most likely cause.';
+    } else if (startsWithWhat) {
+      answer = isFrench
+          ? '"$topic" se comprend mieux avec ce cadre:\n'
+                '- definition simple,\n'
+                '- exemple concret,\n'
+                '- quand l utiliser,\n'
+                '- erreurs courantes a eviter.\n\n'
+                'Dites-moi votre niveau (debutant/intermediaire/avance) et je vous donne une explication adaptee.'
+          : '"$topic" is easiest to explain with this structure:\n'
+                '- plain definition,\n'
+                '- concrete example,\n'
+                '- when to use it,\n'
+                '- common mistakes to avoid.\n\n'
+                'Tell me your level (beginner/intermediate/advanced) and I will tailor it.';
+    } else {
+      answer = isFrench
+          ? 'Oui, on peut en discuter.\nSur "$topic", je peux vous aider de facon pratique: plan, options, risques et prochaine action.\n\n'
+                'Si vous partagez votre contexte, je vous reponds de maniere plus precise.'
+          : 'Yes, we can discuss that.\nFor "$topic", I can help in a practical way: plan, options, risks, and next action.\n\n'
+                'If you share context, I can answer with more precision.';
+    }
+
+    final followUps = isFrench
+        ? <String>[
+            'Explique-le simplement.',
+            'Donne-moi un plan d action concret.',
+            'Quels risques dois-je anticiper ?',
+            ...starterPrompts(locale, role),
+          ]
+        : <String>[
+            'Explain it simply.',
+            'Give me a concrete action plan.',
+            'What risks should I anticipate?',
+            ...starterPrompts(locale, role),
+          ];
+
+    return CamGuideReply(
+      answer: answer,
+      followUps: _dedupePreserveOrder(followUps).take(5).toList(),
+      sourceHints: const <String>['CamGuide general guidance'],
+      confidence: 0.62,
+    );
+  }
+
+  bool _isLikelyCamVoteQuestion({
+    required String normalizedQuestion,
+    required Set<String> questionTokens,
+  }) {
+    if (questionTokens.intersection(_camVoteTokens).isNotEmpty) return true;
+    return normalizedQuestion.contains('cam vote') ||
+        normalizedQuestion.contains('constitutional council');
+  }
+
+  String _extractGeneralTopic({
+    required String normalizedQuestion,
+    required bool isFrench,
+  }) {
+    final prefix = isFrench
+        ? RegExp(
+            r'^(comment|pourquoi|c est quoi|cest quoi|qu est ce que|que signifie)\s+',
+          )
+        : RegExp(r'^(how|why|what is|what are|explain|define)\s+');
+    final withoutPrefix = normalizedQuestion.replaceFirst(prefix, '').trim();
+    if (withoutPrefix.isEmpty) {
+      return isFrench ? 'ce sujet' : 'this topic';
+    }
+    return withoutPrefix;
   }
 
   String _normalize(String raw) {

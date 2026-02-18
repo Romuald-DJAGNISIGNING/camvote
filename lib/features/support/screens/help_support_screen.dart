@@ -6,6 +6,7 @@ import 'package:camvote/gen/l10n/app_localizations.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
+import '../../../core/errors/error_message.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/routing/route_paths.dart';
@@ -293,9 +294,17 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
     if (!mounted) return;
 
     if (result == null || result.status == 'error') {
+      final submitError = ref.read(supportTicketProvider).asError?.error;
+      final errorMessage = submitError == null
+          ? t.helpSupportSubmissionFailed
+          : safeErrorMessage(
+              context,
+              submitError,
+              fallback: t.helpSupportSubmissionFailed,
+            );
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(t.helpSupportSubmissionFailed)));
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
       return;
     }
 

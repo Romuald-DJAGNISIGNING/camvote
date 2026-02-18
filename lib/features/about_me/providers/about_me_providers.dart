@@ -17,7 +17,18 @@ final trelloRepositoryProvider = Provider<TrelloRepository>((ref) {
   return TrelloRepository();
 });
 
+final trelloRefreshTickProvider = StreamProvider<int>((ref) async* {
+  var tick = 0;
+  yield tick;
+  while (true) {
+    await Future<void>.delayed(const Duration(seconds: 45));
+    tick += 1;
+    yield tick;
+  }
+});
+
 final trelloStatsProvider = FutureProvider<TrelloStats?>((ref) async {
+  ref.watch(trelloRefreshTickProvider);
   final repo = ref.watch(trelloRepositoryProvider);
   return repo.fetchBoardStats();
 });

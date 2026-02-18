@@ -1127,6 +1127,10 @@ async function handlePublicTrelloStats(
   corsHeaders: Headers,
 ): Promise<Response> {
   if (request.method !== 'GET') throw new HttpError(405, 'Method not allowed');
+  const responseHeaders = new Headers(corsHeaders);
+  responseHeaders.set('Cache-Control', 'no-store, max-age=0');
+  responseHeaders.set('Pragma', 'no-cache');
+  responseHeaders.set('Expires', '0');
   const key = (env.TRELLO_KEY || '').trim();
   const token = (env.TRELLO_TOKEN || '').trim();
   const boardId = (env.TRELLO_BOARD_ID || '').trim();
@@ -1134,7 +1138,7 @@ async function handlePublicTrelloStats(
   if (!key || !boardId) {
     return jsonResponse(
       { ok: true, configured: false, stats: null },
-      corsHeaders,
+      responseHeaders,
     );
   }
 
@@ -1210,7 +1214,7 @@ async function handlePublicTrelloStats(
           lists,
         },
       },
-      corsHeaders,
+      responseHeaders,
     );
   } catch (error) {
     const message = (error as Error).message || 'Trello unavailable.';
@@ -2508,7 +2512,9 @@ async function handleSupportTicket(
   env: Env,
   corsHeaders: Headers,
 ): Promise<Response> {
-  const { uid, role } = await requireAuthWithRole(request, env);
+  const auth = await maybeAuthWithRole(request, env);
+  const uid = auth?.uid || '';
+  const role = auth?.role || 'public';
   const body = await readJson(request);
   const name = pickString(body, ['name', 'fullName', 'displayName']).trim();
   const email = pickString(body, ['email', 'senderEmail']).trim().toLowerCase();
@@ -2528,7 +2534,7 @@ async function handleSupportTicket(
   const now = new Date().toISOString();
   await firestoreCreate(env, `support_tickets/${id}`, {
     id,
-    userId: uid,
+    userId: uid || null,
     role,
     name,
     email,
@@ -2541,25 +2547,27 @@ async function handleSupportTicket(
     updatedAt: now,
   });
 
-  await createUserNotification(
-    env,
-    {
-      id: `support_ticket_received_${id}`,
-      userId: uid,
-      audience: roleToAudience(role),
-      category: roleToAudience(role),
-      type: 'support',
-      title: 'Support ticket received',
-      body: `Your ticket ${id} was submitted successfully. Our team will reply soon.`,
-      route: `/support?ticketId=${encodeURIComponent(id)}`,
-      read: false,
-      createdAt: now,
-      updatedAt: now,
-      source: 'support_ticket',
-      sourceId: id,
-    },
-    true,
-  );
+  if (uid) {
+    await createUserNotification(
+      env,
+      {
+        id: `support_ticket_received_${id}`,
+        userId: uid,
+        audience: roleToAudience(role),
+        category: roleToAudience(role),
+        type: 'support',
+        title: 'Support ticket received',
+        body: `Your ticket ${id} was submitted successfully. Our team will reply soon.`,
+        route: `/support?ticketId=${encodeURIComponent(id)}`,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+        source: 'support_ticket',
+        sourceId: id,
+      },
+      true,
+    );
+  }
 
   await notifyAdmins(
     env,
@@ -2863,51 +2871,75 @@ async function handleAdminSupportTicketRespond(
     throw new HttpError(404, 'Support ticket not found.');
   }
 
-  const userId = docString(ticketDoc, 'userId');
-  if (!userId) {
-    throw new HttpError(409, 'Support ticket is missing userId.');
+  const recipientEmail = docString(ticketDoc, 'email').trim().toLowerCase();
+  let userId = docString(ticketDoc, 'userId').trim();
+  if (!userId && isValidEmail(recipientEmail)) {
+    const linkedUserDoc = await findUserByIdentifier(env, recipientEmail);
+    if (linkedUserDoc) {
+      userId =
+        (
+          docString(linkedUserDoc, 'uid') ||
+          linkedUserDoc.name.split('/').pop() ||
+          ''
+        ).trim();
+    }
   }
 
   const now = new Date().toISOString();
+  const ticketPatch: JsonObject = {
+    status,
+    responseMessage,
+    respondedAt: now,
+    respondedBy: admin.uid,
+    updatedAt: now,
+  };
+  const ticketPatchFields = [
+    'status',
+    'responseMessage',
+    'respondedAt',
+    'respondedBy',
+    'updatedAt',
+  ];
+  if (userId) {
+    ticketPatch.userId = userId;
+    ticketPatchFields.push('userId');
+  }
   await firestorePatch(
     env,
     `support_tickets/${ticketId}`,
-    {
-      status,
-      responseMessage,
-      respondedAt: now,
-      respondedBy: admin.uid,
-      updatedAt: now,
-    },
-    ['status', 'responseMessage', 'respondedAt', 'respondedBy', 'updatedAt'],
+    ticketPatch,
+    ticketPatchFields,
   );
 
-  await createUserNotification(
-    env,
-    {
-      id: `support_ticket_status_${ticketId}_${status}_${now}`,
-      userId,
-      audience: roleToAudience(docString(ticketDoc, 'role') || 'public'),
-      category: roleToAudience(docString(ticketDoc, 'role') || 'public'),
-      type: status === 'resolved' || status === 'closed' ? 'success' : 'info',
-      title:
-        status === 'resolved'
-          ? 'Support ticket resolved'
-          : status === 'closed'
-          ? 'Support ticket closed'
-          : 'Support response received',
-      body: responseMessage,
-      route: `/support?ticketId=${encodeURIComponent(ticketId)}`,
-      read: false,
-      createdAt: now,
-      updatedAt: now,
-      source: 'support_response',
-      sourceId: ticketId,
-    },
-    true,
-  );
+  let inAppSent = false;
+  if (userId) {
+    await createUserNotification(
+      env,
+      {
+        id: `support_ticket_status_${ticketId}_${status}_${now}`,
+        userId,
+        audience: roleToAudience(docString(ticketDoc, 'role') || 'public'),
+        category: roleToAudience(docString(ticketDoc, 'role') || 'public'),
+        type: status === 'resolved' || status === 'closed' ? 'success' : 'info',
+        title:
+          status === 'resolved'
+            ? 'Support ticket resolved'
+            : status === 'closed'
+            ? 'Support ticket closed'
+            : 'Support response received',
+        body: responseMessage,
+        route: `/support?ticketId=${encodeURIComponent(ticketId)}`,
+        read: false,
+        createdAt: now,
+        updatedAt: now,
+        source: 'support_response',
+        sourceId: ticketId,
+      },
+      true,
+    );
+    inAppSent = true;
+  }
 
-  const recipientEmail = docString(ticketDoc, 'email').trim().toLowerCase();
   const emailSent = await trySendSupportResponseEmail(env, {
     to: recipientEmail,
     ticketId,
@@ -2915,7 +2947,10 @@ async function handleAdminSupportTicketRespond(
     responseMessage,
   });
 
-  return jsonResponse({ ok: true, ticketId, status, emailSent }, corsHeaders);
+  return jsonResponse(
+    { ok: true, ticketId, status, inAppSent, emailSent },
+    corsHeaders,
+  );
 }
 
 async function handleAdminTipList(

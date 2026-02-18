@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 
 import 'core/l10n/app_locales.dart';
@@ -100,80 +99,89 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final auth = ref.watch(authControllerProvider).asData?.value;
-    final routeFromRouter = _routeContextFromUri(_safeRouterUri(router));
-    final routeFromBrowser = _routeContextFromUri(Uri.base);
-    final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-    if (_hideLauncherOnRoute(route.path)) {
-      return child;
-    }
+    return ValueListenableBuilder<RouteInformation>(
+      valueListenable: router.routeInformationProvider,
+      builder: (context, routeInformation, _) {
+        final routeFromRouter = _routeContextFromUri(routeInformation.uri);
+        final routeFromBrowser = _routeContextFromUri(Uri.base);
+        final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
+        if (_hideLauncherOnRoute(route.path)) {
+          return child;
+        }
 
-    final t = AppLocalizations.of(context);
-    final entry = _resolveActionEntryForRoute(route: route, auth: auth);
-    final target = _routeWithEntry(RoutePaths.camGuide, entry);
-    final metrics = _CamGuideLauncherMetrics.fromWidth(
-      MediaQuery.of(context).size.width,
-    );
+        final t = AppLocalizations.of(context);
+        final entry = _resolveActionEntryForRoute(route: route, auth: auth);
+        final target = _routeWithEntry(RoutePaths.camGuide, entry);
+        final metrics = _CamGuideLauncherMetrics.fromWidth(
+          MediaQuery.of(context).size.width,
+        );
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        child,
-        Positioned(
-          right: metrics.right,
-          left: metrics.left,
-          bottom: metrics.bottom,
-          child: SafeArea(
-            minimum: metrics.safeAreaInsets,
-            child: Align(
-              alignment: metrics.alignment,
-              child: Semantics(
-                button: true,
-                label: t.helpSupportAiTitle,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => router.push(target),
-                    borderRadius: BorderRadius.circular(999),
-                    child: Ink(
-                      decoration: BoxDecoration(
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            child,
+            Positioned(
+              right: metrics.right,
+              left: metrics.left,
+              bottom: metrics.bottom,
+              child: SafeArea(
+                minimum: metrics.safeAreaInsets,
+                child: Align(
+                  alignment: metrics.alignment,
+                  child: Semantics(
+                    button: true,
+                    label: t.helpSupportAiTitle,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => router.push(target),
                         borderRadius: BorderRadius.circular(999),
-                        gradient: BrandPalette.heroGradient,
-                        border: Border.all(color: Colors.white.withAlpha(120)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: BrandPalette.ember.withAlpha(75),
-                            blurRadius: 24,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: metrics.padding,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            DecoratedBox(
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white,
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: CamVoteLogo(size: metrics.logoSize),
-                              ),
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(999),
+                            gradient: BrandPalette.heroGradient,
+                            border: Border.all(
+                              color: Colors.white.withAlpha(120),
                             ),
-                            if (!metrics.compact) ...[
-                              const SizedBox(width: 8),
-                              Text(
-                                'CamGuide',
-                                style: Theme.of(context).textTheme.labelLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
-                                    ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: BrandPalette.ember.withAlpha(75),
+                                blurRadius: 24,
+                                spreadRadius: 1,
                               ),
                             ],
-                          ],
+                          ),
+                          child: Padding(
+                            padding: metrics.padding,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                DecoratedBox(
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(2),
+                                    child: CamVoteLogo(size: metrics.logoSize),
+                                  ),
+                                ),
+                                if (!metrics.compact) ...[
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'CamGuide',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -181,9 +189,9 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -197,14 +205,6 @@ class _GlobalCamGuideLauncher extends ConsumerWidget {
         normalized.startsWith(RoutePaths.helpSupport) ||
         normalized.startsWith(RoutePaths.camGuide);
   }
-
-  Uri _safeRouterUri(GoRouter router) {
-    try {
-      return router.routeInformationProvider.value.uri;
-    } catch (_) {
-      return Uri.base;
-    }
-  }
 }
 
 class _WebActionDock extends ConsumerWidget {
@@ -216,90 +216,102 @@ class _WebActionDock extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final auth = ref.watch(authControllerProvider).asData?.value;
+    return ValueListenableBuilder<RouteInformation>(
+      valueListenable: router.routeInformationProvider,
+      builder: (context, routeInformation, _) {
+        final routeFromRouter = _routeContextFromUri(routeInformation.uri);
+        final routeFromBrowser = _routeContextFromUri(Uri.base);
+        final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
+        if (_hideDockOnRoute(route.path)) {
+          return child;
+        }
 
-    final routeFromRouter = _routeContextFromActiveRoute(context, router);
-    final routeFromBrowser = _routeContextFromUri(Uri.base);
-    final route = _mergeRouteContext(routeFromRouter, routeFromBrowser);
-    if (_hideDockOnRoute(route.path)) {
-      return child;
-    }
-
-    final actionEntry = _resolveActionEntryForRoute(route: route, auth: auth);
-    final isAdminAuthed =
-        auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
-    final showAdminShortcut =
-        isAdminAuthed && !route.path.startsWith(RoutePaths.adminDashboard);
-    final showBell = route.path != RoutePaths.notifications;
-    final needsTopClearance = _needsTopClearance(route.path);
-    final dockMetrics = _WebDockMetrics.fromWidth(
-      MediaQuery.of(context).size.width,
-    );
-    final iconButtonStyle = dockMetrics.compact
-        ? IconButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            iconSize: 19,
-            minimumSize: const Size(34, 34),
-            padding: const EdgeInsets.all(7),
-          )
-        : null;
-    final dock = SafeArea(
-      minimum: dockMetrics.safeAreaInsets,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withAlpha(180),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant.withAlpha(90),
-          ),
-        ),
-        child: Padding(
-          padding: dockMetrics.innerPadding,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showBell)
-                NotificationBell(
-                  showTooltip: false,
-                  compact: dockMetrics.compact,
-                  onOpen: () {
-                    router.push(
-                      _routeWithEntry(RoutePaths.notifications, actionEntry),
-                    );
-                  },
-                ),
-              IconButton(
-                style: iconButtonStyle,
-                onPressed: () {
-                  router.push(
-                    _routeWithEntry(RoutePaths.settings, actionEntry),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined),
+        final actionEntry = _resolveActionEntryForRoute(
+          route: route,
+          auth: auth,
+        );
+        final isAdminAuthed =
+            auth?.isAuthenticated == true && auth?.user?.role == AppRole.admin;
+        final showAdminShortcut =
+            isAdminAuthed && !route.path.startsWith(RoutePaths.adminDashboard);
+        final showBell = route.path != RoutePaths.notifications;
+        final needsTopClearance = _needsTopClearance(route.path);
+        final dockMetrics = _WebDockMetrics.fromWidth(
+          MediaQuery.of(context).size.width,
+        );
+        final iconButtonStyle = dockMetrics.compact
+            ? IconButton.styleFrom(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                iconSize: 19,
+                minimumSize: const Size(34, 34),
+                padding: const EdgeInsets.all(7),
+              )
+            : null;
+        final dock = SafeArea(
+          minimum: dockMetrics.safeAreaInsets,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface.withAlpha(180),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withAlpha(90),
               ),
-              if (showAdminShortcut)
-                IconButton(
-                  style: iconButtonStyle,
-                  onPressed: () => router.go(RoutePaths.adminDashboard),
-                  icon: const Icon(Icons.admin_panel_settings_outlined),
-                ),
-            ],
+            ),
+            child: Padding(
+              padding: dockMetrics.innerPadding,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (showBell)
+                    NotificationBell(
+                      showTooltip: false,
+                      compact: dockMetrics.compact,
+                      onOpen: () {
+                        router.push(
+                          _routeWithEntry(
+                            RoutePaths.notifications,
+                            actionEntry,
+                          ),
+                        );
+                      },
+                    ),
+                  IconButton(
+                    style: iconButtonStyle,
+                    onPressed: () {
+                      router.push(
+                        _routeWithEntry(RoutePaths.settings, actionEntry),
+                      );
+                    },
+                    icon: const Icon(Icons.settings_outlined),
+                  ),
+                  if (showAdminShortcut)
+                    IconButton(
+                      style: iconButtonStyle,
+                      onPressed: () => router.go(RoutePaths.adminDashboard),
+                      icon: const Icon(Icons.admin_panel_settings_outlined),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(
-            top: needsTopClearance ? dockMetrics.contentTopInset : 0,
-          ),
-          child: child,
-        ),
-        Positioned(top: 0, right: 0, child: dock),
-      ],
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(
+                top: needsTopClearance ? dockMetrics.contentTopInset : 0,
+              ),
+              child: child,
+            ),
+            Positioned(top: 0, right: 0, child: dock),
+          ],
+        );
+      },
     );
   }
 
@@ -318,30 +330,6 @@ class _WebActionDock extends ConsumerWidget {
         normalized == RoutePaths.adminPortal ||
         normalized == RoutePaths.publicHome ||
         normalized.startsWith(RoutePaths.authLogin);
-  }
-
-  _RouteContext _routeContextFromActiveRoute(
-    BuildContext context,
-    GoRouter router,
-  ) {
-    try {
-      final routeStateUri = GoRouterState.of(context).uri;
-      return _routeContextFromUri(routeStateUri);
-    } catch (_) {
-      if (!kIsWeb) {
-        return const _RouteContext(
-          path: RoutePaths.gateway,
-          entry: null,
-          role: null,
-        );
-      }
-      try {
-        final infoUri = router.routeInformationProvider.value.uri;
-        return _routeContextFromUri(infoUri);
-      } catch (_) {
-        return _routeContextFromUri(Uri.base);
-      }
-    }
   }
 }
 
