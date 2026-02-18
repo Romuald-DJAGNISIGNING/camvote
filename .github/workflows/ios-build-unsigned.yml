@@ -123,19 +123,45 @@ jobs:
         run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
 
       - name: Build Unsigned iOS App
-        run: >
-          flutter build ios --release --no-codesign
-          --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }}
-          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }}
-          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
-          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        id: build
+        shell: bash
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          flutter build ios --release --no-codesign \
+            --dart-define=CAMVOTE_API_BASE_URL=${{ steps.api.outputs.value }} \
+            --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=${{ env.CAMVOTE_FIREBASE_WEB_API_KEY }} \
+            --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=${{ env.CAMVOTE_FIREBASE_ANDROID_API_KEY }} \
+            --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=${{ env.CAMVOTE_FIREBASE_IOS_API_KEY }} \
+            -v 2>&1 | tee ios-build.log
+
+      - name: Extract Build Errors
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -f ios-build.log ]; then
+            echo "::warning::ios-build.log not found."
+            exit 0
+          fi
+
+          # Prefer the most actionable lines; keep the volume low so annotations remain readable.
+          grep -nE '(^|\\b)(error:|fatal error:)' ios-build.log | tail -n 50 | while IFS= read -r line; do
+            # Escape workflow command control characters.
+            msg="$(printf '%s' "$line" | sed -e 's/%/%25/g' -e 's/\r/%0D/g')"
+            echo "::error::${msg}"
+          done || true
 
       - name: Package iOS Artifacts
         id: package
         shell: bash
+        if: always()
         run: |
           set -euo pipefail
           mkdir -p release-artifacts/ios
+
+          if [ -f ios-build.log ]; then
+            cp ios-build.log release-artifacts/ios/ios-build.log
+          fi
 
           if [ -d build/ios/iphoneos/Runner.app ]; then
             runner_app_zip="release-artifacts/ios/Runner.app.zip"
@@ -156,7 +182,7 @@ jobs:
           (
             cd release-artifacts/ios
             shopt -s nullglob
-            files=( *.zip *.ipa )
+            files=( * )
             if [ "${#files[@]}" -eq 0 ]; then
               echo "::error::No iOS artifacts were packaged."
               exit 1
@@ -168,8 +194,13 @@ jobs:
 
       - name: Upload iOS Artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: ios-unsigned-artifacts
           path: ${{ steps.package.outputs.path }}
           if-no-files-found: error
           retention-days: 14
+
+      - name: Fail If Build Failed
+        if: steps.build.outcome != 'success'
+        run: exit 1
