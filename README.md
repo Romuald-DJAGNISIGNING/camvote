@@ -88,6 +88,19 @@
    - Static mobile pages are served from `/mobile/` and `/mobile/app-store/index.html`.
 4. **Helper**: `pwsh scripts/deploy-all.ps1` (skips web with `-SkipWebBuild`).
 
+## Release Preflight
+Run this before any production push/deploy:
+```bash
+flutter analyze
+flutter test
+cd cf-worker && npm ci && npm run lint
+```
+- Confirm no secrets are staged:
+  ```bash
+  git ls-files | grep -E '(^\.env$|^service-account\.json$|wrangler-account\.json|firebase-tools\.json)'
+  ```
+- If the command returns anything, remove/rotate credentials before pushing.
+
 ## Web Portal Links
 - General portal: `https://camvote.pages.dev/portal`
 - Admin portal home: `https://camvote.pages.dev/backoffice`

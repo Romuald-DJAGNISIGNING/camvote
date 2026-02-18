@@ -1,0 +1,65 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  flutter-quality:
+    name: Flutter Analyze and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build Web Release
+        run: flutter build web --release --no-wasm-dry-run
+
+      - name: Ensure sensitive files are not tracked
+        run: |
+          disallowed=$(git ls-files | grep -E '(^\.env$|^service-account\.json$|^cf-worker/node_modules/|wrangler-account\.json|firebase-tools\.json)') || true
+          if [ -n "$disallowed" ]; then
+            echo "Tracked sensitive files detected:"
+            echo "$disallowed"
+            exit 1
+          fi
+
+  worker-quality:
+    name: Worker TypeScript Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cf-worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: cf-worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
