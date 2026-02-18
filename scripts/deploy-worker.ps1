@@ -5,27 +5,40 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Assert-Tool($cmd, $hint) {
-  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-    throw "Required tool '$cmd' not found. $hint"
+function Resolve-ToolPath(
+  [string[]]$Candidates,
+  [string]$Hint,
+  [switch]$Optional = $false
+) {
+  foreach ($candidate in $Candidates) {
+    $tool = Get-Command $candidate -ErrorAction SilentlyContinue
+    if ($tool) {
+      return $tool.Source
+    }
   }
+  if ($Optional) {
+    return $null
+  }
+  throw "Required tool not found ($($Candidates -join ', ')). $Hint"
 }
 
-Assert-Tool npm "Install Node.js"
+$NpmCmd = Resolve-ToolPath @('npm.cmd', 'npm') "Install Node.js"
+$NpxCmd = Resolve-ToolPath @('npx.cmd', 'npx') "Install Node.js"
+$WranglerCmd = Resolve-ToolPath @('wrangler.cmd', 'wrangler') "Install wrangler: npm i -g wrangler" -Optional
 
 function Run-Wrangler {
-  if (Get-Command wrangler -ErrorAction SilentlyContinue) {
-    wrangler deploy
+  if ($WranglerCmd) {
+    & $WranglerCmd deploy
     return
   }
   Write-Host "wrangler not found globally; using npx wrangler" -ForegroundColor Yellow
-  npx wrangler deploy
+  & $NpxCmd wrangler deploy
 }
 
 Write-Host "==> Deploying Cloudflare Worker" -ForegroundColor Cyan
 Push-Location cf-worker
 if (-not $SkipInstall) {
-  npm install --quiet
+  & $NpmCmd install --quiet
 }
 Run-Wrangler
 Pop-Location

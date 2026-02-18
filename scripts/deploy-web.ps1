@@ -6,14 +6,21 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Assert-Tool($cmd, $hint) {
-  if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) {
-    throw "Required tool '$cmd' not found. $hint"
+function Resolve-ToolPath(
+  [string[]]$Candidates,
+  [string]$Hint
+) {
+  foreach ($candidate in $Candidates) {
+    $tool = Get-Command $candidate -ErrorAction SilentlyContinue
+    if ($tool) {
+      return $tool.Source
+    }
   }
+  throw "Required tool not found ($($Candidates -join ', ')). $Hint"
 }
 
-Assert-Tool flutter "Install Flutter SDK"
-Assert-Tool npm "Install Node.js"
+$FlutterCmd = Resolve-ToolPath @('flutter.bat', 'flutter') "Install Flutter SDK"
+$NpxCmd = Resolve-ToolPath @('npx.cmd', 'npx') "Install Node.js"
 
 function Warn-Env($path) {
   if (-not (Test-Path $path)) {
@@ -30,7 +37,7 @@ Warn-Env ".env.public"
 
 if (-not $SkipBuild) {
   Write-Host "==> Building web bundle (Flutter)" -ForegroundColor Cyan
-  flutter build web --release --no-wasm-dry-run
+  & $FlutterCmd build web --release --no-wasm-dry-run
 }
 
 if (-not (Test-Path "build/web")) {
@@ -38,4 +45,4 @@ if (-not (Test-Path "build/web")) {
 }
 
 Write-Host "==> Deploying to Cloudflare Pages ($ProjectName)" -ForegroundColor Cyan
-npx wrangler pages deploy build/web --project-name $ProjectName
+& $NpxCmd wrangler pages deploy build/web --project-name $ProjectName
