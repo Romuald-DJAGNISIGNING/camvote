@@ -187,6 +187,21 @@ try {
     }),
   });
 
+  const notificationPayload = await fetchJson(`${baseUrl}/v1/notifications`, {
+    method: 'GET',
+    headers: {
+      authorization: `Bearer ${userToken}`,
+    },
+  });
+  const notifications = Array.isArray(notificationPayload?.notifications)
+    ? notificationPayload.notifications
+    : [];
+  const ticketMarker = `ticketId=${encodeURIComponent(ticket.ticketId)}`;
+  const matching = notifications.find(
+    (item) => typeof item?.route === 'string' && item.route.includes(ticketMarker)
+  );
+  const notificationFound = Boolean(matching);
+
   console.log(
     JSON.stringify(
       {
@@ -195,6 +210,15 @@ try {
         ticketId: ticket.ticketId,
         inAppSent: reply.inAppSent,
         emailSent: reply.emailSent,
+        notificationFound,
+        notification: notificationFound
+          ? {
+              id: matching.id,
+              title: matching.title,
+              createdAt: matching.createdAt,
+              route: matching.route,
+            }
+          : null,
         ticketEmail,
       },
       null,
@@ -215,4 +239,3 @@ try {
     await Promise.all(tasks);
   }
 }
-
