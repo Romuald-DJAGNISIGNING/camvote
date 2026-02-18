@@ -43,6 +43,7 @@ jobs:
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
       ANDROID_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_BASE64 }}
+      IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
       PLAY_STORE_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
     steps:
       - name: Checkout
@@ -105,6 +106,19 @@ jobs:
           fi
           mkdir -p android/app
           printf '%s' "$ANDROID_GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > android/app/google-services.json
+
+      - name: Restore GoogleService-Info.plist (for validation)
+        shell: bash
+        run: |
+          if [ -f ios/Runner/GoogleService-Info.plist ]; then
+            exit 0
+          fi
+          if [ -z "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "::error::ios/Runner/GoogleService-Info.plist is missing and IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 was not provided."
+            exit 1
+          fi
+          mkdir -p ios/Runner
+          printf '%s' "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > ios/Runner/GoogleService-Info.plist
 
       - name: Configure Android Signing
         shell: bash
