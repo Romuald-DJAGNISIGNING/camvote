@@ -27,6 +27,12 @@ export interface Env {
   TRELLO_KEY?: string;
   TRELLO_TOKEN?: string;
   TRELLO_BOARD_ID?: string;
+  // Optional Trello configuration for treating certain lists as "done" (completed)
+  // when computing delivery progress.
+  // - TRELLO_DONE_LIST_IDS: comma-separated Trello list IDs
+  // - TRELLO_DONE_LIST_NAMES: comma-separated Trello list names
+  TRELLO_DONE_LIST_IDS?: string;
+  TRELLO_DONE_LIST_NAMES?: string;
   TAPTAP_SEND_URL?: string;
   TAPTAP_SEND_DEEP_LINK?: string;
   REMITLY_SEND_URL?: string;
@@ -1465,6 +1471,62 @@ async function handlePublicTrelloStats(
   }
 
   try {
+    const parseCsv = (raw: string | undefined): string[] => {
+      if (!raw) return [];
+      return raw
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+    };
+
+    const normalizeListName = (value: string): string => {
+      return value
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    };
+
+    const isDoneListName = (value: string): boolean => {
+      const normalized = normalizeListName(value);
+      if (!normalized) return false;
+      // Avoid obvious negations.
+      if (normalized.includes('not done') || normalized.includes('pas termine')) {
+        return false;
+      }
+      // English + French heuristics (extendable via env overrides).
+      const keywords = [
+        'done',
+        'complete',
+        'completed',
+        'finish',
+        'finished',
+        'shipped',
+        'released',
+        'delivered',
+        'merged',
+        'termine',
+        'terminee',
+        'fini',
+        'fait',
+        'faite',
+        'livre',
+        'livree',
+        'resolu',
+        'cloture',
+        'cloturee',
+      ];
+      for (const word of keywords) {
+        if (normalized === word) return true;
+        if (normalized.startsWith(`${word} `)) return true;
+        if (normalized.endsWith(` ${word}`)) return true;
+        if (normalized.includes(` ${word} `)) return true;
+      }
+      return false;
+    };
+
     const auth = new URLSearchParams({ key });
     if (token) {
       auth.set('token', token);
@@ -1503,17 +1565,51 @@ async function handlePublicTrelloStats(
     }
     const cards = (await cardsRes.json()) as Array<Record<string, unknown>>;
 
+    const doneListIds = new Set<string>();
+    const doneListIdOverrides = parseCsv(env.TRELLO_DONE_LIST_IDS);
+    const doneListNameOverrides = parseCsv(env.TRELLO_DONE_LIST_NAMES);
+    if (doneListIdOverrides.length > 0) {
+      for (const id of doneListIdOverrides) {
+        doneListIds.add(id);
+      }
+    } else if (doneListNameOverrides.length > 0) {
+      const wantedNames = new Set(doneListNameOverrides.map(normalizeListName));
+      for (const list of activeLists) {
+        const listId = `${list.id ?? ''}`.trim();
+        if (!listId) continue;
+        const listName = `${list.name ?? ''}`;
+        if (wantedNames.has(normalizeListName(listName))) {
+          doneListIds.add(listId);
+        }
+      }
+    } else {
+      for (const list of activeLists) {
+        const listId = `${list.id ?? ''}`.trim();
+        if (!listId) continue;
+        const listName = `${list.name ?? ''}`;
+        if (isDoneListName(listName)) {
+          doneListIds.add(listId);
+        }
+      }
+    }
+
     let totalCards = 0;
     let openCards = 0;
+    let doneCards = 0;
     const lists = activeLists
       .map((list) => {
         const listId = `${list.id ?? ''}`;
         const listName = `${list.name ?? 'List'}`.trim() || 'List';
+        const isDone = doneListIds.has(listId);
         const listCards = cards.filter((c) => `${c.idList ?? ''}` === listId);
         const total = listCards.length;
-        const open = listCards.filter((c) => c.closed !== true).length;
+        const done = isDone
+          ? total
+          : listCards.filter((c) => c.closed === true).length;
+        const open = Math.max(total - done, 0);
         totalCards += total;
         openCards += open;
+        doneCards += done;
         return {
           name: listName,
           totalCards: total,
@@ -1532,7 +1628,7 @@ async function handlePublicTrelloStats(
           lastActivityAt: `${board.dateLastActivity ?? ''}`.trim() || null,
           totalCards,
           openCards,
-          doneCards: Math.max(totalCards - openCards, 0),
+          doneCards: Math.max(doneCards, 0),
           lists,
         },
       },
@@ -3007,40 +3103,54 @@ async function handleSupportTicket(
   });
 
   if (uid) {
-    await createUserNotification(
+    try {
+      await createUserNotification(
+        env,
+        {
+          id: `support_ticket_received_${id}`,
+          userId: uid,
+          audience: roleToAudience(role),
+          category: roleToAudience(role),
+          type: 'support',
+          title: 'Support ticket received',
+          body: `Your ticket ${id} was submitted successfully. Our team will reply soon.`,
+          route: `/support?ticketId=${encodeURIComponent(id)}`,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+          source: 'support_ticket',
+          sourceId: id,
+        },
+        true,
+      );
+    } catch (error) {
+      console.error(
+        'Support ticket user notification failed',
+        (error as Error).message || error,
+      );
+    }
+  }
+
+  try {
+    await notifyAdmins(
       env,
       {
-        id: `support_ticket_received_${id}`,
-        userId: uid,
-        audience: roleToAudience(role),
-        category: roleToAudience(role),
-        type: 'support',
-        title: 'Support ticket received',
-        body: `Your ticket ${id} was submitted successfully. Our team will reply soon.`,
-        route: `/support?ticketId=${encodeURIComponent(id)}`,
-        read: false,
-        createdAt: now,
-        updatedAt: now,
+        idPrefix: `support_ticket_new_${id}`,
+        category: 'support',
+        title: 'New help desk ticket',
+        body: `New ${role} ticket from ${name}.`,
+        route: `/admin/support?ticketId=${encodeURIComponent(id)}`,
         source: 'support_ticket',
         sourceId: id,
       },
-      true,
+      now,
+    );
+  } catch (error) {
+    console.error(
+      'Support ticket admin notification failed',
+      (error as Error).message || error,
     );
   }
-
-  await notifyAdmins(
-    env,
-    {
-      idPrefix: `support_ticket_new_${id}`,
-      category: 'support',
-      title: 'New help desk ticket',
-      body: `New ${role} ticket from ${name}.`,
-      route: `/admin/support?ticketId=${encodeURIComponent(id)}`,
-      source: 'support_ticket',
-      sourceId: id,
-    },
-    now,
-  );
 
   return jsonResponse({ ok: true, ticketId: id, status: 'received' }, corsHeaders, 201);
 }
@@ -6261,7 +6371,14 @@ async function trySendSupportResponseEmail(env: Env, payload: SupportResponseEma
 
   if (isGmailSenderAddress(from)) {
     if (hasGmailSupportEmailConfig(env)) {
-      return await trySendSupportResponseEmailViaGmail(env, { ...payload, to: recipient }, from, replyTo);
+      const ok = await trySendSupportResponseEmailViaGmail(
+        env,
+        { ...payload, to: recipient },
+        from,
+        replyTo,
+      );
+      console.log(`Support email provider=gmail_api ticket=${payload.ticketId} ok=${ok}`);
+      return ok;
     }
 
     console.error(
@@ -6271,7 +6388,14 @@ async function trySendSupportResponseEmail(env: Env, payload: SupportResponseEma
     );
   }
 
-  return await trySendSupportResponseEmailViaMailChannels(env, { ...payload, to: recipient }, from, replyTo);
+  const ok = await trySendSupportResponseEmailViaMailChannels(
+    env,
+    { ...payload, to: recipient },
+    from,
+    replyTo,
+  );
+  console.log(`Support email provider=mailchannels ticket=${payload.ticketId} ok=${ok}`);
+  return ok;
 }
 
 async function trySendSupportResponseEmailViaMailChannels(
