@@ -16,6 +16,14 @@ class AppConfig {
     return defineValue;
   }
 
+  static String _normalizeReadableText(String input) {
+    return input
+        .replaceAll('Ã‚Â©', '(c)')
+        .replaceAll('Â©', '(c)')
+        .replaceAll('©', '(c)')
+        .trim();
+  }
+
   // Configure these at build time using --dart-define.
   // Example:
   // flutter run --dart-define=CAMVOTE_API_BASE_URL=https://api.example.com
@@ -106,11 +114,13 @@ class AppConfig {
     const String.fromEnvironment('CAMVOTE_MAP_TILE_KEY', defaultValue: ''),
   );
 
-  static String get mapAttribution => _pick(
-    _env('CAMVOTE_MAP_ATTRIBUTION'),
-    const String.fromEnvironment(
-      'CAMVOTE_MAP_ATTRIBUTION',
-      defaultValue: '© OpenStreetMap contributors',
+  static String get mapAttribution => _normalizeReadableText(
+    _pick(
+      _env('CAMVOTE_MAP_ATTRIBUTION'),
+      const String.fromEnvironment(
+        'CAMVOTE_MAP_ATTRIBUTION',
+        defaultValue: '(c) OpenStreetMap contributors',
+      ),
     ),
   );
 
@@ -162,8 +172,7 @@ class AppConfig {
   static bool get hasTipOrangeMoneyNumber =>
       tipOrangeMoneyNumber.trim().isNotEmpty;
   static bool get hasTipOrangeMoneyName => tipOrangeMoneyName.trim().isNotEmpty;
-  static bool get hasMaxItTipQrImageUrl =>
-      maxItTipQrImageUrl.trim().isNotEmpty;
+  static bool get hasMaxItTipQrImageUrl => maxItTipQrImageUrl.trim().isNotEmpty;
   static bool get hasReceiptWatermarkAsset =>
       receiptWatermarkAsset.trim().isNotEmpty;
   static bool get hasMapTileKey => mapTileKey.trim().isNotEmpty;

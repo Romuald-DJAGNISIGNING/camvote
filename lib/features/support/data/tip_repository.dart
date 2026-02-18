@@ -9,6 +9,7 @@ import '../../../core/network/worker_client.dart';
 import '../../../core/firebase/firebase_auth_scope.dart';
 import '../../../core/offline/offline_sync_store.dart';
 import '../models/tip_models.dart';
+import '../utils/tip_checkout_links.dart';
 
 class TipRepository {
   TipRepository({WorkerClient? workerClient, FirebaseAuth? auth})
@@ -242,75 +243,20 @@ class TipRepository {
         ? legacy.currency.trim().toUpperCase()
         : 'XAF';
     final amount = legacy.amount;
+    final fallbackLinks = buildFallbackTipCheckoutLinks(
+      provider: TipCheckoutProvider.remitly,
+      tipId: legacy.tipId,
+      amount: amount,
+      currency: currency,
+      recipientName: recipientName,
+      recipientNumber: recipientNumber,
+    );
 
     return legacy.copyWith(
       provider: 'remitly',
-      checkoutUrl: _buildRemitlyWebFallbackUrl(
-        tipId: legacy.tipId,
-        amount: amount,
-        currency: currency,
-        recipientName: recipientName,
-        recipientNumber: recipientNumber,
-      ),
-      deepLink: _buildRemitlyDeepLinkFallbackUrl(
-        tipId: legacy.tipId,
-        amount: amount,
-        currency: currency,
-        recipientName: recipientName,
-        recipientNumber: recipientNumber,
-      ),
+      checkoutUrl: fallbackLinks.checkoutUrl,
+      deepLink: fallbackLinks.deepLink,
     );
-  }
-
-  String _buildRemitlyWebFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'https',
-      host: 'www.remitly.com',
-      path: '/',
-      queryParameters: <String, String>{
-        'utm_source': 'camvote',
-        'utm_medium': 'tip',
-        'camvote_tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-        'recipient_country': 'CM',
-        'recipient_network': 'orange_money',
-      },
-    );
-    return uri.toString();
-  }
-
-  String _buildRemitlyDeepLinkFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'remitly',
-      host: 'send',
-      queryParameters: <String, String>{
-        'tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-      },
-    );
-    return uri.toString();
   }
 
   int _safeInt(dynamic value) {

@@ -11,9 +11,14 @@ final tipRepositoryProvider = Provider<TipRepository>((ref) {
 
 final pendingOfflineTipQueueProvider = StreamProvider<int>((ref) async* {
   final repo = ref.watch(tipRepositoryProvider);
+  var disposed = false;
+  ref.onDispose(() {
+    disposed = true;
+  });
   yield await repo.pendingOfflineTipQueueCount();
-  while (true) {
+  while (!disposed) {
     await Future<void>.delayed(const Duration(seconds: 6));
+    if (disposed) break;
     yield await repo.pendingOfflineTipQueueCount();
   }
 });

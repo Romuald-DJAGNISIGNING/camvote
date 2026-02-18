@@ -14,6 +14,7 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/errors/error_message.dart';
 import '../../../core/layout/responsive.dart';
+import '../../../core/motion/cam_motion.dart';
 import '../../../core/offline/offline_status_providers.dart';
 import '../../../core/theme/role_theme.dart';
 import '../../../core/widgets/feedback/cam_toast.dart';
@@ -25,6 +26,7 @@ import '../../notifications/providers/notifications_providers.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../models/tip_models.dart';
 import '../providers/tip_providers.dart';
+import '../utils/tip_checkout_links.dart';
 
 class TipSupportScreen extends ConsumerStatefulWidget {
   const TipSupportScreen({super.key});
@@ -49,6 +51,10 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
   bool _submittingProof = false;
   bool _uploadingProof = false;
   final List<String> _proofAttachments = <String>[];
+  Timer? _statusPollTimer;
+  int _statusPollAttempts = 0;
+  static const Duration _statusPollInterval = Duration(seconds: 10);
+  static const int _statusPollMaxAttempts = 18;
 
   @override
   void initState() {
@@ -60,12 +66,14 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
       if (tipId.isNotEmpty) {
         _activeTipId = tipId;
         ref.read(tipStatusProvider.notifier).refresh(tipId);
+        _startStatusPolling(tipId);
       }
     });
   }
 
   @override
   void dispose() {
+    _stopStatusPolling();
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _amountCtrl.dispose();
@@ -107,6 +115,9 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     ) {
       final result = next.asData?.value;
       if (result == null) return;
+      if (result.isSuccess && result.tipId == _activeTipId.trim()) {
+        _stopStatusPolling();
+      }
       unawaited(_handleTipStatusSideEffects(result));
     });
     ref.listen<AsyncValue<TipCheckoutSession?>>(tipCheckoutProvider, (
@@ -228,9 +239,11 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                             onSelectionChanged: (value) {
                               final next = value.first;
                               if (next == _channel) return;
+                              _stopStatusPolling();
                               setState(() {
                                 _channel = next;
                                 _activeTipId = '';
+                                _statusPollAttempts = 0;
                                 _referenceCtrl.clear();
                                 _proofNoteCtrl.clear();
                                 _proofAttachments.clear();
@@ -291,6 +304,9 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                                   child: TextFormField(
                                     controller: _amountCtrl,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
                                     decoration: InputDecoration(
                                       labelText: t.tipAmountLabel,
                                     ),
@@ -544,26 +560,42 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            statusState.when(
-                              data: (result) {
-                                if (result == null) {
-                                  return Text(t.tipWaitingConfirmation);
-                                }
-                                return _TipStatusPanel(result: result, t: t);
-                              },
-                              loading: () => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                            AnimatedSwitcher(
+                              duration: CamMotion.medium,
+                              switchInCurve: CamMotion.emphasized,
+                              switchOutCurve: Curves.easeIn,
+                              child: statusState.when(
+                                data: (result) {
+                                  if (result == null) {
+                                    return Text(
+                                      t.tipWaitingConfirmation,
+                                      key: const ValueKey('tip_status_waiting'),
+                                    );
+                                  }
+                                  return _TipStatusPanel(
+                                    key: ValueKey(
+                                      'tip_status_${result.tipId}_${result.status}',
+                                    ),
+                                    result: result,
+                                    t: t,
+                                  );
+                                },
+                                loading: () => Padding(
+                                  key: const ValueKey('tip_status_loading'),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: CamVotePulseLoading(
+                                    title: t.tipCheckingPayment,
+                                    compact: true,
+                                  ),
                                 ),
-                                child: CamVotePulseLoading(
-                                  title: t.tipCheckingPayment,
-                                  compact: true,
-                                ),
-                              ),
-                              error: (error, _) => Text(
-                                error.toString(),
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
+                                error: (error, _) => Text(
+                                  error.toString(),
+                                  key: const ValueKey('tip_status_error'),
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
                                 ),
                               ),
                             ),
@@ -632,11 +664,18 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
         break;
     }
     if (!mounted || session == null) return;
+    _stopStatusPolling();
     session = _normalizeSessionForSelectedChannel(session);
     ref.read(tipCheckoutProvider.notifier).setSession(session);
 
     final tipId = session.tipId;
-    setState(() => _activeTipId = tipId);
+    setState(() {
+      _activeTipId = tipId;
+      _statusPollAttempts = 0;
+    });
+    if (tipId.isNotEmpty) {
+      _startStatusPolling(tipId);
+    }
 
     if (_channel == TipProviderChannel.tapTapSend ||
         _channel == TipProviderChannel.remitly) {
@@ -666,96 +705,40 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     final currency = session.currency.trim().isNotEmpty
         ? session.currency.trim().toUpperCase()
         : _currency.trim().toUpperCase();
-    switch (_channel) {
-      case TipProviderChannel.tapTapSend:
-        final checkout = _isTapTapCheckoutUrl(session.checkoutUrl)
-            ? session.checkoutUrl
-            : _buildTapTapWebFallbackUrl(
-                tipId: session.tipId,
-                amount: amount,
-                currency: currency,
-                recipientName: recipientName,
-                recipientNumber: recipientNumber,
-              );
-        final deepLink = _isTapTapDeepLink(session.deepLink)
-            ? session.deepLink
-            : _buildTapTapDeepLinkFallbackUrl(
-                tipId: session.tipId,
-                amount: amount,
-                currency: currency,
-                recipientName: recipientName,
-                recipientNumber: recipientNumber,
-              );
-        return session.copyWith(
-          provider: 'taptap_send',
-          checkoutUrl: checkout,
-          deepLink: deepLink,
-        );
-      case TipProviderChannel.remitly:
-        final checkout = _isRemitlyCheckoutUrl(session.checkoutUrl)
-            ? session.checkoutUrl
-            : _buildRemitlyWebFallbackUrl(
-                tipId: session.tipId,
-                amount: amount,
-                currency: currency,
-                recipientName: recipientName,
-                recipientNumber: recipientNumber,
-              );
-        final deepLink = _isRemitlyDeepLink(session.deepLink)
-            ? session.deepLink
-            : _buildRemitlyDeepLinkFallbackUrl(
-                tipId: session.tipId,
-                amount: amount,
-                currency: currency,
-                recipientName: recipientName,
-                recipientNumber: recipientNumber,
-              );
-        return session.copyWith(
-          provider: 'remitly',
-          checkoutUrl: checkout,
-          deepLink: deepLink,
-        );
-      case TipProviderChannel.maxItQr:
-        final qrUrl = session.qrUrl?.trim().isNotEmpty == true
-            ? session.qrUrl
-            : AppConfig.maxItTipQrImageUrl.trim();
-        return session.copyWith(provider: 'maxit_qr', qrUrl: qrUrl);
+    if (_channel == TipProviderChannel.maxItQr) {
+      final qrUrl = session.qrUrl?.trim().isNotEmpty == true
+          ? session.qrUrl
+          : AppConfig.maxItTipQrImageUrl.trim();
+      return session.copyWith(provider: 'maxit_qr', qrUrl: qrUrl);
     }
-  }
 
-  bool _isRemitlyCheckoutUrl(String? url) {
-    final value = url?.trim().toLowerCase() ?? '';
-    return value.contains('remitly');
-  }
-
-  bool _isRemitlyDeepLink(String? url) {
-    final value = url?.trim().toLowerCase() ?? '';
-    return value.startsWith('remitly://');
-  }
-
-  bool _isTapTapCheckoutUrl(String? url) {
-    final value = url?.trim().toLowerCase() ?? '';
-    return value.contains('taptapsend');
-  }
-
-  bool _isTapTapDeepLink(String? url) {
-    final value = url?.trim().toLowerCase() ?? '';
-    return value.startsWith('taptapsend:');
-  }
-
-  String _maybeUpgradeRecipientNumberInCheckoutUrl(
-    String checkoutUrl, {
-    required String fullRecipientNumber,
-  }) {
-    if (fullRecipientNumber.trim().isEmpty) return checkoutUrl;
-    final uri = Uri.tryParse(checkoutUrl.trim());
-    if (uri == null) return checkoutUrl;
-
-    final qp = Map<String, String>.from(uri.queryParameters);
-    final recipient = qp['recipient_number']?.trim() ?? '';
-    if (recipient.isEmpty || !recipient.contains('*')) return checkoutUrl;
-    qp['recipient_number'] = fullRecipientNumber.trim();
-    return uri.replace(queryParameters: qp).toString();
+    final checkoutProvider = _channel == TipProviderChannel.remitly
+        ? TipCheckoutProvider.remitly
+        : TipCheckoutProvider.tapTapSend;
+    final fallbackLinks = buildFallbackTipCheckoutLinks(
+      provider: checkoutProvider,
+      tipId: session.tipId,
+      amount: amount,
+      currency: currency,
+      recipientName: recipientName,
+      recipientNumber: recipientNumber,
+    );
+    final checkout =
+        isExpectedTipCheckoutUrl(
+          provider: checkoutProvider,
+          url: session.checkoutUrl,
+        )
+        ? session.checkoutUrl
+        : fallbackLinks.checkoutUrl;
+    final deepLink =
+        isExpectedTipDeepLink(provider: checkoutProvider, url: session.deepLink)
+        ? session.deepLink
+        : fallbackLinks.deepLink;
+    return session.copyWith(
+      provider: checkoutProvider.apiValue,
+      checkoutUrl: checkout,
+      deepLink: deepLink,
+    );
   }
 
   Future<void> _submitTapTapSendProof() async {
@@ -874,9 +857,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
 
   Future<void> _openCheckoutForSession(TipCheckoutSession session) async {
     final t = AppLocalizations.of(context);
-    final provider = session.provider.toLowerCase().trim();
-    if (provider == 'taptap_send' || provider == 'remitly') {
-      final isRemitlyProvider = provider == 'remitly';
+    final provider = tipCheckoutProviderFromValue(session.provider);
+    if (provider != null) {
       final fullRecipientNumber =
           session.orangeMoneyNumber?.trim().isNotEmpty == true
           ? session.orangeMoneyNumber!.trim()
@@ -895,61 +877,44 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
           ? session.currency.trim().toUpperCase()
           : _currency.trim().toUpperCase();
       final rawCheckout = session.checkoutUrl?.trim() ?? '';
-      final canUseCheckout = rawCheckout.isNotEmpty
-          ? isRemitlyProvider
-                ? _isRemitlyCheckoutUrl(rawCheckout)
-                : _isTapTapCheckoutUrl(rawCheckout)
-          : false;
+      final canUseCheckout = isExpectedTipCheckoutUrl(
+        provider: provider,
+        url: rawCheckout,
+      );
       final sanitizedCheckout = canUseCheckout
-          ? _maybeUpgradeRecipientNumberInCheckoutUrl(
+          ? maybeUpgradeMaskedRecipientNumberInCheckoutUrl(
               rawCheckout,
               fullRecipientNumber: fullRecipientNumber,
             )
           : rawCheckout;
+      final fallbackLinks = buildFallbackTipCheckoutLinks(
+        provider: provider,
+        tipId: session.tipId,
+        amount: amount,
+        currency: currency,
+        recipientName: recipientName,
+        recipientNumber: fullRecipientNumber.isNotEmpty
+            ? fullRecipientNumber
+            : maskedRecipientNumber,
+      );
       final checkout = canUseCheckout
           ? sanitizedCheckout
-          : isRemitlyProvider
-          ? _buildRemitlyWebFallbackUrl(
-              tipId: session.tipId,
-              amount: amount,
-              currency: currency,
-              recipientName: recipientName,
-              recipientNumber: fullRecipientNumber.isNotEmpty
-                  ? fullRecipientNumber
-                  : maskedRecipientNumber,
-            )
-          : _buildTapTapWebFallbackUrl(
-              tipId: session.tipId,
-              amount: amount,
-              currency: currency,
-              recipientName: recipientName,
-              recipientNumber: fullRecipientNumber.isNotEmpty
-                  ? fullRecipientNumber
-                  : maskedRecipientNumber,
-            );
+          : fallbackLinks.checkoutUrl;
       final rawDeepLink = session.deepLink?.trim() ?? '';
-      final canUseDeepLink = rawDeepLink.isNotEmpty
-          ? isRemitlyProvider
-                ? _isRemitlyDeepLink(rawDeepLink)
-                : _isTapTapDeepLink(rawDeepLink)
-          : false;
+      final canUseDeepLink = isExpectedTipDeepLink(
+        provider: provider,
+        url: rawDeepLink,
+      );
       final deepLink = canUseDeepLink
           ? rawDeepLink
-          : isRemitlyProvider
-          ? _buildRemitlyDeepLinkFallbackUrl(
+          : buildFallbackTipCheckoutLinks(
+              provider: provider,
               tipId: session.tipId,
               amount: amount,
               currency: currency,
               recipientName: recipientName,
               recipientNumber: fullRecipientNumber,
-            )
-          : _buildTapTapDeepLinkFallbackUrl(
-              tipId: session.tipId,
-              amount: amount,
-              currency: currency,
-              recipientName: recipientName,
-              recipientNumber: fullRecipientNumber,
-            );
+            ).deepLink;
       final shouldTryDeepLinkFirst = !kIsWeb || _isLikelyMobileWebBrowser();
 
       if (shouldTryDeepLinkFirst && deepLink.isNotEmpty) {
@@ -1006,106 +971,35 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
     return shortestSide < 700;
   }
 
-  String _buildTapTapWebFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'https',
-      host: 'www.taptapsend.com',
-      path: '/',
-      queryParameters: <String, String>{
-        'utm_source': 'camvote',
-        'utm_medium': 'tip',
-        'camvote_tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-        'recipient_country': 'CM',
-        'recipient_network': 'orange_money',
-      },
-    );
-    return uri.toString();
+  void _startStatusPolling(String tipId) {
+    final normalized = tipId.trim();
+    if (normalized.isEmpty) return;
+    if (_statusPollTimer != null) return;
+
+    _statusPollAttempts = 0;
+    _statusPollTimer = Timer.periodic(_statusPollInterval, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        _statusPollTimer = null;
+        return;
+      }
+      final currentState = ref.read(tipStatusProvider).asData?.value;
+      final alreadyConfirmed =
+          currentState?.tipId == normalized && currentState?.isSuccess == true;
+      if (alreadyConfirmed || _statusPollAttempts >= _statusPollMaxAttempts) {
+        timer.cancel();
+        _statusPollTimer = null;
+        return;
+      }
+      _statusPollAttempts += 1;
+      ref.read(tipStatusProvider.notifier).refresh(normalized);
+    });
   }
 
-  String _buildTapTapDeepLinkFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'taptapsend',
-      host: 'send',
-      queryParameters: <String, String>{
-        'tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-      },
-    );
-    return uri.toString();
-  }
-
-  String _buildRemitlyWebFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'https',
-      host: 'www.remitly.com',
-      path: '/',
-      queryParameters: <String, String>{
-        'utm_source': 'camvote',
-        'utm_medium': 'tip',
-        'camvote_tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-        'recipient_country': 'CM',
-        'recipient_network': 'orange_money',
-      },
-    );
-    return uri.toString();
-  }
-
-  String _buildRemitlyDeepLinkFallbackUrl({
-    required String tipId,
-    required int amount,
-    required String currency,
-    required String recipientName,
-    required String recipientNumber,
-  }) {
-    final uri = Uri(
-      scheme: 'remitly',
-      host: 'send',
-      queryParameters: <String, String>{
-        'tip_id': tipId,
-        if (amount > 0) 'amount': '$amount',
-        if (currency.trim().isNotEmpty) 'currency': currency.trim(),
-        if (recipientName.trim().isNotEmpty)
-          'recipient_name': recipientName.trim(),
-        if (recipientNumber.trim().isNotEmpty)
-          'recipient_number': recipientNumber.trim(),
-      },
-    );
-    return uri.toString();
+  void _stopStatusPolling() {
+    _statusPollTimer?.cancel();
+    _statusPollTimer = null;
+    _statusPollAttempts = 0;
   }
 
   Future<void> _handleTipStatusSideEffects(TipStatusResult result) async {
@@ -1149,6 +1043,8 @@ class _TipSupportScreenState extends ConsumerState<TipSupportScreen> {
           route: '/support/tip?tipId=${result.tipId}',
           alsoPush: true,
         );
+    if (!mounted) return;
+    await HapticFeedback.mediumImpact();
     if (!mounted) return;
     await CamToast.celebrate(
       context,
@@ -1292,7 +1188,7 @@ class _TipSessionCard extends StatelessWidget {
 }
 
 class _TipStatusPanel extends StatelessWidget {
-  const _TipStatusPanel({required this.result, required this.t});
+  const _TipStatusPanel({super.key, required this.result, required this.t});
 
   final TipStatusResult result;
   final AppLocalizations t;
