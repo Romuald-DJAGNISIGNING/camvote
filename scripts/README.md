@@ -83,11 +83,22 @@ pwsh scripts/release-android.ps1
 Notes:
 - `deploy-web.ps1` builds with `--release` by default.
 - `deploy-all.ps1` also deploys Firestore rules/indexes and the Worker.
-- `deploy-all.ps1` prefers `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth and avoids deprecated `FIREBASE_TOKEN` when service-account auth is available.
+- `deploy-all.ps1` requires `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase auth.
+- `FIREBASE_TOKEN` is deprecated and intentionally ignored by deploy scripts.
+- `deploy-worker.ps1`, `deploy-web.ps1`, and `deploy-all.ps1` require `CLOUDFLARE_API_TOKEN` (optionally `CLOUDFLARE_ACCOUNT_ID`).
 - Deploy scripts now require a clean git worktree by default; pass `-AllowDirty` only when intentional.
 - `deploy-web.ps1` and `deploy-all.ps1` run Flutter analyze/test by default; pass `-SkipQualityChecks` if needed.
 - `validate-mobile-config.ps1` checks `lib/firebase_options.dart` against `android/app/google-services.json` and `ios/Runner/GoogleService-Info.plist`.
 - `release-android.ps1` builds signed Android release artifacts (`.aab` + split `.apk`) and writes SHA-256 checksums to `build/mobile-android-sha256.txt`.
+
+Recommended secure session before deploy:
+
+```
+$env:GOOGLE_APPLICATION_CREDENTIALS="C:\secure\camvote-service-account.json"
+$env:CLOUDFLARE_API_TOKEN="<cloudflare-token>"
+$env:CLOUDFLARE_ACCOUNT_ID="<cloudflare-account-id>"   # optional
+pwsh scripts/deploy-all.ps1 -PagesProject camvote
+```
 
 ## Android release script arguments
 

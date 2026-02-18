@@ -32,6 +32,16 @@ function Assert-LastExitCode([string]$FailureMessage) {
   }
 }
 
+function Assert-EnvValue(
+  [string]$Name,
+  [string]$HelpMessage
+) {
+  $value = [Environment]::GetEnvironmentVariable($Name)
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    throw "Missing required environment variable '$Name'. $HelpMessage"
+  }
+}
+
 function Assert-CleanGitWorktree {
   $gitStatus = git status --porcelain
   if ($LASTEXITCODE -ne 0) {
@@ -85,33 +95,20 @@ function Run-Wrangler {
   Assert-LastExitCode "Cloudflare Worker deploy failed"
 }
 
-$firebaseToken = $env:FIREBASE_TOKEN
 $firebaseCredentials = Resolve-FirebaseCredentialsPath
-if ($firebaseCredentials) {
-  $env:GOOGLE_APPLICATION_CREDENTIALS = $firebaseCredentials
+if (-not $firebaseCredentials) {
+  throw "Firebase deploy requires a service-account key. Set GOOGLE_APPLICATION_CREDENTIALS or add service-account.json at repo root."
 }
-if ($firebaseCredentials) {
-  if (-not [string]::IsNullOrWhiteSpace($firebaseToken)) {
-    Write-Host "FIREBASE_TOKEN detected; using service-account auth instead." -ForegroundColor Yellow
-    Remove-Item Env:FIREBASE_TOKEN -ErrorAction SilentlyContinue
-  }
-} elseif (-not [string]::IsNullOrWhiteSpace($firebaseToken)) {
-  Write-Host "Warning: FIREBASE_TOKEN auth is deprecated. Prefer GOOGLE_APPLICATION_CREDENTIALS." -ForegroundColor Yellow
+$env:GOOGLE_APPLICATION_CREDENTIALS = $firebaseCredentials
+if (-not [string]::IsNullOrWhiteSpace($env:FIREBASE_TOKEN)) {
+  Write-Host "Ignoring deprecated FIREBASE_TOKEN; using GOOGLE_APPLICATION_CREDENTIALS." -ForegroundColor Yellow
+  Remove-Item Env:FIREBASE_TOKEN -ErrorAction SilentlyContinue
 }
+Assert-EnvValue -Name "CLOUDFLARE_API_TOKEN" -HelpMessage "Set a scoped token before deploy (and optionally CLOUDFLARE_ACCOUNT_ID)."
 
 Write-Host "==> Deploying Firestore rules/indexes" -ForegroundColor Cyan
 & $FirebaseCmd deploy --only "firestore:rules,firestore:indexes" --force
-if ($LASTEXITCODE -ne 0) {
-  if ($firebaseCredentials -and -not [string]::IsNullOrWhiteSpace($firebaseToken)) {
-    Write-Host "Service-account auth failed; retrying Firebase deploy with FIREBASE_TOKEN." -ForegroundColor Yellow
-    Remove-Item Env:GOOGLE_APPLICATION_CREDENTIALS -ErrorAction SilentlyContinue
-    $env:FIREBASE_TOKEN = $firebaseToken
-    & $FirebaseCmd deploy --only "firestore:rules,firestore:indexes" --force
-    Assert-LastExitCode "Firebase Firestore deploy failed"
-  } else {
-    Assert-LastExitCode "Firebase Firestore deploy failed"
-  }
-}
+Assert-LastExitCode "Firebase Firestore deploy failed"
 
 Write-Host "==> Auditing scripts/ dependencies" -ForegroundColor Cyan
 Push-Location scripts

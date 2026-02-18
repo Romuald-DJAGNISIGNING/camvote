@@ -87,6 +87,8 @@
    - Routes like `/public`, `/admin`, `/observer` will work after deploy.
    - Static mobile pages are served from `/mobile/` and `/mobile/app-store/index.html`.
 4. **Helper**: `pwsh scripts/deploy-all.ps1` (skips web with `-SkipWebBuild`).
+   - Requires `GOOGLE_APPLICATION_CREDENTIALS` (or `service-account.json` at repo root) for Firebase deploy auth.
+   - Requires `CLOUDFLARE_API_TOKEN` for Worker/Pages deploy auth.
 
 ## Mobile Release Pipeline
 - **Local Android signed release**:
@@ -147,6 +149,7 @@ cd cf-worker && npm ci && npm run lint
   git ls-files | grep -E '(^\.env$|^service-account\.json$|wrangler-account\.json|firebase-tools\.json)'
   ```
 - If the command returns anything, remove/rotate credentials before pushing.
+- Do not rely on `FIREBASE_TOKEN`; use service-account auth via `GOOGLE_APPLICATION_CREDENTIALS`.
 - In GitHub repository settings, define these Actions secrets:
   `CAMVOTE_FIREBASE_WEB_API_KEY`, `CAMVOTE_FIREBASE_ANDROID_API_KEY`, `CAMVOTE_FIREBASE_IOS_API_KEY`.
   The CI workflow now fails on `main`/`master` pushes if any of these are missing.

@@ -30,6 +30,16 @@ function Assert-LastExitCode([string]$FailureMessage) {
   }
 }
 
+function Assert-EnvValue(
+  [string]$Name,
+  [string]$HelpMessage
+) {
+  $value = [Environment]::GetEnvironmentVariable($Name)
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    throw "Missing required environment variable '$Name'. $HelpMessage"
+  }
+}
+
 function Assert-CleanGitWorktree {
   $gitStatus = git status --porcelain
   if ($LASTEXITCODE -ne 0) {
@@ -47,6 +57,7 @@ $WranglerCmd = Resolve-ToolPath @('wrangler.cmd', 'wrangler') "Install wrangler:
 if (-not $AllowDirty) {
   Assert-CleanGitWorktree
 }
+Assert-EnvValue -Name "CLOUDFLARE_API_TOKEN" -HelpMessage "Set a scoped token before deploy (and optionally CLOUDFLARE_ACCOUNT_ID)."
 
 function Run-Wrangler {
   if ($WranglerCmd) {
