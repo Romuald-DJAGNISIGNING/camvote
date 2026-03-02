@@ -1,0 +1,6 @@
+Row,Name,Matricule,FinalScore,Letter,Pass,Source
+2,Alice A.,MAT001,82.00,B+,Yes,CA+Exam (raw)
+4,Charlie C.,MAT003,66.00,C,Yes,Total (fallback)
+5,Dana D.,MAT004,,X,No,Unavailable
+6,,MAT005,60.00,D+,No,CA+Exam (raw)
+7,Eve E.,MAT002,60.00,D+,No,CA+Exam (raw)
