@@ -29,11 +29,17 @@ Offline Flutter (Windows desktop) Student Grade Calculator with polished dashboa
 - Data-focused model types
 - Explicit edge-case handling with issue logs
 
-## Run
+## Run UI
 
 ```bash
 flutter pub get
 flutter run -d windows
+```
+
+## Run CLI
+
+```bash
+dart run bin/gradecalc_cli.dart --input samples/parity/input_students.csv --output build/exports/grades.xlsx
 ```
 
 ## Test
