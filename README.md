@@ -12,9 +12,9 @@ Dedicated Chapter 2 repository (Functions/Collections + Classes/OOP) with all re
   - Exercise 1: `Animal` hierarchy (`Dog`, `Cat`)
   - Exercise 2: sealed `NetworkState` + `handleState`
   - Exercise 3: `Drawable` interface (`Circle`, `Square`)
-- `milestones/Milestone2_Joelf.kt`
+- `milestones/Milestone2_RomualdSIGNING.kt`
   - Data class functions, custom higher-order function, lambda, collection ops in `main`
-- `milestones/Milestone3_Joelf.kt`
+- `milestones/Milestone3_RomualdSIGNING.kt`
   - OOP mini model with data class, interface, abstract class, inheritance, polymorphism
 
 ## Run
@@ -37,3 +37,4 @@ Dedicated Chapter 2 repository (Functions/Collections + Classes/OOP) with all re
 - Code is intentionally concise and null-safe.
 - Functional operations (`map`, `filter`, `fold`, `associateWith`) are used throughout.
 - Demos are console-ready for LMS submission screenshots.
+

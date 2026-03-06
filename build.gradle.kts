@@ -37,12 +37,13 @@ tasks.register<JavaExec>("runMilestone2") {
     group = "application"
     description = "Run Milestone 2 demo"
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("chapter2.milestones.Milestone2_JoelfKt")
+    mainClass.set("chapter2.milestones.Milestone2_RomualdSIGNINGKt")
 }
 
 tasks.register<JavaExec>("runMilestone3") {
     group = "application"
     description = "Run Milestone 3 demo"
     classpath = sourceSets["main"].runtimeClasspath
-    mainClass.set("chapter2.milestones.Milestone3_JoelfKt")
+    mainClass.set("chapter2.milestones.Milestone3_RomualdSIGNINGKt")
 }
+
