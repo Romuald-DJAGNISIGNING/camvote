@@ -6,6 +6,7 @@ class ChartDataBuilder {
   const ChartDataBuilder();
 
   ChartDataset buildGradeDistribution(ProcessingReport report) {
+    // The chart builder only transforms graded data, so the UI never has to know the raw map structure.
     final points = report.summary.gradeCounts.entries
         .where((entry) => entry.value > 0)
         .map((entry) => ChartPoint(label: entry.key.label, count: entry.value))

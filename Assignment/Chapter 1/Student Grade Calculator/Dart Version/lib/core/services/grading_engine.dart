@@ -18,6 +18,7 @@ class GradingEngine {
     final issues = <ValidationIssue>[];
     final dedupedRows = _dedupeRows(inputRows, issues);
 
+    // I use map here so the grading pipeline stays data-driven and easy to test.
     final graded = dedupedRows.map((row) {
       final evaluation = _evaluate(row);
       issues.addAll(evaluation.issues);
@@ -247,6 +248,7 @@ class GradingEngine {
       gradeCounts[result.letter] = (gradeCounts[result.letter] ?? 0) + 1;
     }
 
+    // These chained collection calls keep the analytics logic short and readable.
     final gradedScores =
         results
             .where((result) => result.status == GradeStatus.graded)
@@ -259,6 +261,7 @@ class GradingEngine {
     final average = gradedRows == 0 ? 0.0 : gradedScores.sum / gradedRows;
 
     final median = _median(gradedScores);
+    // I keep pass counting separate so the pass rule can evolve without touching export or UI code.
     final passCount = results
         .where((result) => result.status == GradeStatus.graded && result.pass)
         .length;

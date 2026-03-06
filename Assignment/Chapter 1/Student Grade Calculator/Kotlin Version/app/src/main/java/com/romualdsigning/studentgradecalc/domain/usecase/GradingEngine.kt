@@ -20,6 +20,7 @@ class GradingEngine(
         val issues = mutableListOf<ValidationIssue>()
         val deduped = dedupeRows(rows, issues)
 
+        // I keep the full pipeline functional here so grading stays predictable and easy to test.
         val results = deduped
             .map { evaluate(it, issues) }
             .sortedBy { it.rowIndex }
@@ -214,6 +215,7 @@ class GradingEngine(
             gradeCounts[result.letter] = (gradeCounts[result.letter] ?: 0) + 1
         }
 
+        // This collection chain is where the analytics benefit most from Kotlin's higher-order functions.
         val gradedScores = results
             .filter { it.status == GradeStatus.GRADED }
             .mapNotNull { it.finalScore }
@@ -223,6 +225,7 @@ class GradingEngine(
         val unknownRows = results.size - gradedRows
         val average = if (gradedRows == 0) 0.0 else gradedScores.average().round2()
         val median = median(gradedScores).round2()
+        // I keep pass counting explicit because lecturers sometimes change the pass policy independently.
         val passCount = results.count { it.status == GradeStatus.GRADED && it.pass }
         val passRate = if (gradedRows == 0) 0.0 else ((passCount.toDouble() / gradedRows) * 100).round2()
 

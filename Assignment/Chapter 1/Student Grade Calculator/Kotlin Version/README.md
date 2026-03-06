@@ -28,6 +28,13 @@ Native Android (Jetpack Compose) Student Grade Calculator with local CSV/XLSX pr
 - Expression-style conditional grading logic.
 - Data classes as the main data contract.
 
+## Functional And OOP Concepts Used
+
+- Higher-order functions and lambdas are used in grading and analytics with `map`, `filter`, `mapNotNull`, `count`, and `associateWith`.
+- The project is object-oriented around service and use-case classes such as `FileImportService`, `GradingEngine`, `WorkbookExportService`, and `ChartDataBuilder`.
+- Data classes keep the domain model compact and clear: `StudentInputRow`, `NormalizedStudent`, `GradeResult`, `ValidationIssue`, and `ProcessingReport`.
+- The same grading logic is shared between the Android UI and the Kotlin console runner so results stay identical across entry points.
+
 ## Build & Test
 
 ```bash

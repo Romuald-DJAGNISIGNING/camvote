@@ -29,6 +29,13 @@ Offline Flutter (Windows desktop) Student Grade Calculator with polished dashboa
 - Data-focused model types
 - Explicit edge-case handling with issue logs
 
+## Functional And OOP Concepts Used
+
+- Higher-order functions and lambdas are used in the grading flow and analytics with `map`, `where`, `fold`, and collection transforms.
+- The app is object-oriented around focused classes such as `FileImportService`, `GradingEngine`, `WorkbookExportService`, and `ChartDataBuilder`.
+- Immutable model classes such as `StudentInputRow`, `NormalizedStudent`, `GradeResult`, and `ProcessingReport` keep parsing, grading, UI, and export responsibilities separated.
+- The same grading rules are reused from both the Windows UI and the Dart CLI so the behavior stays consistent.
+
 ## Run UI
 
 ```bash
