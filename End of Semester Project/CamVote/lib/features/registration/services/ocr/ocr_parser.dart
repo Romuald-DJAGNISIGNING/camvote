@@ -71,7 +71,7 @@ class OcrParser {
       RegExp(r'^(N(O|°)|NO)\b', caseSensitive: false),
     ]);
     final documentExpiry = _valueAfterAnyLabel(lines, [
-      RegExp(r'^(DATE\s+D[\' ]EXPIRATION)\b', caseSensitive: false),
+      RegExp(r"^(DATE\s+D[' ]EXPIRATION)\b", caseSensitive: false),
       RegExp(r'^(DATE\s+EXPIRATION)\b', caseSensitive: false),
       RegExp(r'^(DATE\s+OF\s+EXPIRY)\b', caseSensitive: false),
       RegExp(r'^(DATE\s+OF\s+EXPIRATION)\b', caseSensitive: false),
