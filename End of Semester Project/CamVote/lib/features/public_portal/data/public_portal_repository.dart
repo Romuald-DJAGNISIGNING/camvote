@@ -115,7 +115,12 @@ class PublicPortalRepository {
     );
     final statusRaw = _asString(response['status']);
     final status = switch (statusRaw) {
+      'registered_pre_eligible' => PublicVoterLookupStatus.registeredPreEligible,
       'eligible' => PublicVoterLookupStatus.eligible,
+      'voted' => PublicVoterLookupStatus.voted,
+      'suspended' => PublicVoterLookupStatus.suspended,
+      'deceased' => PublicVoterLookupStatus.deceased,
+      'archived' => PublicVoterLookupStatus.archived,
       'pending_verification' => PublicVoterLookupStatus.pendingVerification,
       _ => PublicVoterLookupStatus.notFound,
     };

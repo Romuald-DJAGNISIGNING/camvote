@@ -14,15 +14,19 @@ class AppDownloadCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isWebPlatform || !AppConfig.hasStoreLinks) {
+    if (!isWebPlatform) {
       return const SizedBox.shrink();
     }
 
     final t = AppLocalizations.of(context);
     final languageCode = Localizations.localeOf(context).languageCode;
-    final playUrl = AppConfig.playStoreUrl.trim();
+    final configuredPlayUrl = AppConfig.playStoreUrl.trim();
     final mobileFeaturesUrl = _normalizeStaticWebUrl(
       AppConfig.mobileFeaturesUrl.trim(),
+    );
+    final playUrl = buildAndroidDownloadExperienceUrl(
+      targetUrl: configuredPlayUrl,
+      languageCode: languageCode,
     );
     final appUrl = _decorateAppStoreUrl(
       _resolveIosComingSoonUrl(
@@ -39,23 +43,15 @@ class AppDownloadCard extends StatelessWidget {
     final showQr = isDesktopWeb && actions.isNotEmpty;
     final showLearnMore = mobileFeaturesUrl.isNotEmpty;
     final learnMoreUrl = showLearnMore
-        ? _buildLearnMoreUrl(mobileFeaturesUrl, languageCode, playUrl, appUrl)
+        ? _buildLearnMoreUrl(
+            mobileFeaturesUrl,
+            languageCode,
+            configuredPlayUrl,
+            appUrl,
+          )
         : '';
-    // QR code should be a single fast link. For Android, we prefer the configured
-    // Play URL (which can be a GitHub Pages smart-link that auto-picks the right
-    // split APK) so scanners jump straight into the download flow.
     final qrUrl = showQr
-        ? (playUrl.isNotEmpty
-              ? playUrl
-              : buildSmartDownloadUrl(
-                  baseUrl: mobileFeaturesUrl,
-                  languageCode: languageCode,
-                  playUrl: playUrl,
-                  appUrl: appUrl,
-                  androidDeepLink: AppConfig.androidDeepLink,
-                  iosDeepLink: AppConfig.iosDeepLink,
-                  iosLive: AppConfig.iosAppLive,
-                ))
+        ? playUrl
         : '';
     return Card(
       clipBehavior: Clip.antiAlias,

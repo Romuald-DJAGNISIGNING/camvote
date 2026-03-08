@@ -42,6 +42,32 @@ String buildSmartDownloadUrl({
   return uri.replace(queryParameters: params).toString();
 }
 
+String buildAndroidDownloadExperienceUrl({
+  String targetUrl = '',
+  String languageCode = '',
+  String publicUrl = '',
+}) {
+  final baseUri = Uri.parse(_absoluteUrl('/mobile/apk/index.html'));
+  final params = Map<String, String>.from(baseUri.queryParameters);
+  final normalizedTarget = targetUrl.trim();
+  if (languageCode.trim().isNotEmpty) {
+    params['lang'] = languageCode.trim().toLowerCase();
+  }
+  if (publicUrl.trim().isNotEmpty) {
+    params['public'] = publicUrl.trim();
+  }
+  params['auto'] = '1';
+  if (normalizedTarget.isNotEmpty &&
+      !isLocalAndroidDownloadExperienceUrl(normalizedTarget)) {
+    params['target'] = _absoluteUrl(normalizedTarget);
+  }
+  return baseUri.replace(queryParameters: params).toString();
+}
+
+bool isLocalAndroidDownloadExperienceUrl(String url) {
+  return url.trim().toLowerCase().contains('/mobile/apk');
+}
+
 String _absoluteUrl(String url) {
   final uri = Uri.parse(url);
   if (uri.hasScheme) return url;

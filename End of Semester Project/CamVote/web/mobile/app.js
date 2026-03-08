@@ -552,7 +552,7 @@ const featureData = {
   ]
 };
 
-const DEFAULT_PLAY = 'https://romuald-djagnisigning.github.io/camvote/';
+const DEFAULT_PLAY = '/mobile/apk/';
 const DEFAULT_APP = '/mobile/app-store/';
 const DEFAULT_PUBLIC = '/#/public';
 const AUTO_REDIRECT_DELAY_MS = 1450;
@@ -642,7 +642,11 @@ function setStoreLinks() {
     public: publicUrl
   });
   const appFinal = ensureAppStoreIndex(appWithParams);
-  const resolvedPlay = resolveUrl(play);
+  const resolvedPlay = buildAndroidExperienceUrl(
+    play,
+    currentLang || 'en',
+    publicUrl
+  );
   const resolvedApp = resolveUrl(appFinal);
 
   setLink(playCta, showPlay ? resolvedPlay : '');
@@ -664,7 +668,11 @@ function setStoreLinks() {
 
   if (auto && isMobile) {
     if (isAndroid && resolvedPlay) {
-      startAutoRedirect(resolvedPlay, 'android', deeplinkAndroid);
+      if (isLocalAndroidExperienceUrl(resolvedPlay)) {
+        window.location.href = resolvedPlay;
+      } else {
+        startAutoRedirect(resolvedPlay, 'android', deeplinkAndroid);
+      }
     } else if (isIos && resolvedApp) {
       startAutoRedirect(resolvedApp, 'ios', deeplinkIos);
     }
@@ -685,7 +693,7 @@ function setStoreLinks() {
         setQrImageWithFallback(smartQr, smartUrl, 220);
       }
       qrWrap.classList.add('active');
-      enableQrCardInteraction(qrCard, qrBurst);
+      enableQrCardInteraction(qrCard, qrBurst, smartUrl);
     } else {
       qrWrap.classList.remove('active');
       if (qrCard) {
@@ -752,7 +760,12 @@ function resolveUrl(url) {
     }
     const [pathPart, hashPart] = resolved.split('#');
     const [pathOnly, queryPart] = pathPart.split('?');
-    if (pathOnly.endsWith('/app-store') || pathOnly.endsWith('/app-store/')) {
+    if (
+      pathOnly.endsWith('/app-store') ||
+      pathOnly.endsWith('/app-store/') ||
+      pathOnly.endsWith('/apk') ||
+      pathOnly.endsWith('/apk/')
+    ) {
       const basePath = pathOnly.endsWith('/') ? pathOnly : `${pathOnly}/`;
       const withIndex = `${basePath}index.html`;
       const withQuery = queryPart ? `${withIndex}?${queryPart}` : withIndex;
@@ -793,6 +806,28 @@ function ensureAppStoreIndex(url) {
   return url;
 }
 
+function buildAndroidExperienceUrl(targetUrl, lang, publicUrl) {
+  const experienceUrl = appendParams('/mobile/apk/index.html', {
+    lang,
+    public: publicUrl,
+    auto: '1'
+  });
+  const trimmedTarget = `${targetUrl || ''}`.trim();
+  if (!trimmedTarget || isLocalAndroidExperienceUrl(trimmedTarget)) {
+    return resolveUrl(experienceUrl);
+  }
+  return resolveUrl(
+    appendParams(experienceUrl, {
+      target: trimmedTarget
+    })
+  );
+}
+
+function isLocalAndroidExperienceUrl(url) {
+  const value = `${url || ''}`.toLowerCase();
+  return value.includes('/mobile/apk');
+}
+
 function ensureBurstParticles(container) {
   if (!container) return;
   if (container.children.length) return;
@@ -812,12 +847,17 @@ function triggerBurst(container) {
   container.classList.add('active');
 }
 
-function enableQrCardInteraction(card, burst) {
+function enableQrCardInteraction(card, burst, targetUrl) {
   if (!card || card.dataset.enhanced === '1') return;
   ensureBurstParticles(burst);
   card.dataset.enhanced = '1';
   card.classList.add('scanning');
   triggerBurst(burst);
+  if (targetUrl) {
+    card.tabIndex = 0;
+    card.setAttribute('role', 'link');
+    card.setAttribute('aria-label', 'Open CamVote mobile download');
+  }
   window.setTimeout(() => {
     card.classList.remove('scanning');
   }, 1200);
@@ -831,9 +871,20 @@ function enableQrCardInteraction(card, burst) {
   card.addEventListener('click', () => {
     card.classList.add('scanning');
     triggerBurst(burst);
+    if (targetUrl) {
+      window.setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 160);
+    }
     window.setTimeout(() => {
       card.classList.remove('scanning');
     }, 900);
+  });
+  card.addEventListener('keydown', (event) => {
+    if (!targetUrl) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    window.location.href = targetUrl;
   });
 }
 
@@ -1154,4 +1205,3 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
-

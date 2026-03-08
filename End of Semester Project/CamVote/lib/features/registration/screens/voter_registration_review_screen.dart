@@ -8,9 +8,9 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
-import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
 import '../../../core/network/worker_client.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 import '../../auth/utils/auth_error_utils.dart';
 import '../domain/registration_review_payload.dart';
 import '../models/registration_submission.dart';
@@ -85,9 +85,9 @@ class _VoterRegistrationReviewScreenState
         .isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
+      appBar: NotificationAppBar(
         title: Text(t.registrationReviewTitle),
+        showBell: false,
       ),
       body: Stack(
         children: [
@@ -186,6 +186,14 @@ class _VoterRegistrationReviewScreenState
                             label: t.placeOfBirthShort,
                             value: extracted.placeOfBirth ?? t.unknown,
                           ),
+                          if (extracted.documentExpiry != null)
+                            _Row(
+                              label: t.cardExpiry,
+                              value: _formatDate(
+                                context,
+                                extracted.documentExpiry,
+                              ),
+                            ),
                           if (hasExtractedNationality)
                             _Row(
                               label: t.nationality,
@@ -430,6 +438,8 @@ class _VoterRegistrationReviewScreenState
         nationality: draft.nationality,
         regionCode: draft.regionCode,
         documentType: widget.payload.docType.name,
+        documentNumber: extracted?.documentNumber,
+        docExpiry: extracted?.documentExpiry,
         ocrRawText: extracted?.rawText,
         ocrSummary: validation?.summary,
         ocrNameOk: validation?.nameOk ?? false,

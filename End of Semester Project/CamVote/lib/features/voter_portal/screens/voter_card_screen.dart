@@ -7,11 +7,11 @@ import '../../../shared/liveness/liveness_challenge_screen.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
-import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../core/motion/cam_reveal.dart';
 import '../../../core/widgets/qr/branded_qr_code.dart';
 import '../../registration/providers/registration_providers.dart';
 import '../../registration/models/registration_draft.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 
 class VoterCardScreen extends ConsumerStatefulWidget {
   const VoterCardScreen({super.key});
@@ -29,9 +29,9 @@ class _VoterCardScreenState extends ConsumerState<VoterCardScreen> {
     final draft = ref.watch(voterRegistrationDraftProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
+      appBar: NotificationAppBar(
         title: Text(t.electoralCardTitle),
+        showBell: false,
       ),
       body: BrandBackdrop(
         child: ResponsiveContent(

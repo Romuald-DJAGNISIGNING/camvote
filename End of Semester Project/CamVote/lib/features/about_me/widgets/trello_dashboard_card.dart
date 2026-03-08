@@ -50,9 +50,9 @@ class _TrelloDashboardCardState extends State<TrelloDashboardCard> {
         : listsSorted.take(5).toList(growable: false);
 
     final total = math.max(0, widget.stats.totalCards);
-    final done = math.max(0, widget.stats.doneCards);
-    final open = math.max(0, widget.stats.openCards);
-    final doneFrac = _safeFrac(done, total);
+    final done = math.max(0, widget.stats.completedTasks);
+    final open = math.max(0, widget.stats.remainingTasks);
+    final doneFrac = widget.stats.completionRatio;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -187,13 +187,6 @@ class _TrelloDashboardCardState extends State<TrelloDashboardCard> {
       ),
     );
   }
-}
-
-double _safeFrac(int numerator, int denominator) {
-  if (denominator <= 0) return 0;
-  final f = numerator / denominator;
-  if (f.isNaN || !f.isFinite) return 0;
-  return f.clamp(0, 1);
 }
 
 class _TrelloHeader extends StatelessWidget {
@@ -556,7 +549,7 @@ class _TrelloProgressPanel extends StatelessWidget {
     final cs = theme.colorScheme;
     final border = cs.outlineVariant.withAlpha(100);
 
-    final percent = (doneFraction * 100).round();
+    final percent = doneFraction <= 0 ? 0 : (doneFraction * 100).round();
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -738,7 +731,7 @@ class _TrelloListRow extends StatelessWidget {
     final total = math.max(0, stat.totalCards);
     final open = math.max(0, stat.openCards);
     final done = math.max(0, stat.doneCards);
-    final doneFrac = _safeFrac(done, total);
+    final doneFrac = stat.completionRatio;
 
     final border = cs.outlineVariant.withAlpha(100);
 

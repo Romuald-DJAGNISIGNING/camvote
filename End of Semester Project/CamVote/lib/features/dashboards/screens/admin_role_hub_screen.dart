@@ -28,6 +28,7 @@ class AdminRoleHubScreen extends ConsumerWidget {
     return Scaffold(
       appBar: NotificationAppBar(
         showBack: false,
+        showHomeLogo: false,
         title: Row(
           children: [
             const CamVoteLogo(size: 28),

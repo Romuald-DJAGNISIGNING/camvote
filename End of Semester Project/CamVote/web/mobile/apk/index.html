@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>CamVote Android Download</title>
+  <meta
+    name="description"
+    content="CamVote Android download handoff. Secure APK transfer with branded install guidance."
+  />
+  <link rel="icon" href="../media/app_icon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../media/app_icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Manrope:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background">
+    <img class="pattern" src="../media/cam_pattern.png" alt="" />
+    <img class="logo-watermark" src="../media/app_logo.png" alt="" />
+    <div class="mesh"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="../media/app_logo.png" alt="CamVote" />
+      <div class="brand-text">
+        <div class="brand-name">CamVote</div>
+        <div class="brand-tag" data-i18n="brandTag">Official civic platform</div>
+      </div>
+    </div>
+    <div class="lang-toggle" role="group" aria-label="Language">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-copy reveal">
+        <div class="pill" data-i18n="pill">Android transfer</div>
+        <h1 data-i18n="heroTitle">Preparing your CamVote Android download.</h1>
+        <p class="lead" data-i18n="heroSubtitle">
+          Stay on this page while CamVote securely sends the installation package to your device.
+        </p>
+
+        <div class="status-card">
+          <div class="status-row">
+            <span class="status-chip" id="statusChip" data-i18n="statusReady">Secure handoff ready</span>
+            <span class="status-meta" id="statusMeta" data-i18n="statusMeta">Universal APK preferred for most phones</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="status-copy" id="statusCopy" data-i18n="statusCopy">
+            We are checking the latest signed Android package and preparing the transfer.
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <a class="btn primary" id="startDownload" href="#" rel="noopener">
+            <span data-i18n="ctaPrimary">Start CamVote download</span>
+          </a>
+          <a class="btn ghost" id="manualDownload" href="#" rel="noopener">
+            <span data-i18n="ctaManual">Download manually</span>
+          </a>
+          <a class="btn ghost" id="publicPortal" href="#" rel="noopener">
+            <span data-i18n="ctaPublic">Open Public Portal</span>
+          </a>
+        </div>
+
+        <div class="download-note" id="downloadNote" data-i18n="downloadNote">
+          If the transfer does not begin automatically, tap the manual download button above.
+        </div>
+
+        <div class="alt-downloads" id="altDownloads">
+          <div class="alt-title" data-i18n="altTitle">Other Android builds</div>
+          <div class="alt-links" id="altLinks"></div>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="transfer-stage">
+          <div class="server-node">
+            <div class="server-core">
+              <span class="server-led"></span>
+              <span class="server-led"></span>
+              <span class="server-led"></span>
+            </div>
+            <div class="server-label" data-i18n="serverLabel">CamVote release server</div>
+          </div>
+
+          <div class="transfer-lane" aria-hidden="true">
+            <span class="transfer-beam"></span>
+            <span class="transfer-packet packet-1"></span>
+            <span class="transfer-packet packet-2"></span>
+            <span class="transfer-packet packet-3"></span>
+          </div>
+
+          <div class="phone-node">
+            <div class="phone-frame">
+              <div class="phone-glow"></div>
+              <img class="phone-app" src="../media/app_icon.png" alt="" />
+              <div class="phone-pulse"></div>
+            </div>
+            <div class="phone-label" data-i18n="phoneLabel">Your Android phone</div>
+          </div>
+        </div>
+
+        <div class="transfer-steps">
+          <div class="step step-active" id="stepLocate">
+            <span>01</span>
+            <div>
+              <strong data-i18n="stepLocateTitle">Locate the latest signed build</strong>
+              <p data-i18n="stepLocateBody">CamVote checks the most recent Android release package.</p>
+            </div>
+          </div>
+          <div class="step" id="stepTransfer">
+            <span>02</span>
+            <div>
+              <strong data-i18n="stepTransferTitle">Start the transfer</strong>
+              <p data-i18n="stepTransferBody">A secure handoff begins from the release server to your phone.</p>
+            </div>
+          </div>
+          <div class="step" id="stepInstall">
+            <span>03</span>
+            <div>
+              <strong data-i18n="stepInstallTitle">Install with confidence</strong>
+              <p data-i18n="stepInstallBody">Open the APK after download and complete the Android install flow.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span data-i18n="footer">Official civic participation platform.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

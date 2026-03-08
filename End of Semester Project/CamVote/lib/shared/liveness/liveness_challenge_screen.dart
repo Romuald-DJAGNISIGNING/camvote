@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
@@ -23,7 +24,7 @@ class LivenessChallengeScreen extends StatefulWidget {
   static Future<bool> run(BuildContext context) async {
     if (!isSupportedPlatform) return true;
     final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const LivenessChallengeScreen()),
+      CupertinoPageRoute(builder: (_) => const LivenessChallengeScreen()),
     );
     return result ?? false;
   }

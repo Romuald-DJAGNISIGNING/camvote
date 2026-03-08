@@ -1,4 +1,5 @@
 import 'package:camvote/core/errors/error_message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -357,7 +358,7 @@ class _OpenElectionVoteCard extends ConsumerWidget {
 
     if (context.mounted) {
       await Navigator.of(context).push(
-        MaterialPageRoute<void>(
+        CupertinoPageRoute<void>(
           builder: (_) => VoterVoteImpactScreen(
             electionTitle: election.title,
             candidateName: c.fullName,
@@ -369,7 +370,7 @@ class _OpenElectionVoteCard extends ConsumerWidget {
 
     if (context.mounted) {
       await Navigator.of(context).push(
-        MaterialPageRoute<void>(
+        CupertinoPageRoute<void>(
           builder: (_) => VoterReceiptScreen(receipt: receipt),
         ),
       );
@@ -406,5 +407,4 @@ class _OpenElectionVoteCard extends ConsumerWidget {
     return '$date $time';
   }
 }
-
 

@@ -1,4 +1,5 @@
 const DEFAULT_SUPPORT_EMAIL = 'camvoteappassist@gmail.com';
+const DEFAULT_PLAY_URL = '/mobile/apk/';
 const DEFAULT_PUBLIC_URL = '/#/public';
 const DEFAULT_API_BASE = 'https://camvote.romuald-djagnisigning.workers.dev';
 const DEFAULT_LAUNCH_DATE = '2026-06-30T23:59:59Z';
@@ -146,13 +147,21 @@ function initLang() {
 
 function setLinks() {
   const params = new URLSearchParams(window.location.search);
-  const play = params.get('play');
+  const play = params.get('play') || DEFAULT_PLAY_URL;
   const publicUrl = resolvePublicUrl();
   const playCta = document.getElementById('playCta');
   const publicCta = document.getElementById('publicCta');
+  let playUrl = resolveUrl(play);
+  if (playUrl && playUrl.includes('/mobile/apk')) {
+    const url = new URL(playUrl);
+    url.searchParams.set('lang', currentLang);
+    url.searchParams.set('public', publicUrl);
+    url.searchParams.set('auto', '1');
+    playUrl = url.toString();
+  }
   if (playCta) {
-    if (play) {
-      playCta.href = resolveUrl(play);
+    if (playUrl) {
+      playCta.href = playUrl;
       playCta.style.display = 'inline-flex';
     } else {
       playCta.style.display = 'none';
@@ -178,6 +187,9 @@ function resolveUrl(url) {
     return url;
   }
   if (window.location.protocol === 'file:') {
+    if (url.startsWith('/mobile/')) {
+      return url.replace('/mobile/', '../');
+    }
     if (url.startsWith('/')) {
       return `.${url}`;
     }

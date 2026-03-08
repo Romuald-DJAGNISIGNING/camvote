@@ -54,6 +54,33 @@ class OcrParser {
       RegExp(r'^(CITIZENSHIP)\b', caseSensitive: false),
       RegExp(r'^(PAYS)\b', caseSensitive: false),
     ]);
+    final documentNumber = _valueAfterAnyLabel(lines, [
+      RegExp(r'^(NUM(E|É)RO\s+DU\s+DOCUMENT)\b', caseSensitive: false),
+      RegExp(r'^(NUM(E|É)RO\s+DE\s+DOCUMENT)\b', caseSensitive: false),
+      RegExp(r'^(NUM(E|É)RO\s+DE\s+CARTE)\b', caseSensitive: false),
+      RegExp(r'^(NUM(E|É)RO\s+DE\s+PASSEPORT)\b', caseSensitive: false),
+      RegExp(r'^(DOCUMENT\s+NUMBER)\b', caseSensitive: false),
+      RegExp(r'^(DOCUMENT\s+NO)\b', caseSensitive: false),
+      RegExp(r'^(ID\s+NUMBER)\b', caseSensitive: false),
+      RegExp(r'^(ID\s+NO)\b', caseSensitive: false),
+      RegExp(r'^(CARD\s+NUMBER)\b', caseSensitive: false),
+      RegExp(r'^(PASSPORT\s+NUMBER)\b', caseSensitive: false),
+      RegExp(r'^(PASSPORT\s+NO)\b', caseSensitive: false),
+      RegExp(r'^(NO\s+DE\s+PASSEPORT)\b', caseSensitive: false),
+      RegExp(r'^(NO\s+DE\s+CARTE)\b', caseSensitive: false),
+      RegExp(r'^(N(O|°)|NO)\b', caseSensitive: false),
+    ]);
+    final documentExpiry = _valueAfterAnyLabel(lines, [
+      RegExp(r'^(DATE\s+D[\' ]EXPIRATION)\b', caseSensitive: false),
+      RegExp(r'^(DATE\s+EXPIRATION)\b', caseSensitive: false),
+      RegExp(r'^(DATE\s+OF\s+EXPIRY)\b', caseSensitive: false),
+      RegExp(r'^(DATE\s+OF\s+EXPIRATION)\b', caseSensitive: false),
+      RegExp(r'^(EXPIRY\s+DATE)\b', caseSensitive: false),
+      RegExp(r'^(EXPIRATION\s+DATE)\b', caseSensitive: false),
+      RegExp(r'^(VALID\s+UNTIL)\b', caseSensitive: false),
+      RegExp(r'^(EXPIRE\s+LE)\b', caseSensitive: false),
+      RegExp(r'^(EXP)\b', caseSensitive: false),
+    ]);
 
     final pob = _valueAfterAnyLabel(lines, [
       RegExp(r'^(LIEU\s+DE\s+NAISSANCE)\b', caseSensitive: false),
@@ -82,6 +109,8 @@ class OcrParser {
       dateOfBirth: dob,
       placeOfBirth: _cleanValue(pob),
       nationality: _cleanValue(nationality),
+      documentNumber: _normalizeDocumentNumber(documentNumber),
+      documentExpiry: _parseDateFromText(documentExpiry),
     );
   }
 
@@ -351,6 +380,25 @@ class OcrParser {
     return v.isEmpty ? null : v;
   }
 
+  static String? _normalizeDocumentNumber(String? value) {
+    final cleaned = _cleanValue(value);
+    if (cleaned == null) return null;
+    final normalized = _normalizeLoose(cleaned).replaceAll(' ', '');
+    final compact = normalized.replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    return compact.isEmpty ? null : compact;
+  }
+
+  static DateTime? _parseMrzCompactDate(String raw) {
+    final value = raw.trim();
+    if (value.length != 6) return null;
+    final yy = int.tryParse(value.substring(0, 2));
+    final mm = int.tryParse(value.substring(2, 4));
+    final dd = int.tryParse(value.substring(4, 6));
+    if (yy == null || mm == null || dd == null) return null;
+    final year = yy <= 29 ? 2000 + yy : 1900 + yy;
+    return DateTime(year, mm, dd);
+  }
+
   static bool _dobMatch(DateTime expected, DateTime? got) {
     if (got == null) return false;
     if (expected.year != got.year) return false;
@@ -535,7 +583,12 @@ class OcrParser {
     }
 
     // Line2: nationality + birthdate YYMMDD (positions vary by doc type; use common passport layout)
+    String? documentNumber;
+    DateTime? expiry;
     if (l2.length >= 20) {
+      documentNumber = _normalizeDocumentNumber(
+        l2.substring(0, min(9, l2.length)).replaceAll('<', ''),
+      );
       nat = l2.substring(10, 13).replaceAll('<', '').trim();
       final yy = int.tryParse(l2.substring(13, 15));
       final mm = int.tryParse(l2.substring(15, 17));
@@ -545,9 +598,18 @@ class OcrParser {
         final year = (yy <= 29) ? 2000 + yy : 1900 + yy;
         dob = DateTime(year, mm, dd);
       }
+      if (l2.length >= 27) {
+        expiry = _parseMrzCompactDate(l2.substring(21, 27));
+      }
     }
 
-    return _MrzParsed(fullName: name, dateOfBirth: dob, nationality: nat);
+    return _MrzParsed(
+      fullName: name,
+      dateOfBirth: dob,
+      nationality: nat,
+      documentNumber: documentNumber,
+      documentExpiry: expiry,
+    );
   }
 }
 
@@ -555,8 +617,16 @@ class _MrzParsed {
   final String? fullName;
   final DateTime? dateOfBirth;
   final String? nationality;
+  final String? documentNumber;
+  final DateTime? documentExpiry;
 
-  _MrzParsed({this.fullName, this.dateOfBirth, this.nationality});
+  _MrzParsed({
+    this.fullName,
+    this.dateOfBirth,
+    this.nationality,
+    this.documentNumber,
+    this.documentExpiry,
+  });
 
   OcrExtractedIdentity copyWith({required String rawText}) =>
       OcrExtractedIdentity(
@@ -565,5 +635,7 @@ class _MrzParsed {
         dateOfBirth: dateOfBirth,
         placeOfBirth: null, // MRZ doesn't contain POB reliably
         nationality: nationality,
+        documentNumber: documentNumber,
+        documentExpiry: documentExpiry,
       );
 }

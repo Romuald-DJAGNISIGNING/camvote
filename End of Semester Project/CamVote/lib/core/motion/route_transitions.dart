@@ -31,7 +31,8 @@ class CamRouteTransitions {
       );
     }
 
-    if (defaultTargetPlatform == TargetPlatform.iOS ||
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS) {
       return CupertinoPage<T>(key: state.pageKey, child: child);
     }

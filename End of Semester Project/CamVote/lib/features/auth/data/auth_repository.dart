@@ -167,7 +167,9 @@ class AuthRepository {
       throw StateError(_accountArchivedError);
     }
     final role = AppRoleX.fromApi(data['role'] as String?) ?? AppRole.public;
-    final mustChangePasswordFlag = _asBool(data['mustChangePassword']);
+    final mustChangePasswordFlag = _asBool(
+      data['mustChangePassword'] ?? data['must_change_password'],
+    );
     final temporaryPasswordIssuedAt = _parseDate(
       data['observerTemporaryPasswordIssuedAt'],
     );
@@ -179,11 +181,12 @@ class AuthRepository {
             passwordChangedAt.isBefore(temporaryPasswordIssuedAt));
     return AuthUser(
       id: uid,
-      fullName: (data['fullName'] as String?) ?? '',
+      fullName:
+          (data['fullName'] as String?) ?? (data['full_name'] as String?) ?? '',
       email: (data['email'] as String?) ?? '',
       role: role,
-      voterId: data['voterId'] as String?,
-      verified: (data['verified'] as bool?) ?? false,
+      voterId: (data['voterId'] as String?) ?? (data['voter_id'] as String?),
+      verified: _asBool(data['verified']),
       mustChangePassword: mustChangePasswordFlag || observerNeedsPasswordChange,
     );
   }

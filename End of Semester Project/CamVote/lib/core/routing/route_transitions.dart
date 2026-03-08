@@ -1,9 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 class RouteTransitions {
-  static CustomTransitionPage<T> fadeSlide<T>({
+  static Page<T> fadeSlide<T>({
     required GoRouterState state,
     required Widget child,
   }) {
@@ -17,6 +18,12 @@ class RouteTransitions {
           return child;
         },
       );
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      return CupertinoPage<T>(key: state.pageKey, child: child);
     }
 
     return CustomTransitionPage<T>(

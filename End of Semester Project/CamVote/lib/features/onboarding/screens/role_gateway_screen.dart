@@ -42,6 +42,7 @@ class RoleGatewayScreen extends ConsumerWidget {
     final screen = Scaffold(
       appBar: NotificationAppBar(
         showBack: false,
+        showHomeLogo: false,
         title: Row(
           children: [
             const CamVoteLogo(size: 28),

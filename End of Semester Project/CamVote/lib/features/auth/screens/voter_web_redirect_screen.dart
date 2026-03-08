@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:camvote/gen/l10n/app_localizations.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
-import '../../../core/branding/brand_logo.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/network/platform_utils.dart'
@@ -15,6 +14,7 @@ import '../../../core/routing/route_paths.dart';
 import '../../../core/utils/external_links.dart';
 import '../../../core/utils/mobile_links.dart';
 import '../../../core/widgets/marketing/app_download_card.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 
 class VoterWebRedirectScreen extends ConsumerStatefulWidget {
   const VoterWebRedirectScreen({super.key});
@@ -40,7 +40,7 @@ class _VoterWebRedirectScreenState
     if (_attempted) return;
     _attempted = true;
     if (!isMobileWeb) return;
-    final url = _smartDownloadUrl();
+    final url = isAndroidWeb ? _androidDownloadUrl() : _smartDownloadUrl();
     if (url.isEmpty) return;
     openWebRedirect(url);
   }
@@ -65,6 +65,14 @@ class _VoterWebRedirectScreenState
     );
   }
 
+  String _androidDownloadUrl() {
+    return buildAndroidDownloadExperienceUrl(
+      targetUrl: AppConfig.playStoreUrl.trim(),
+      languageCode: Localizations.localeOf(context).languageCode,
+      publicUrl: '/#${RoutePaths.publicHome}',
+    );
+  }
+
   Future<void> _openUrl(String url) async {
     await openExternalLink(context, url);
   }
@@ -79,7 +87,9 @@ class _VoterWebRedirectScreenState
     if (path.endsWith('/')) {
       normalizedPath = '${path}index.html';
     } else if (!hasFileExtension &&
-        (path.endsWith('/mobile') || path.endsWith('/app-store'))) {
+        (path.endsWith('/mobile') ||
+            path.endsWith('/app-store') ||
+            path.endsWith('/apk'))) {
       normalizedPath = '$path/index.html';
     }
 
@@ -112,7 +122,7 @@ class _VoterWebRedirectScreenState
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final playUrl = AppConfig.playStoreUrl.trim();
+    final playUrl = _androidDownloadUrl();
     final appUrl = _resolveIosComingSoonUrl(
       _normalizeStaticWebUrl(AppConfig.appStoreUrl.trim()),
     );
@@ -120,14 +130,10 @@ class _VoterWebRedirectScreenState
     final showApp = appUrl.isNotEmpty && (!isAndroidWeb);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const CamVoteLogo(size: 26),
-            const SizedBox(width: 8),
-            Text(t.modeVoterTitle),
-          ],
-        ),
+      appBar: NotificationAppBar(
+        title: Text(t.modeVoterTitle),
+        showBell: false,
+        showOnWeb: true,
       ),
       body: BrandBackdrop(
         child: ResponsiveContent(

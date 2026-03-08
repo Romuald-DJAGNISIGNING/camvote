@@ -37,13 +37,20 @@ class RegistrationSubmissionResult {
           (json['status'] as String?) ??
           (queued ? 'queued_offline' : 'pending'),
       message: (json['message'] as String?) ?? '',
-      nextAction: (json['next_action'] as String?) ?? '',
-      cardExpired: json['card_expired'] as bool?,
+      nextAction:
+          (json['nextAction'] as String?) ??
+          (json['next_action'] as String?) ??
+          '',
+      cardExpired:
+          (json['cardExpired'] as bool?) ?? (json['card_expired'] as bool?),
       existingRegistrationId:
           (json['existing_registration_id'] as String?) ??
           (json['existingRegistrationId'] as String?) ??
           '',
-      renewalToken: (json['renewal_token'] as String?) ?? '',
+      renewalToken:
+          (json['renewalToken'] as String?) ??
+          (json['renewal_token'] as String?) ??
+          '',
       queuedOffline: queued,
       offlineQueueId: queueId,
     );

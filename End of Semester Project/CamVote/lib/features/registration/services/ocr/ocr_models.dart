@@ -11,6 +11,8 @@ class OcrExtractedIdentity {
   final DateTime? dateOfBirth;
   final String? placeOfBirth;
   final String? nationality;
+  final String? documentNumber;
+  final DateTime? documentExpiry;
 
   const OcrExtractedIdentity({
     required this.rawText,
@@ -18,6 +20,8 @@ class OcrExtractedIdentity {
     this.dateOfBirth,
     this.placeOfBirth,
     this.nationality,
+    this.documentNumber,
+    this.documentExpiry,
   });
 }
 

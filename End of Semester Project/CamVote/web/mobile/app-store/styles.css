@@ -26,6 +26,7 @@ body {
     linear-gradient(140deg, var(--paper) 0%, #f9f6f1 45%, #eef5f0 100%);
   min-height: 100vh;
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .background {
@@ -114,7 +115,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 6vw 8px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 6vw 8px;
 }
 
 .brand {
@@ -166,7 +167,7 @@ body {
 }
 
 .container {
-  padding: 24px 6vw 64px;
+  padding: 24px 6vw calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 .hero {

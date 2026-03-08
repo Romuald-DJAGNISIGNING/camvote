@@ -18,6 +18,7 @@ void main() {
       totalCards: 42,
       openCards: 18,
       doneCards: 24,
+      completionPercent: 57,
       lists: const [
         TrelloListStat(name: 'List 1', totalCards: 12, openCards: 9),
         TrelloListStat(name: 'List 2', totalCards: 11, openCards: 8),
@@ -57,6 +58,8 @@ void main() {
     expect(find.text('Total'), findsOneWidget);
     expect(find.text('Open'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
+    expect(find.text('57%'), findsOneWidget);
+    expect(find.text('24/42'), findsOneWidget);
 
     expect(find.text('List 1'), findsOneWidget);
     expect(find.text('List 5'), findsOneWidget);

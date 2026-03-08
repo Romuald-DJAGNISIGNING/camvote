@@ -24,22 +24,29 @@ class AuthUser {
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       id: (json['id'] as String?) ?? '',
-      fullName: (json['full_name'] as String?) ?? '',
+      fullName:
+          (json['fullName'] as String?) ?? (json['full_name'] as String?) ?? '',
       email: (json['email'] as String?) ?? '',
       role: AppRoleX.fromApi(json['role'] as String?) ?? AppRole.public,
-      voterId: json['voter_id'] as String?,
+      voterId: (json['voterId'] as String?) ?? (json['voter_id'] as String?),
       verified: (json['verified'] as bool?) ?? false,
-      mustChangePassword: (json['must_change_password'] as bool?) ?? false,
+      mustChangePassword:
+          (json['mustChangePassword'] as bool?) ??
+          (json['must_change_password'] as bool?) ??
+          false,
     );
   }
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'fullName': fullName,
     'full_name': fullName,
     'email': email,
     'role': role.apiValue,
+    'voterId': voterId,
     'voter_id': voterId,
     'verified': verified,
+    'mustChangePassword': mustChangePassword,
     'must_change_password': mustChangePassword,
   };
 }

@@ -13,8 +13,8 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/motion/cam_reveal.dart';
-import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../core/widgets/qr/branded_qr_code.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 import '../domain/vote_receipt.dart';
 
 class VoterReceiptScreen extends StatelessWidget {
@@ -30,9 +30,9 @@ class VoterReceiptScreen extends StatelessWidget {
     final castAtLabel = _formatDateTime(context, receipt.castAt);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
+      appBar: NotificationAppBar(
         title: Text(t.voteReceiptTitle),
+        showBell: false,
       ),
       body: BrandBackdrop(
         child: ResponsiveContent(

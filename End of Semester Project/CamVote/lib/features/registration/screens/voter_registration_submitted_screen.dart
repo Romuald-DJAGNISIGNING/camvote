@@ -7,8 +7,8 @@ import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
-import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../core/theme/role_theme.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 import '../models/registration_submission_result.dart';
 
 class VoterRegistrationSubmittedScreen extends ConsumerWidget {
@@ -24,9 +24,9 @@ class VoterRegistrationSubmittedScreen extends ConsumerWidget {
         ? (result.registrationId.isEmpty ? t.unknown : result.registrationId)
         : result.offlineQueueId;
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
+      appBar: NotificationAppBar(
         title: Text(t.registrationSubmittedTitle),
+        showBell: false,
       ),
       body: BrandBackdrop(
         child: ResponsiveContent(

@@ -940,11 +940,25 @@ async function handleAdminRegistrationDecide(
   const payload = valueToJs(
     docMapValue(regDoc, 'payload') || { mapValue: { fields: {} } },
   ) as Record<string, unknown>;
-    const dob = typeof payload?.dob === 'string' ? payload.dob : (payload?.dateOfBirth as string);
-    const regionCode = payload?.regionCode as string | undefined;
-    const centerId = payload?.centerId as string | undefined;
-    const deviceHash = payload?.deviceHash as string | undefined;
-    const cardExpiry = payload?.docExpiry as string | undefined;
+    const dob =
+      typeof payload?.dob === 'string'
+        ? payload.dob
+        : (payload?.dateOfBirth as string | undefined) ||
+          (payload?.date_of_birth as string | undefined);
+    const regionCode =
+      (payload?.regionCode as string | undefined) ||
+      (payload?.region_code as string | undefined);
+    const centerId =
+      (payload?.centerId as string | undefined) ||
+      (payload?.preferredCenterId as string | undefined) ||
+      (payload?.preferred_center_id as string | undefined);
+    const deviceHash =
+      (payload?.deviceHash as string | undefined) ||
+      (payload?.device_hash as string | undefined);
+    const cardExpiry =
+      (payload?.docExpiry as string | undefined) ||
+      (payload?.doc_expiry as string | undefined) ||
+      (payload?.cardExpiry as string | undefined);
 
     await firestorePatch(
       env,
@@ -1189,11 +1203,48 @@ async function handlePublicVoterLookup(
 
   const user = docs[0];
   const verified = docBool(user, 'verified') === true;
+  const storedDob = docString(user, 'dob') || docString(user, 'dateOfBirth');
+  if (storedDob && !sameCalendarDate(storedDob, dob)) {
+    return jsonResponse(
+      {
+        ok: true,
+        status: 'not_found',
+        maskedName: '',
+        maskedRegNumber: '',
+        cardExpiry: null,
+      },
+      corsHeaders,
+    );
+  }
+  const rawStatus = docString(user, 'status').trim().toLowerCase();
+  const archived = rawStatus === 'archived' || docString(user, 'deletedAt').trim().length > 0;
+  const deceased =
+    rawStatus === 'deceased' ||
+    docBool(user, 'deceased') === true ||
+    docString(user, 'deceasedAt').trim().length > 0;
+  const suspended =
+    rawStatus === 'suspended' || rawStatus === 'blocked' || rawStatus === 'flagged';
+  const hasVoted = docBool(user, 'hasVoted') === true || rawStatus === 'voted';
+  const age = computeAgeFromIso(storedDob || dob);
   const fullName = docString(user, 'fullName');
+  const status =
+    archived
+      ? 'archived'
+      : deceased
+        ? 'deceased'
+        : suspended
+          ? 'suspended'
+          : !verified
+            ? 'pending_verification'
+            : hasVoted
+              ? 'voted'
+              : age !== null && age >= 18 && age < 21
+                ? 'registered_pre_eligible'
+                : 'eligible';
   return jsonResponse(
     {
       ok: true,
-      status: verified ? 'eligible' : 'pending_verification',
+      status,
       maskedName: maskName(fullName),
       maskedRegNumber: maskReg(regNumber),
       cardExpiry: docString(user, 'cardExpiry') || null,
@@ -1456,9 +1507,7 @@ async function handlePublicTrelloStats(
 ): Promise<Response> {
   if (request.method !== 'GET') throw new HttpError(405, 'Method not allowed');
   const responseHeaders = new Headers(corsHeaders);
-  responseHeaders.set('Cache-Control', 'no-store, max-age=0');
-  responseHeaders.set('Pragma', 'no-cache');
-  responseHeaders.set('Expires', '0');
+  responseHeaders.set('Cache-Control', 'public, max-age=20, s-maxage=20, stale-while-revalidate=60');
   const key = (env.TRELLO_KEY || '').trim();
   const token = (env.TRELLO_TOKEN || '').trim();
   const boardId = (env.TRELLO_BOARD_ID || '').trim();
@@ -1509,14 +1558,27 @@ async function handlePublicTrelloStats(
         'merged',
         'termine',
         'terminee',
+        'termines',
+        'terminees',
         'fini',
         'fait',
         'faite',
+        'acheve',
+        'achevee',
+        'acheves',
+        'achevees',
         'livre',
         'livree',
+        'livres',
+        'livrees',
         'resolu',
+        'resolue',
+        'resolus',
+        'resolues',
         'cloture',
         'cloturee',
+        'clotures',
+        'cloturees',
       ];
       for (const word of keywords) {
         if (normalized === word) return true;
@@ -1533,6 +1595,10 @@ async function handlePublicTrelloStats(
     }
     const authQuery = auth.toString();
     const baseUrl = 'https://api.trello.com/1';
+    const toFiniteNumber = (value: unknown): number => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
 
     const boardRes = await fetch(
       `${baseUrl}/boards/${encodeURIComponent(
@@ -1558,12 +1624,47 @@ async function handlePublicTrelloStats(
     const cardsRes = await fetch(
       `${baseUrl}/boards/${encodeURIComponent(
         boardId,
-      )}/cards?${authQuery}&fields=idList,closed&filter=all`,
+      )}/cards?${authQuery}&fields=idList,closed,dueComplete&badges=true&filter=all`,
     );
     if (!cardsRes.ok) {
       throw new HttpError(502, 'Unable to load Trello cards.');
     }
     const cards = (await cardsRes.json()) as Array<Record<string, unknown>>;
+    const cardProgressByList = new Map<
+      string,
+      { totalUnits: number; doneUnits: number; cardCount: number }
+    >();
+    for (const card of cards) {
+      const listId = `${card.idList ?? ''}`.trim();
+      if (!listId) continue;
+      const badges =
+        card.badges && typeof card.badges === 'object'
+          ? (card.badges as Record<string, unknown>)
+          : {};
+      const checklistTotal = Math.max(0, toFiniteNumber(badges.checkItems));
+      const checklistDone = Math.max(0, toFiniteNumber(badges.checkItemsChecked));
+      const dueComplete = card.dueComplete === true || badges.dueComplete === true;
+      const isClosed = card.closed === true;
+      const totalUnits = checklistTotal > 0 ? checklistTotal : 1;
+      let doneUnits =
+        checklistTotal > 0
+          ? Math.min(checklistDone, checklistTotal)
+          : isClosed || dueComplete
+            ? 1
+            : 0;
+      if ((isClosed || dueComplete) && doneUnits < totalUnits) {
+        doneUnits = totalUnits;
+      }
+      const progress = cardProgressByList.get(listId) ?? {
+        totalUnits: 0,
+        doneUnits: 0,
+        cardCount: 0,
+      };
+      progress.totalUnits += totalUnits;
+      progress.doneUnits += doneUnits;
+      progress.cardCount += 1;
+      cardProgressByList.set(listId, progress);
+    }
 
     const doneListIds = new Set<string>();
     const doneListIdOverrides = parseCsv(env.TRELLO_DONE_LIST_IDS);
@@ -1601,22 +1702,33 @@ async function handlePublicTrelloStats(
         const listId = `${list.id ?? ''}`;
         const listName = `${list.name ?? 'List'}`.trim() || 'List';
         const isDone = doneListIds.has(listId);
-        const listCards = cards.filter((c) => `${c.idList ?? ''}` === listId);
-        const total = listCards.length;
-        const done = isDone
-          ? total
-          : listCards.filter((c) => c.closed === true).length;
+        const listProgress = cardProgressByList.get(listId) ?? {
+          totalUnits: 0,
+          doneUnits: 0,
+          cardCount: 0,
+        };
+        const total = listProgress.totalUnits;
+        const done = isDone ? total : listProgress.doneUnits;
         const open = Math.max(total - done, 0);
+        const safeDone = Math.max(Math.min(done, total), 0);
         totalCards += total;
         openCards += open;
-        doneCards += done;
+        doneCards += safeDone;
         return {
           name: listName,
           totalCards: total,
           openCards: open,
+          doneCards: safeDone,
+          completionPercent: total > 0 ? Math.round((safeDone / total) * 100) : 0,
+          cardCount: listProgress.cardCount,
         };
       })
       .sort((a, b) => b.totalCards - a.totalCards);
+
+    const safeDoneCards = Math.max(Math.min(doneCards, totalCards), 0);
+    const safeOpenCards = Math.max(totalCards - safeDoneCards, 0);
+    const completionPercent =
+      totalCards > 0 ? Math.round((safeDoneCards / totalCards) * 100) : 0;
 
     return jsonResponse(
       {
@@ -1627,8 +1739,13 @@ async function handlePublicTrelloStats(
           boardUrl: `${board.shortUrl ?? ''}`.trim(),
           lastActivityAt: `${board.dateLastActivity ?? ''}`.trim() || null,
           totalCards,
-          openCards,
-          doneCards: Math.max(doneCards, 0),
+          totalTasks: totalCards,
+          openCards: safeOpenCards,
+          openTasks: safeOpenCards,
+          doneCards: safeDoneCards,
+          completedTasks: safeDoneCards,
+          remainingTasks: safeOpenCards,
+          completionPercent,
           lists,
         },
       },
@@ -6827,6 +6944,19 @@ function parseDateValue(value: unknown): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+function sameCalendarDate(left: string, right: string): boolean {
+  const leftMs = parseDateValue(left);
+  const rightMs = parseDateValue(right);
+  if (leftMs === null || rightMs === null) return false;
+  const a = new Date(leftMs);
+  const b = new Date(rightMs);
+  return (
+    a.getUTCFullYear() === b.getUTCFullYear() &&
+    a.getUTCMonth() === b.getUTCMonth() &&
+    a.getUTCDate() === b.getUTCDate()
+  );
+}
+
 function computeAgeFromIso(dateString: string): number | null {
   const parsed = Date.parse(dateString);
   if (Number.isNaN(parsed)) return null;
@@ -7253,4 +7383,3 @@ function pemToArrayBuffer(pem: string): ArrayBuffer {
   }
   return bytes.buffer;
 }
-

@@ -1,4 +1,5 @@
 import 'package:camvote/core/errors/error_message.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -116,7 +117,7 @@ class _ReceiptTile extends StatelessWidget {
         subtitle: Text(t.auditTokenShortLabel('$shortToken...')),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
+          CupertinoPageRoute<void>(
             builder: (_) => VoterReceiptScreen(receipt: receipt),
           ),
         ),
@@ -124,5 +125,4 @@ class _ReceiptTile extends StatelessWidget {
     );
   }
 }
-
 

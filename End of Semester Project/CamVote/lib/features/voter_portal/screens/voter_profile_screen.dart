@@ -5,7 +5,6 @@ import '../../../gen/l10n/app_localizations.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../../core/routing/route_paths.dart';
 import 'package:go_router/go_router.dart';
-import '../../settings/screens/settings_screen.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/branding/brand_backdrop.dart';
 import '../../../core/branding/brand_header.dart';
@@ -57,11 +56,7 @@ class VoterProfileScreen extends ConsumerWidget {
                     leading: const Icon(Icons.settings_outlined),
                     title: Text(t.settings),
                     subtitle: Text(t.appearance),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const SettingsScreen(),
-                      ),
-                    ),
+                    onTap: () => context.push(RoutePaths.settings),
                   ),
                 ),
                 const SizedBox(height: 12),

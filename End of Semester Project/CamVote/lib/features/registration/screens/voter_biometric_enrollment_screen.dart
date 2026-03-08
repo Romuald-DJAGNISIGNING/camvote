@@ -7,10 +7,10 @@ import '../../../core/branding/brand_header.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../../core/widgets/loaders/camvote_pulse_loading.dart';
-import '../../../core/widgets/navigation/app_back_button.dart';
 import '../../../shared/biometrics/biometric_gate.dart';
 import '../../../shared/liveness/liveness_challenge_screen.dart';
 import '../../../core/motion/cam_reveal.dart';
+import '../../notifications/widgets/notification_app_bar.dart';
 import '../domain/registration_review_payload.dart';
 import '../providers/registration_providers.dart';
 
@@ -54,9 +54,9 @@ class _VoterBiometricEnrollmentScreenState
         : 0.0;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(),
+      appBar: NotificationAppBar(
         title: Text(t.biometricEnrollmentTitle),
+        showBell: false,
       ),
       body: Stack(
         children: [

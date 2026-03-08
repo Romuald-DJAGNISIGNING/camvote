@@ -11,7 +11,6 @@ import '../../../core/branding/brand_palette.dart';
 import '../../../core/layout/responsive.dart';
 import '../../../core/routing/route_paths.dart';
 import '../../../core/theme/role_theme.dart';
-import '../../../core/widgets/feedback/cam_toast.dart';
 import '../../../core/widgets/loaders/cameroon_election_loader.dart';
 import '../../notifications/widgets/notification_app_bar.dart';
 import '../models/camguide_chat.dart';
@@ -789,13 +788,21 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       _scrollToBottom();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _responding = false);
-      final t = AppLocalizations.of(context);
-      CamToast.show(
-        context,
-        message: t.genericErrorLabel,
-        type: CamToastType.error,
-      );
+      final locale = Localizations.localeOf(context);
+      final role = ref.read(currentRoleProvider);
+      final fallback = _buildResilientFallbackReply(locale: locale, role: role);
+      setState(() {
+        _entries.add(
+          _CamGuideChatEntry.assistant(
+            message: fallback.answer,
+            followUps: fallback.followUps,
+            sourceHints: fallback.sourceHints,
+            confidence: fallback.confidence,
+          ),
+        );
+        _responding = false;
+      });
+      _scrollToBottom();
     }
   }
 
@@ -866,6 +873,22 @@ class _CamGuideScreenState extends ConsumerState<CamGuideScreen> {
       if (!seen.add(key)) continue;
       yield trimmed;
     }
+  }
+
+  CamGuideReply _buildResilientFallbackReply({
+    required Locale locale,
+    required AppRole role,
+  }) {
+    final assistant = ref.read(camGuideAssistantProvider);
+    final isFrench = locale.languageCode.toLowerCase().startsWith('fr');
+    return CamGuideReply(
+      answer: isFrench
+          ? 'Je reste disponible. La reponse live n a pas pu etre chargee pour cette demande, mais vous pouvez continuer ici sans perdre la conversation. Reessayez ou choisissez une suggestion ci-dessous.'
+          : 'I am still here. The live answer could not be loaded for this request, but you can keep going here without losing the conversation. Try again or pick one of the suggestions below.',
+      followUps: assistant.starterPrompts(locale, role).take(5).toList(),
+      sourceHints: const <String>['CamGuide resilient fallback'],
+      confidence: 0.24,
+    );
   }
 }
 

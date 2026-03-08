@@ -221,6 +221,11 @@ class VoterDocumentOcrScreen extends ConsumerWidget {
                           label: t.nationality,
                           value: extracted.nationality,
                         ),
+                        if (extracted.documentExpiry != null)
+                          _KeyValue(
+                            label: t.cardExpiry,
+                            value: extracted.documentExpiry?.toIso8601String(),
+                          ),
                         const SizedBox(height: 10),
                         ExpansionTile(
                           title: Text(t.rawOcrText),
