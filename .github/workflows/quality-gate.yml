@@ -1,0 +1,163 @@
+name: Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "End of Semester Project/CamVote/**"
+      - ".github/workflows/quality-gate.yml"
+      - ".github/workflows/android-release.yml"
+  pull_request:
+    paths:
+      - "End of Semester Project/CamVote/**"
+      - ".github/workflows/quality-gate.yml"
+      - ".github/workflows/android-release.yml"
+
+jobs:
+  flutter-quality:
+    name: Flutter Analyze and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: End of Semester Project/CamVote
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.38.9"
+
+      - name: Flutter Version
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Validate Firebase mobile config
+        run: dart run tools/validate_firebase_mobile_config.dart --allow-missing-native-files
+
+      - name: Validate Firebase Build Secrets
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        env:
+          CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        run: |
+          missing=0
+          for key in CAMVOTE_FIREBASE_WEB_API_KEY CAMVOTE_FIREBASE_ANDROID_API_KEY CAMVOTE_FIREBASE_IOS_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required repository secret: $key"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Analyze
+        id: analyze
+        run: |
+          set +e
+          flutter analyze 2>&1 | tee flutter-analyze.log
+          analyze_exit=${PIPESTATUS[0]}
+          echo "exit_code=$analyze_exit" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Upload Analyze Log
+        if: always() && steps.analyze.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-analyze-log
+          path: End of Semester Project/CamVote/flutter-analyze.log
+
+      - name: Analyze Summary
+        if: always() && steps.analyze.outcome != 'skipped'
+        run: |
+          echo "### flutter analyze exit code: ${{ steps.analyze.outputs.exit_code }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 200 flutter-analyze.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail If Analyze Failed
+        if: steps.analyze.outputs.exit_code != '0'
+        run: exit 1
+
+      - name: Test
+        if: steps.analyze.outputs.exit_code == '0'
+        run: flutter test
+
+      - name: Build Web Release
+        if: steps.analyze.outputs.exit_code == '0'
+        env:
+          CAMVOTE_FIREBASE_WEB_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_WEB_API_KEY }}
+          CAMVOTE_FIREBASE_ANDROID_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_ANDROID_API_KEY }}
+          CAMVOTE_FIREBASE_IOS_API_KEY: ${{ secrets.CAMVOTE_FIREBASE_IOS_API_KEY }}
+        run: >
+          flutter build web --release --no-wasm-dry-run
+          --dart-define=CAMVOTE_FIREBASE_WEB_API_KEY=$CAMVOTE_FIREBASE_WEB_API_KEY
+          --dart-define=CAMVOTE_FIREBASE_ANDROID_API_KEY=$CAMVOTE_FIREBASE_ANDROID_API_KEY
+          --dart-define=CAMVOTE_FIREBASE_IOS_API_KEY=$CAMVOTE_FIREBASE_IOS_API_KEY
+
+      - name: Ensure sensitive files are not tracked
+        if: steps.analyze.outputs.exit_code == '0'
+        run: |
+          disallowed=$(git ls-files | grep -E '(^End of Semester Project/CamVote/\.env$|^End of Semester Project/CamVote/service-account\.json$|^End of Semester Project/CamVote/firebase-service-account\.json$|^End of Semester Project/CamVote/android/app/google-services\.json$|^End of Semester Project/CamVote/ios/Runner/GoogleService-Info\.plist$|^End of Semester Project/CamVote/android/key\.properties$|^End of Semester Project/CamVote/android/app/upload-keystore\.jks$|^End of Semester Project/CamVote/cf-worker/node_modules/|^End of Semester Project/CamVote/wrangler-account\.json$|^End of Semester Project/CamVote/firebase-tools\.json$)') || true
+          if [ -n "$disallowed" ]; then
+            echo "Tracked sensitive files detected:"
+            echo "$disallowed"
+            exit 1
+          fi
+
+      - name: Secret Pattern Scan
+        if: steps.analyze.outputs.exit_code == '0'
+        run: |
+          set +e
+          git grep -nE '(AIza[0-9A-Za-z\-_]{35}|1//[0-9A-Za-z\-_]{30,})' -- \
+            'End of Semester Project/CamVote/lib' \
+            'End of Semester Project/CamVote/cf-worker' \
+            'End of Semester Project/CamVote/android' \
+            'End of Semester Project/CamVote/ios' \
+            'End of Semester Project/CamVote/web' \
+            'End of Semester Project/CamVote/scripts' \
+            'End of Semester Project/CamVote/test' \
+            > secret-patterns.log
+          secret_exit=$?
+          set -e
+          if [ "$secret_exit" -eq 0 ]; then
+            echo "Potential hardcoded secrets detected:"
+            cat secret-patterns.log
+            exit 1
+          fi
+          if [ "$secret_exit" -gt 1 ]; then
+            echo "Secret scan command failed with exit code $secret_exit"
+            exit "$secret_exit"
+          fi
+
+  worker-quality:
+    name: Worker TypeScript Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: End of Semester Project/CamVote/cf-worker
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: End of Semester Project/CamVote/cf-worker/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
