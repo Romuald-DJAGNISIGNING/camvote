@@ -3,7 +3,7 @@ description: CamVote — Secure Digital Electoral System (Android, iOS, Web) wit
 publish_to: "none"
 
 # Keep this in sync with your Flutter/Dart toolchain
-version: 0.2.0+2
+version: 0.2.1+3
 
 environment:
   sdk: ">=3.10.0 <4.0.0"

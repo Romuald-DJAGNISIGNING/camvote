@@ -25,9 +25,16 @@ class VoterReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     final t = AppLocalizations.of(context);
     final token = receipt.auditToken;
     final castAtLabel = _formatDateTime(context, receipt.castAt);
+    final shortReceiptId = receipt.id.length > 12
+        ? receipt.id.substring(0, 12).toUpperCase()
+        : receipt.id.toUpperCase();
+    final shortToken = token.length > 16
+        ? '${token.substring(0, 16).toUpperCase()}...'
+        : token.toUpperCase();
 
     return Scaffold(
       appBar: NotificationAppBar(
@@ -45,6 +52,81 @@ class VoterReceiptScreen extends StatelessWidget {
                   BrandHeader(
                     title: receipt.electionTitle,
                     subtitle: t.voteReceiptSubtitle,
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            cs.primary.withAlpha(235),
+                            cs.tertiary.withAlpha(205),
+                            cs.primaryContainer.withAlpha(220),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _ReceiptPill(
+                                  icon: Icons.verified_user_outlined,
+                                  label: t.statusVoted,
+                                ),
+                                const Spacer(),
+                                Icon(
+                                  Icons.receipt_long_rounded,
+                                  color: Colors.white.withAlpha(235),
+                                  size: 30,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Text(
+                              receipt.electionTitle,
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              t.voteReceiptSubtitle,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withAlpha(210),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                _ReceiptMetricCard(
+                                  label: t.trackingIdLabel,
+                                  value: shortReceiptId,
+                                ),
+                                _ReceiptMetricCard(
+                                  label: t.auditTokenLabel,
+                                  value: shortToken,
+                                ),
+                                _ReceiptMetricCard(
+                                  label: t.castAtLabel,
+                                  value: castAtLabel,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Card(
@@ -72,15 +154,20 @@ class VoterReceiptScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                receipt.electionTitle,
-                                style: theme.textTheme.titleLarge?.copyWith(
+                                t.electionLabel,
+                                style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text('${t.castAtLabel}: $castAtLabel'),
+                              Text(
+                                receipt.electionTitle,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                               const SizedBox(height: 8),
-                              Divider(color: theme.colorScheme.outlineVariant),
+                              Divider(color: cs.outlineVariant),
                               const SizedBox(height: 8),
                               _HashRow(
                                 label: t.candidateHashLabel,
@@ -89,6 +176,13 @@ class VoterReceiptScreen extends StatelessWidget {
                               _HashRow(
                                 label: t.partyHashLabel,
                                 value: receipt.partyHash,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                t.receiptPrivacyNote,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurface.withAlpha(175),
+                                ),
                               ),
                             ],
                           ),
@@ -337,6 +431,81 @@ class VoterReceiptScreen extends StatelessWidget {
       context,
     ).formatTimeOfDay(TimeOfDay.fromDateTime(value));
     return '$date $time';
+  }
+}
+
+class _ReceiptPill extends StatelessWidget {
+  const _ReceiptPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(28),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white.withAlpha(50)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReceiptMetricCard extends StatelessWidget {
+  const _ReceiptMetricCard({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 132, maxWidth: 220),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withAlpha(48)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white.withAlpha(195),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

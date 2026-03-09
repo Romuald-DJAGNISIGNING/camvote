@@ -93,6 +93,7 @@ class VoterRegistrationSubmittedScreen extends ConsumerWidget {
     return switch (normalized) {
       'queued_offline' => t.helpSupportOfflineQueueTitle,
       'pending' => t.registrationStatusPending,
+      'manual_review' || 'under_review' => t.registrationStatusPending,
       'approved' => t.registrationStatusApproved,
       'rejected' => t.registrationStatusRejected,
       _ => normalized.isEmpty ? t.registrationStatusPending : status,

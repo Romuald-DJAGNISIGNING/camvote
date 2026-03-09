@@ -755,10 +755,19 @@ async function handleRegistrationSubmit(
   const { uid } = await requireAuth(request, env);
   const auth: RateLimitAuth = { uid };
   const payload = (await readJson(request)) as JsonObject;
+  const biometricEnrolled =
+    booleanField(payload, 'biometricEnrolled') || booleanField(payload, 'biometric_enrolled');
+  const livenessVerified =
+    booleanField(payload, 'livenessVerified') ||
+    booleanField(payload, 'liveness_verified') ||
+    booleanField(payload, 'livenessPassed');
 
   const dob = pickString(payload, ['dateOfBirth', 'date_of_birth', 'dob']);
   if (!dob || !isAdult(dob)) {
     throw new HttpError(403, 'Registrant must be at least 18 years old.');
+  }
+  if (!biometricEnrolled || !livenessVerified) {
+    throw new HttpError(403, 'Biometric enrollment and liveness verification are required.');
   }
   const windowSeconds = parseIntEnv(
     env.REGISTRATION_RATE_LIMIT_WINDOW_SECONDS,
@@ -800,6 +809,18 @@ async function handleRegistrationSubmit(
     'id_number',
   ]);
   const documentType = pickString(payload, ['documentType', 'document_type']);
+  const reviewReasons: string[] = [];
+  let riskScore = 0;
+  const failedOcrChecks = collectFailedOcrChecks(payload);
+
+  if (!documentNumber.trim()) {
+    reviewReasons.push('missing_document_number');
+    riskScore += 20;
+  }
+  if (failedOcrChecks.length > 0) {
+    reviewReasons.push(...failedOcrChecks.map((item) => `ocr_${item}`));
+    riskScore += Math.min(28, failedOcrChecks.length * 7);
+  }
 
   const docHash =
     documentNumber && documentType
@@ -841,33 +862,92 @@ async function handleRegistrationSubmit(
           uid,
           deviceHash,
           type: 'DEVICE_ALREADY_BOUND',
-          severity: 'high',
+          severity: 'critical',
           note: 'Registration from device already bound to another account.',
         });
+        reviewReasons.push('device_bound_to_other_account');
+        riskScore += 45;
       }
+    }
+
+    const otherRegistrationCount = await countActiveRegistrationsForDeviceHash(
+      env,
+      deviceHash,
+      uid,
+    );
+    if (otherRegistrationCount > 0) {
+      await logDeviceRisk(env, {
+        uid,
+        deviceHash,
+        type: 'SHARED_REGISTRATION_DEVICE',
+        severity: otherRegistrationCount > 1 ? 'critical' : 'high',
+        note: `Device hash reused across ${otherRegistrationCount} other registration(s).`,
+      });
+      reviewReasons.push('shared_registration_device');
+      riskScore += Math.min(30, otherRegistrationCount * 12);
     }
   }
 
   const registrationId = crypto.randomUUID();
   const now = new Date().toISOString();
+  const requiresManualReview = reviewReasons.length > 0;
+  const registrationStatus = requiresManualReview ? 'manual_review' : 'pending';
+  const registrationMessage = requiresManualReview
+    ? 'Registration submitted for enhanced fraud review.'
+    : 'Registration submitted successfully.';
 
   await firestoreCreate(env, `registrations/${registrationId}`, {
     uid,
-    status: 'pending',
+    status: registrationStatus,
     createdAt: now,
     deviceHash: deviceHash || null,
     documentNumberHash: docHash || null,
+    reviewRequired: requiresManualReview,
+    reviewReasons,
+    riskScore,
     payload,
   });
 
   await firestorePatch(
     env,
     `users/${uid}`,
-    { registrationStatus: 'pending', registrationId, lastRegistrationAt: now },
-    ['registrationStatus', 'registrationId', 'lastRegistrationAt'],
+    {
+      registrationStatus: registrationStatus,
+      registrationId,
+      lastRegistrationAt: now,
+      reviewRequired: requiresManualReview,
+      registrationRiskScore: riskScore,
+    },
+    [
+      'registrationStatus',
+      'registrationId',
+      'lastRegistrationAt',
+      'reviewRequired',
+      'registrationRiskScore',
+    ],
   );
 
-  return jsonResponse({ ok: true, registrationId, status: 'pending' }, corsHeaders);
+  if (requiresManualReview) {
+    await firestoreCreate(env, `audit_events/${crypto.randomUUID()}`, {
+      type: 'registration_manual_review',
+      uid,
+      registrationId,
+      riskScore,
+      reviewReasons,
+      createdAt: now,
+    });
+  }
+
+  return jsonResponse(
+    {
+      ok: true,
+      registrationId,
+      status: registrationStatus,
+      message: registrationMessage,
+      nextAction: requiresManualReview ? 'await_manual_review' : '',
+    },
+    corsHeaders,
+  );
 }
 
 async function handleAccountDelete(
@@ -5384,8 +5464,23 @@ function enforceVoterStatus(userDoc: FirestoreDoc): void {
     throw new HttpError(403, 'User not verified.');
   }
   const status = docString(userDoc, 'status');
-  if (status && ['archived', 'suspended', 'deceased', 'banned'].includes(status)) {
+  if (
+    status &&
+    [
+      'archived',
+      'suspended',
+      'deceased',
+      'banned',
+      'flagged',
+      'manual_review',
+      'under_review',
+      'device_blocked',
+    ].includes(status)
+  ) {
     throw new HttpError(403, 'User status does not allow voting.');
+  }
+  if (docBool(userDoc, 'reviewRequired') === true) {
+    throw new HttpError(403, 'Account is under enhanced review.');
   }
   const cardExpiry = docString(userDoc, 'cardExpiry');
   if (cardExpiry && Date.parse(cardExpiry) < Date.now()) {
@@ -5714,6 +5809,29 @@ async function findDuplicateRegistration(env: Env, docHash: string): Promise<Fir
     return docs[0];
   }
   return null;
+}
+
+async function countActiveRegistrationsForDeviceHash(
+  env: Env,
+  deviceHash: string,
+  excludeUid: string,
+): Promise<number> {
+  const docs = await firestoreRunQuery(env, {
+    from: [{ collectionId: 'registrations' }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: 'deviceHash' },
+        op: 'EQUAL',
+        value: { stringValue: deviceHash },
+      },
+    },
+    limit: 10,
+  });
+  return docs.filter((doc) => {
+    const uid = docString(doc, 'uid');
+    const status = docString(doc, 'status');
+    return uid && uid !== excludeUid && status !== 'rejected';
+  }).length;
 }
 
 async function findDuplicateUser(env: Env, docHash: string): Promise<FirestoreDoc | null> {
@@ -6893,6 +7011,26 @@ function pickString(body: JsonObject, keys: string[]): string {
     }
   }
   return '';
+}
+
+function collectFailedOcrChecks(body: JsonObject): string[] {
+  const failed: string[] = [];
+  if (!booleanField(body, 'ocrNameOk') && !booleanField(body, 'ocr_name_ok')) {
+    failed.push('name_mismatch');
+  }
+  if (!booleanField(body, 'ocrDobOk') && !booleanField(body, 'ocr_dob_ok')) {
+    failed.push('dob_mismatch');
+  }
+  if (!booleanField(body, 'ocrPobOk') && !booleanField(body, 'ocr_pob_ok')) {
+    failed.push('pob_mismatch');
+  }
+  if (
+    !booleanField(body, 'ocrNationalityOk') &&
+    !booleanField(body, 'ocr_nationality_ok')
+  ) {
+    failed.push('nationality_mismatch');
+  }
+  return failed;
 }
 
 function objectArrayField(body: JsonObject, key: string): JsonObject[] {
